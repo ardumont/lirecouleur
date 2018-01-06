@@ -8,8 +8,8 @@
 # voir http://lirecouleur.arkaline.fr
 #
 # @author Marie-Pierre Brungard
-# @version 3.5
-# @since 2015
+# @version 4.0.0
+# @since 2017
 #
 # GNU General Public Licence (GPL) version 3
 #
@@ -51,711 +51,15 @@ except:
     pass
 import string
 import re
-from lirecouleur import *
-
-__version__ = "3.5.0"
-
-# create LANG environment variable
-import locale
-if os.getenv('LANG') is None:
-    lang, enc = locale.getdefaultlocale()
-    os.environ['LANG'] = lang
-#os.environ['LANGUAGE'] = os.environ['LANG']
-
-__memoKeys__ = {}
-
-#########################################################################################################
-#########################################################################################################
-#
-#    Fonctions préliminaires utilitaires
-#
-#                                    @@@@@@@@@@@@@@@@@@@@@@
-#
-#########################################################################################################
-#########################################################################################################
-def getLirecouleurTemplateURL():
-    url = handleMaskTemplate()
-    if len(url) > 0:
-        return url
-
-    localdir = os.sep.join([getLirecouleurDirectory(), 'locale'])
-    loclang = os.environ['LANG']
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.ott"])
-    if os.path.isfile(tempname):
-        return uno.systemPathToFileUrl(tempname)
-    loclang = loclang.split('.')[0]
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.ott"])
-    if os.path.isfile(tempname):
-        return uno.systemPathToFileUrl(tempname)
-    loclang = loclang.split('_')[0]
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.ott"])
-    if os.path.isfile(tempname):
-        return uno.systemPathToFileUrl(tempname)
-    
-    url = os.sep.join([getLirecouleurURL(), "template", "lirecouleur.ott"])
-    if os.path.isfile(uno.fileUrlToSystemPath(url)):
-        return url
-    return ""
-
-def getLirecouleurDictionary():
-    localdir = os.sep.join([getLirecouleurDirectory(), 'locale'])
-    loclang = os.environ['LANG']
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.dic"])
-    if os.path.isfile(tempname):
-        return tempname
-    loclang = loclang.split('.')[0]
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.dic"])
-    if os.path.isfile(tempname):
-        return tempname
-    loclang = loclang.split('_')[0]
-    tempname = os.sep.join([localdir, loclang, "lirecouleur.dic"])
-    if os.path.isfile(tempname):
-        return tempname
-    return os.sep.join([getLirecouleurDirectory(), "lirecouleur.dic"])
-
-def createUnoStruct(cTypeName):
-    """Create a UNO struct and return it.
-    Similar to the function of the same name in OOo Basic. -- Copied from Danny Brewer library
-    """
-    sm = uno.getComponentContext().ServiceManager
-    oCoreReflection = sm.createInstance( "com.sun.star.reflection.CoreReflection" )
-    # Get the IDL class for the type name
-    oXIdlClass = oCoreReflection.forName( cTypeName )
-    # Create the struct.
-    oReturnValue, oStruct = oXIdlClass.createObject( None )
-    return oStruct
-
-def createUnoService(serviceName, ctx=None):
-    if ctx is None:
-        ctx = uno.getComponentContext()
-
-    sm = ctx.ServiceManager
-    try:
-        serv = sm.createInstanceWithContext(serviceName, ctx)
-    except:
-        serv = sm.createInstance(serviceName)
-
-    return serv
-
-"""
-    morceau de code très sale pour identifier si on utilise OpenOffice ou LibreOffice : les 2 n'ont pas
-    la même façon de noter le style par défaut.
-"""
-def getOOoSetupNode(sNodePath):
-    oConfigProvider = createUnoService('com.sun.star.configuration.ConfigurationProvider')
-    ppp = createUnoStruct("com.sun.star.beans.PropertyValue")
-    ppp.Name = "nodepath"
-    ppp.Value = sNodePath
-    return oConfigProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (ppp,))
-
-def getOOoSetupValue(sNodePath, sProperty):
-    xConfig = getOOoSetupNode(sNodePath)
-    return xConfig.getByName(sProperty)
-
-__style_par_defaut__ = ""
-#applic = getOOoSetupValue("/org.openoffice.Setup/Product", "ooName").lower()
-#if applic.startswith("libreoffice"):
-    #__style_par_defaut__ = "Style par défaut"
-
-"""
-    Get the URL of LireCouleur
-"""
-def getLirecouleurURL():
-    """Get the URL of LireCouleur"""
-    try:
-        pip = uno.getComponentContext().getValueByName("/singletons/com.sun.star.deployment.PackageInformationProvider")
-        url = pip.getPackageLocation("LireCouleur")
-        if len(url) > 0:
-            return url
-    except:
-        pass
-
-    try:
-        # just for debugging outside the extension scope
-        filename = uno.fileUrlToSystemPath(__file__)
-        return uno.sytemPathToFileUrl(os.path.dirname(os.path.abspath(filename)))
-    except:
-        pass
-
-    xPathSettingsService = createUnoService('com.sun.star.util.PathSettings')
-    xUserPath = xPathSettingsService.getPropertyValue('UserConfig').split(os.sep)[:-1]
-    xUserPath.extend(['Scripts', 'python'])
-    return os.sep.join(xUserPath)
-
-"""
-    Get the name of the directory of LireCouleur
-"""
-def getLirecouleurDirectory():
-    """Get the name of the directory of LireCouleur"""
-    return uno.fileUrlToSystemPath(getLirecouleurURL())
-
-"""
-
-"""
-def i18n():
-    localdir = os.sep.join([getLirecouleurDirectory(), 'locale'])
-    gettext.bindtextdomain('lirecouleur', localdir)
-    gettext.textdomain('lirecouleur')
-
-#########################################################################################################
-#########################################################################################################
-#
-#    Cette partie du code est destinée à la présentation dans OOo des phonèmes
-#    et des syllabes de différentes manières.
-#
-#                                    @@@@@@@@@@@@@@@@@@@@@@
-#
-#########################################################################################################
-#########################################################################################################
-
-###################################################################################
-# Ensemble des styles d'affichage des phonèmes selon différents codages
-# voir http://wiki.services.openoffice.org/wiki/Documentation/DevGuide/Text/Formatting
-###################################################################################
-style_phon_perso = {
-        'verb_3p':{'CharStyleName':'conjug_3p'},
-        '#':{'CharStyleName':'phon_muet'},
-        'q_caduc':{'CharStyleName':'phon_e_caduc'},
-        'a':{'CharStyleName':'phon_a'},
-        'q':{'CharStyleName':'phon_e'},
-        'i':{'CharStyleName':'phon_i'},
-        'o':{'CharStyleName':'phon_o'},
-        'o_comp':{'CharStyleName':'phon_o_comp'},
-        'o_ouvert':{'CharStyleName':'phon_o_ouvert'},
-        'u':{'CharStyleName':'phon_ou'},
-        'y':{'CharStyleName':'phon_u'},
-        'e':{'CharStyleName':'phon_ez'},
-        'e_comp':{'CharStyleName':'phon_ez_comp'},
-        'w':{'CharStyleName':'phon_w'},
-        'wa':{'CharStyleName':'phon_wa'},
-        'w5':{'CharStyleName':'phon_w5'},
-        'e^':{'CharStyleName':'phon_et'},
-        'e^_comp':{'CharStyleName':'phon_et_comp'},
-        'a~':{'CharStyleName':'phon_an'},
-        'e~':{'CharStyleName':'phon_in'},
-        'x~':{'CharStyleName':'phon_un'},
-        'o~':{'CharStyleName':'phon_on'},
-        'x':{'CharStyleName':'phon_oe'},
-        'x^':{'CharStyleName':'phon_eu'},
-        'j':{'CharStyleName':'phon_y'},
-        'z_s':{'CharStyleName':'phon_z'},
-        'g_u':{'CharStyleName':'phon_g'},
-        'z^_g':{'CharStyleName':'phon_ge'},
-        's_x':{'CharStyleName':'phon_s'},
-        'n~':{'CharStyleName':'phon_gn'},
-        'p':{'CharStyleName':'phon_p'},
-        't':{'CharStyleName':'phon_t'},
-        'k':{'CharStyleName':'phon_k'},
-        'k_qu':{'CharStyleName':'phon_k'},
-        'b':{'CharStyleName':'phon_b'},
-        'd':{'CharStyleName':'phon_d'},
-        'g':{'CharStyleName':'phon_g'},
-        'f':{'CharStyleName':'phon_f'},
-        'f_ph':{'CharStyleName':'phon_f'},
-        's':{'CharStyleName':'phon_s'},
-        's_c':{'CharStyleName':'phon_s'},
-        's_t':{'CharStyleName':'phon_s'},
-        's^':{'CharStyleName':'phon_ch'},
-        'v':{'CharStyleName':'phon_v'},
-        'z':{'CharStyleName':'phon_z'},
-        'z^':{'CharStyleName':'phon_ge'},
-        'm':{'CharStyleName':'phon_m'},
-        'n':{'CharStyleName':'phon_n'},
-        'l':{'CharStyleName':'phon_l'},
-        'r':{'CharStyleName':'phon_r'},
-        'ks':{'CharStyleName':'phon_ks'},
-        'gz':{'CharStyleName':'phon_gz'},
-        '#_amb':{'CharStyleName':__style_par_defaut__},
-        'espace':{'CharStyleName':'espace'},
-        'liaison':{'CharStyleName':'liaison'},
-        'lettre_b':{'CharStyleName':'lettre_b'},
-        'lettre_d':{'CharStyleName':'lettre_d'},
-        'lettre_p':{'CharStyleName':'lettre_p'},
-        'lettre_q':{'CharStyleName':'lettre_q'},
-        'consonne':{'CharStyleName':'phon_consonne'},
-        'voyelle':{'CharStyleName':'phon_voyelle'},
-        'Majuscule':{'CharStyleName':'Majuscule'},
-        'Ponctuation':{'CharStyleName':'Ponctuation'},
-        'defaut':{'CharStyleName':__style_par_defaut__}
-        }
-
-style_phon_complexes = {
-        'verb_3p':{'CharStyleName':'conjug_3p'},
-        '#':{'CharStyleName':'phon_muet'},
-        'q_caduc':{'CharStyleName':__style_par_defaut__},
-        'a':{'CharStyleName':__style_par_defaut__},
-        'q':{'CharStyleName':__style_par_defaut__},
-        'i':{'CharStyleName':__style_par_defaut__},
-        'o':{'CharStyleName':__style_par_defaut__},
-        'o_comp':{'CharStyleName':'phon_voyelle_comp'},
-        'o_ouvert':{'CharStyleName':__style_par_defaut__},
-        'u':{'CharStyleName':'phon_voyelle_comp'},
-        'y':{'CharStyleName':__style_par_defaut__},
-        'e':{'CharStyleName':__style_par_defaut__},
-        'e_comp':{'CharStyleName':'phon_voyelle_comp'},
-        'w':{'CharStyleName':'phon_voyelle_comp'},
-        'wa':{'CharStyleName':'phon_voyelle_comp'},
-        'w5':{'CharStyleName':'phon_voyelle_comp'},
-        'e^':{'CharStyleName':__style_par_defaut__},
-        'e^_comp':{'CharStyleName':'phon_voyelle_comp'},
-        'a~':{'CharStyleName':'phon_voyelle_comp'},
-        'e~':{'CharStyleName':'phon_voyelle_comp'},
-        'x~':{'CharStyleName':'phon_voyelle_comp'},
-        'o~':{'CharStyleName':'phon_voyelle_comp'},
-        'x':{'CharStyleName':'phon_voyelle_comp'},
-        'x^':{'CharStyleName':'phon_voyelle_comp'},
-        'j':{'CharStyleName':'phon_consonne_comp'},
-        'z_s':{'CharStyleName':'phon_consonne_comp'},
-        'g_u':{'CharStyleName':'phon_consonne_comp'},
-        'z^_g':{'CharStyleName':'phon_consonne_comp'},
-        's_x':{'CharStyleName':'phon_consonne_comp'},
-        'n~':{'CharStyleName':'phon_consonne_comp'},
-        'p':{'CharStyleName':__style_par_defaut__},
-        't':{'CharStyleName':__style_par_defaut__},
-        'k':{'CharStyleName':__style_par_defaut__},
-        'k_qu':{'CharStyleName':'phon_consonne_comp'},
-        'b':{'CharStyleName':__style_par_defaut__},
-        'd':{'CharStyleName':__style_par_defaut__},
-        'g':{'CharStyleName':__style_par_defaut__},
-        'f':{'CharStyleName':__style_par_defaut__},
-        'f_ph':{'CharStyleName':'phon_consonne_comp'},
-        's':{'CharStyleName':__style_par_defaut__},
-        's_c':{'CharStyleName':'phon_consonne_comp'},
-        's_t':{'CharStyleName':'phon_consonne_comp'},
-        's^':{'CharStyleName':'phon_consonne_comp'},
-        'v':{'CharStyleName':__style_par_defaut__},
-        'z':{'CharStyleName':__style_par_defaut__},
-        'z^':{'CharStyleName':__style_par_defaut__},
-        'm':{'CharStyleName':__style_par_defaut__},
-        'n':{'CharStyleName':__style_par_defaut__},
-        'l':{'CharStyleName':__style_par_defaut__},
-        'r':{'CharStyleName':__style_par_defaut__},
-        'ks':{'CharStyleName':'phon_consonne_comp'},
-        'gz':{'CharStyleName':'phon_consonne_comp'},
-        '#_amb':{'CharStyleName':__style_par_defaut__},
-        'espace':{'CharStyleName':'espace'},
-        'liaison':{'CharStyleName':'liaison'},
-        'lettre_b':{'CharStyleName':'lettre_b'},
-        'lettre_d':{'CharStyleName':'lettre_d'},
-        'lettre_p':{'CharStyleName':'lettre_p'},
-        'lettre_q':{'CharStyleName':'lettre_q'},
-        'consonne':{'CharStyleName':'phon_consonne'},
-        'voyelle':{'CharStyleName':'phon_voyelle'},
-        'Majuscule':{'CharStyleName':'Majuscule'},
-        'Ponctuation':{'CharStyleName':'Ponctuation'},
-        'defaut':{'CharStyleName':__style_par_defaut__}
-        }
-
-style_syll_souligne = {
-        '1': {'CharUnderline':3,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000},
-        '2': {'CharUnderline':1,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000}
-        }
-
-__style_syll_souligne__ = {
-        '1': {'CharUnderline':3,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000},
-        '2': {'CharUnderline':1,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000}
-        }
-
-__style_phon_perso__ = {
-        'verb_3p':{'CharColor':0x00aaaaaa},
-        '#':{'CharColor':0x00aaaaaa},
-        '#_amb':{'CharColor':0x0000000},
-        'q_caduc':{'CharColor':0X00aaaaaa},
-        'a':{'CharColor':0x000068de},
-        'a~':{'CharColor':0x000068de, 'CharShadowed':True},
-        'q':{'CharColor':0X00ef001e},
-        'i':{'CharColor':0X003deb3d},
-        'e~':{'CharColor':0X003deb3d, 'CharShadowed':True},
-        'o':{'CharColor':0X00de7004},
-        'o_comp':{'CharColor':0X00de7004},
-        'o_ouvert':{'CharColor':0X00de7004},
-        'o~':{'CharColor':0X00de7004, 'CharShadowed':True},
-        'u':{'CharColor':0X00ffc305},
-        'y':{'CharColor':0X005c8526},
-        'x~':{'CharColor':0X005c8526, 'CharShadowed':True},
-        'e':{'CharColor':0X00008080},
-        'e_comp':{'CharColor':0X00008080},
-        'e^':{'CharColor':0X000ecd5, 'CharShadowed':True},
-        'e^_comp':{'CharColor':0X000ecd5, 'CharShadowed':True},
-        'x':{'CharColor':0X00dc2300},
-        'x^':{'CharColor':0X00800000},
-        'w':{'CharColor':0X00892ca0},
-        'wa':{'CharColor':0X00892ca0},
-        'w5':{'CharColor':0X003deb3d, 'CharShadowed':True, 'CharUnderline':6},
-        'j':{'CharColor':0X00892ca0, 'CharShadowed':True},
-        'z_s':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'g_u':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'z^_g':{'CharColor':0x0000000, 'CharWeight':150.0},
-        's_x':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'n~':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'p':{'CharColor':0x0000000, 'CharWeight':150.0},
-        't':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'k':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'k_qu':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'b':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'd':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'g':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'f':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'f_ph':{'CharColor':0x0000000, 'CharWeight':150.0},
-        's':{'CharColor':0x0000000, 'CharWeight':150.0},
-        's_c':{'CharColor':0x0000000, 'CharWeight':150.0},
-        's_t':{'CharColor':0x0000000, 'CharWeight':150.0},
-        's^':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'v':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'z':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'z^':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'm':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'n':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'l':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'r':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'ks':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'gz':{'CharColor':0x0000000, 'CharWeight':150.0},
-        'espace':{'CharBackColor':0x00ff00ff},
-        'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
-        'lettre_b':{'CharColor':0x0000ff00, 'CharWeight':150.0},
-        'lettre_d':{'CharColor':0x00ff0000, 'CharWeight':150.0},
-        'lettre_p':{'CharColor':0x000000ff, 'CharWeight':150.0},
-        'lettre_q':{'CharColor':0x00555555, 'CharWeight':150.0},
-        'consonne':{'CharColor':0x000000ff},
-        'voyelle':{'CharColor':0x00ff0000},
-        'Majuscule':{'CharBackColor':0x00ffff00},
-        'Ponctuation':{'CharBackColor':0x00ff0000},
-        'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
-        }
-
-__style_phon_complexes__ = {
-        'verb_3p':{'CharColor':0x0000000, 'CharContoured':True},
-        '#':{'CharColor':0x0000000, 'CharContoured':True},
-        'q_caduc':{'CharColor':0x00000000},
-        'a':{'CharColor':0x0000000},
-        'q':{'CharColor':0x0000000},
-        'i':{'CharColor':0x0000000},
-        'o':{'CharColor':0x0000000},
-        'o_comp':{'CharColor':0x00ff950e},
-        'o_ouvert':{'CharColor':0x0000000},
-        'u':{'CharColor':0x00ff950e},
-        'y':{'CharColor':0x0000000},
-        'e':{'CharColor':0x0000000},
-        'e_comp':{'CharColor':0x00ff950e},
-        'w':{'CharColor':0x00ff950e},
-        'wa':{'CharColor':0x00ff950e},
-        'w5':{'CharColor':0x00ff950e},
-        'e^':{'CharColor':0x0000000},
-        'e^_comp':{'CharColor':0x00ff950e},
-        'a~':{'CharColor':0x00ff950e},
-        'e~':{'CharColor':0x00ff950e},
-        'x~':{'CharColor':0x00ff950e},
-        'o~':{'CharColor':0x00ff950e},
-        'x':{'CharColor':0x00ff950e},
-        'x^':{'CharColor':0x00ff950e},
-        'j':{'CharColor':0x00aecf00},
-        'z_s':{'CharColor':0x00aecf00},
-        'g_u':{'CharColor':0x00aecf00},
-        'z^_g':{'CharColor':0x00aecf00},
-        's_x':{'CharColor':0x00aecf00},
-        'n~':{'CharColor':0x00aecf00},
-        'p':{'CharColor':0x0000000},
-        't':{'CharColor':0x0000000},
-        'k':{'CharColor':0x0000000},
-        'k_qu':{'CharColor':0x00aecf00},
-        'b':{'CharColor':0x0000000},
-        'd':{'CharColor':0x0000000},
-        'g':{'CharColor':0x0000000},
-        'f':{'CharColor':0x0000000},
-        'f_ph':{'CharColor':0x00aecf00},
-        's':{'CharColor':0x0000000},
-        's_c':{'CharColor':0x00aecf00},
-        's_t':{'CharColor':0x00aecf00},
-        's^':{'CharColor':0x00aecf00},
-        'v':{'CharColor':0x0000000},
-        'z':{'CharColor':0x0000000},
-        'z^':{'CharColor':0x0000000},
-        'm':{'CharColor':0x0000000},
-        'n':{'CharColor':0x0000000},
-        'l':{'CharColor':0x0000000},
-        'r':{'CharColor':0x0000000},
-        'ks':{'CharColor':0x00aecf00},
-        'gz':{'CharColor':0x00aecf00},
-        '#_amb':{'CharColor':0x0000000},
-        'espace':{'CharBackColor':0x00ff00ff},
-        'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
-        'lettre_b':{'CharColor':0x0000ff00, 'CharWeight':150.0},
-        'lettre_d':{'CharColor':0x00ff0000, 'CharWeight':150.0},
-        'lettre_p':{'CharColor':0x000000ff, 'CharWeight':150.0},
-        'lettre_q':{'CharColor':0x00555555, 'CharWeight':150.0},
-        'consonne':{'CharColor':0x000000ff},
-        'voyelle':{'CharColor':0x00ff0000},
-        'Majuscule':{'CharBackColor':0x00ffff00},
-        'Ponctuation':{'CharBackColor':0x00ff0000},
-        'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
-        }
-
-style_syll_dys = {
-        '1': {'CharStyleName':'syll_dys_1'},
-        '2': {'CharStyleName':'syll_dys_2'},
-        '3': {'CharStyleName':'syll_dys_3'}
-        }
-
-__style_syll_dys__ = {
-        '1': {'CharColor':0x000000ff},
-        '2': {'CharColor':0x00ff0000},
-        '3': {'CharColor':0x0000ff00}
-        }
-
-style_mot_dys = {
-        '1': {'CharStyleName':'mot_dys_1'},
-        '2': {'CharStyleName':'mot_dys_2'},
-        '3': {'CharStyleName':'mot_dys_3'}
-        }
-
-__style_mot_dys__ = {
-        '1': {'CharColor':0x000000ff},
-        '2': {'CharColor':0x00ff0000},
-        '3': {'CharColor':0x0000ff00}
-        }
-
-style_yod = {
-        'a':{'CharStyleName':'yod_phon_a'},
-        'q':{'CharStyleName':'yod_phon_e'},
-        'i':{'CharStyleName':'yod_phon_i'},
-        'o':{'CharStyleName':'yod_phon_o'},
-        'o_comp':{'CharStyleName':'yod_phon_o_comp'},
-        'o_ouvert':{'CharStyleName':'yod_phon_o_ouvert'},
-        'u':{'CharStyleName':'yod_phon_ou'},
-        'e':{'CharStyleName':'yod_phon_ez'},
-        'e_comp':{'CharStyleName':'yod_phon_ez_comp'},
-        'e^':{'CharStyleName':'yod_phon_et'},
-        'e^_comp':{'CharStyleName':'yod_phon_et_comp'},
-        'a~':{'CharStyleName':'yod_phon_an'},
-        'e~':{'CharStyleName':'yod_phon_in'},
-        'x~':{'CharStyleName':'yod_phon_un'},
-        'o~':{'CharStyleName':'yod_phon_on'},
-        'x':{'CharStyleName':'yod_phon_oe'},
-        'x^':{'CharStyleName':'yod_phon_eu'}
-        }
-
-__style_yod__ = {
-        'a':{'CharColor':__style_phon_perso__['a']['CharColor'], 'CharUnderline':11},
-        'a~':{'CharColor':__style_phon_perso__['a~']['CharColor'], 'CharUnderline':11},
-        'q':{'CharColor':__style_phon_perso__['q']['CharColor'], 'CharUnderline':11},
-        'i':{'CharColor':__style_phon_perso__['i']['CharColor'], 'CharUnderline':11},
-        'e~':{'CharColor':__style_phon_perso__['e~']['CharColor'], 'CharUnderline':11},
-        'o':{'CharColor':__style_phon_perso__['o']['CharColor'], 'CharUnderline':11},
-        'o_comp':{'CharColor':__style_phon_perso__['o_comp']['CharColor'], 'CharUnderline':11},
-        'o_ouvert':{'CharColor':__style_phon_perso__['o_ouvert']['CharColor'], 'CharUnderline':11},
-        'o~':{'CharColor':__style_phon_perso__['o~']['CharColor'], 'CharUnderline':11},
-        'u':{'CharColor':__style_phon_perso__['u']['CharColor'], 'CharUnderline':11},
-        'x~':{'CharColor':__style_phon_perso__['x~']['CharColor'], 'CharUnderline':11},
-        'e':{'CharColor':__style_phon_perso__['e']['CharColor'], 'CharUnderline':11},
-        'e_comp':{'CharColor':__style_phon_perso__['e_comp']['CharColor'], 'CharUnderline':11},
-        'e^':{'CharColor':__style_phon_perso__['e^']['CharColor'], 'CharUnderline':11},
-        'e^_comp':{'CharColor':__style_phon_perso__['e^_comp']['CharColor'], 'CharUnderline':11},
-        'x':{'CharColor':__style_phon_perso__['x']['CharColor'], 'CharUnderline':11},
-        'x^':{'CharColor':__style_phon_perso__['x^']['CharColor'], 'CharUnderline':11}
-        }
-
-style_wau = {
-        'a':{'CharStyleName':'wau_phon_a'},
-        'i':{'CharStyleName':'wau_phon_i'},
-        'e':{'CharStyleName':'wau_phon_ez'},
-        'e_comp':{'CharStyleName':'wau_phon_ez_comp'},
-        'e^':{'CharStyleName':'wau_phon_et'},
-        'e^_comp':{'CharStyleName':'wau_phon_et_comp'},
-        'a~':{'CharStyleName':'wau_phon_an'},
-        'e~':{'CharStyleName':'wau_phon_in'},
-        'x~':{'CharStyleName':'wau_phon_un'},
-        'o~':{'CharStyleName':'wau_phon_on'},
-        'x^':{'CharStyleName':'wau_phon_eu'}
-        }
-
-__style_wau__ = {
-        'a':{'CharColor':__style_phon_perso__['a']['CharColor'], 'CharUnderline':12},
-        'i':{'CharColor':__style_phon_perso__['i']['CharColor'], 'CharUnderline':12},
-        'e':{'CharColor':__style_phon_perso__['e']['CharColor'], 'CharUnderline':12},
-        'e_comp':{'CharColor':__style_phon_perso__['e_comp']['CharColor'], 'CharUnderline':12},
-        'e^':{'CharColor':__style_phon_perso__['e^']['CharColor'], 'CharUnderline':11},
-        'e^_comp':{'CharColor':__style_phon_perso__['e^_comp']['CharColor'], 'CharUnderline':12},
-        'a~':{'CharColor':__style_phon_perso__['a~']['CharColor'], 'CharUnderline':12},
-        'e~':{'CharColor':__style_phon_perso__['e~']['CharColor'], 'CharUnderline':12},
-        'x~':{'CharColor':__style_phon_perso__['x~']['CharColor'], 'CharUnderline':12},
-        'o~':{'CharColor':__style_phon_perso__['o~']['CharColor'], 'CharUnderline':12},
-        'x^':{'CharColor':__style_phon_perso__['x^']['CharColor'], 'CharUnderline':12}
-        }
-
-style_semi = {
-        'j' : style_yod,
-        'w' : style_wau
-        }
-
-######################################################################################
-#
-######################################################################################
-styles_phonemes = {
-        'perso' : style_phon_perso,
-        'complexes' : style_phon_complexes
-        }
-
-styles_syllabes = {
-        'souligne' : style_syll_souligne,
-        'dys' : style_syll_dys
-        }
-
-
-styles_mots = {
-        'dys' : style_mot_dys
-        }
-
-######################################################################################
-#
-######################################################################################
-__styles_lignes_altern__ = {
-        '1':{'CharBackColor':0x00ffff66},
-        '2':{'CharBackColor':0x0023ff23},
-        '3':{'CharBackColor':0x00ff9966},
-        '4':{'CharBackColor':0x0000ffdc}
-        }
-
-styles_lignes_altern = {
-        '1':{'CharStyleName':'altern_ligne_1'},
-        '2':{'CharStyleName':'altern_ligne_2'},
-        '3':{'CharStyleName':'altern_ligne_3'},
-        '4':{'CharStyleName':'altern_ligne_4'}
-        }
-
-styles_lignes = 'altern_ligne_'
-
-######################################################################################
-# Création des styles de caractères nécessaires à l'application
-######################################################################################
-def createCharacterStyles(xModel, style_nom, style_forme):
-    """ Création des styles de caractères nécessaires à l'application """
-    charStyles = xModel.getStyleFamilies().getByName('CharacterStyles')
-
-    try:
-        #first create the default character style
-        defaultcharstylename = style_nom['defaut']['CharStyleName']
-        if len(defaultcharstylename) > 0 and not charStyles.hasByName(defaultcharstylename):
-            tmp_style = xModel.createInstance('com.sun.star.style.CharacterStyle')    # create a char style
-            tmp_style.setPropertiesToDefault( ('CharCaseMap','CharEscapement','CharEscapementHeight','CharPosture','CharUnderline','CharWeight') )
-            charStyles.insertByName(defaultcharstylename, tmp_style)    # insert the style in the document
-    except:
-        pass
-
-    # then create the other character styles
-    for phon in style_nom.keys():
-        charstylename = style_nom[phon]['CharStyleName']
-        if len(charstylename) > 0 and not charStyles.hasByName(charstylename):
-            charstylestruct = style_forme[phon]
-            tmp_style = xModel.createInstance('com.sun.star.style.CharacterStyle')    # create a char style
-            for kpv in charstylestruct.keys():
-                tmp_style.setPropertyValue(kpv, charstylestruct[kpv])
-            try:
-                tmp_style.setParentStyle(defaultcharstylename)    # set parent charstyle
-            except:
-                pass
-            charStyles.insertByName(charstylename, tmp_style)
-
-def makeShape(oDrawDoc, cShapeClassName, oPosition=None, oSize=None):
-    """Create a new shape of the specified class.
-    Position and size arguments are optional.
-    """
-    oShape = oDrawDoc.createInstance(cShapeClassName)
-
-    if oPosition != None:
-        oShape.Position = oPosition
-    if oSize != None:
-        oShape.Size = oSize
-
-    return oShape
-
-def makeTextShape(oDrawDoc, oPosition=None, oSize=None):
-    """Create a new TextShape with an optional position and size."""
-    oShape = makeShape(oDrawDoc, "com.sun.star.drawing.TextShape", oPosition, oSize)
-    oShape.TextHorizontalAdjust = 0
-    oShape.TextVerticalAdjust = 0
-    oShape.TextAutoGrowWidth = True
-    oShape.TextAutoGrowHeight = True
-    oShape.TextLeftDistance = 0
-    oShape.TextRightDistance = 0
-    oShape.TextUpperDistance = 0
-    oShape.TextLowerDistance = 0
-    return oShape
-
-def makeSize(nWidth, nHeight):
-    """Create a com.sun.star.awt.Size struct."""
-    oSize = createUnoStruct("com.sun.star.awt.Size")
-    oSize.Width = nWidth
-    oSize.Height = nHeight
-    return oSize
-
-def makePoint(nX, nY):
-    """Create a com.sun.star.awt.Point struct."""
-    oPoint = createUnoStruct("com.sun.star.awt.Point")
-    oPoint.X = nX
-    oPoint.Y = nY
-    return oPoint
-
-######################################################################################
-# Lecture d'un style de présentation dans le fichier .lirecouleur
-######################################################################################
-def handleStyle(styleName):
-    """Lecture d'un style de présentation dans le fichier .lirecouleur"""
-    if not(styleName in globals()):
-        globals()[styleName] = {}
-
-    # read the application data file content
-    adata = readAppData()
-    if not styleName in adata:
-        return False
-
-    # transfer the configuration data in the resulting dict
-    for phonid in adata[styleName]:
-        globals()[styleName][phonid] = adata[styleName][phonid]
-    del adata
-
-    return True
-
-######################################################################################
-# Récupération éventuelle des styles de caractères
-######################################################################################
-__memDocument__ = None
-def importStylesLireCouleur(xModel):
-    global __memDocument__
-    if __memDocument__ == xModel:
-        # on n'a pas changé de document donc pas besoin de recharger les styles
-        return
-    __memDocument__ = xModel
-
-    try:
-        """
-            Importation des styles à partir d'un fichier odt
-        """
-        ''' chemin d'accès au fichier qui contient les styles à utiliser '''
-        url = getLirecouleurTemplateURL()
-        try:
-            ppp = createUnoStruct("com.sun.star.beans.PropertyValue")
-            ppp.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
-            ppp.Value = False
-            res = xModel.getStyleFamilies().loadStylesFromURL(url, (ppp,))
-        except:
-            pass
-        createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
-        createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
-        createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
-        createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
-        createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
-        createCharacterStyles(xModel, style_yod, __style_yod__)
-        createCharacterStyles(xModel, style_wau, __style_wau__)
-
-        if not handleStyle("style_syll_souligne"):
-            try:
-                ''' En désespoir de cause, on fait une copie du style de sauvegarde '''
-                globals()["styles_syllabes"]["souligne"] = globals()["__style_syll_souligne__"]
-                saveAppData("style_syll_souligne", globals()["__style_syll_souligne__"])
-            except:
-                pass
-    except:
-        pass
+from lirecouleur.lirecouleur import *
+from lirecouleur.utils import (Settings, create_uno_service, create_uno_struct)
+from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_bdpq__,
+        __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
+        __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
+        __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_phonemes_complexes__,
+        __lirecouleur_phrase__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
+        __lirecouleur_syllabes__,__arret_dynsylldys__,__new_lirecouleur_document__,getLirecouleurDirectory,
+        getLirecouleurDictionary,__lirecouleur_dynsylldys__, importStylesLireCouleur)
 
 ######################################################################################
 # Gestionnaire d'événement de la boite de dialogue
@@ -775,11 +79,13 @@ class MyActionListener(unohelper.Base, XActionListener):
 
     def actionPerformed(self, actionEvent):
         global __style_phon_perso__
+        
+        settings = Settings()
 
-        selectphonemes = handleMaskPhonems()
-        nbcouleurs = handleMaskAlternate()
-        nbespaces = handleMaskSubspaces()
-        tempFilename = handleMaskTemplate()
+        selectphonemes = settings.get('__selection_phonemes__')
+        nbcouleurs = settings.get('__alternate__')
+        nbespaces = settings.get('__subspaces__')
+        tempFilename = settings.get('__template__')
 
         selectphonemes['a'] = self.checkListPhonemes['checkA'].State
         selectphonemes['e'] = selectphonemes['e_comp'] = self.checkListPhonemes['checkE'].State
@@ -830,14 +136,14 @@ class MyActionListener(unohelper.Base, XActionListener):
         nbespaces = self.fieldEsp.getValue()
         tempFilename = self.fieldTemp.getText()
 
-        saveMaskPhonems(selectphonemes)
-        saveMaskAlternate(int(nbcouleurs))
-        saveMaskSubspaces(int(nbespaces))
-        saveMaskPoint(self.checkPoint.getState())
+        settings.setValue('__selection_phonemes__', selectphonemes)
+        settings.setValue('__alternate__', int(nbcouleurs))
+        settings.setValue('__subspaces__', int(nbespaces))
+        settings.setValue('__point__', self.checkPoint.getState())
 
-        saveMaskSyllo(self.selectTyp1Syll.getSelectedItemPos(), self.selectTyp2Syll.getSelectedItemPos())
-        saveMaskTemplate(tempFilename)
-        saveMaskCountry(self.selectLocale.getSelectedItem())
+        settings.setValue('__syllo__', (self.selectTyp1Syll.getSelectedItemPos(), self.selectTyp2Syll.getSelectedItemPos()))
+        settings.setValue('__template__', tempFilename)
+        settings.setValue('__locale__', self.selectLocale.getSelectedItem())
 
         self.controlContainer.endExecute()
 
@@ -951,6 +257,9 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
 
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     import array
+    
+    # récupération des infos de configuration
+    settings = Settings()
 
     # i18n
     i18n()
@@ -959,25 +268,25 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     smgr = xContext.ServiceManager
 
     # read the already selected phonemes in the .lirecouleur file
-    selectphonemes = handleMaskPhonems()
+    selectphonemes = settings.get('__selection_phonemes__')
 
-    # lecture de la période d'alternance de lignes dans le fichier .lirecouleur
-    nbcouleurs = handleMaskAlternate()
+    # lecture de la période d'alternance de lignes
+    nbcouleurs = settings.get('__alternate__')
 
-    # lecture de la période d'alternance de lignes dans le fichier .lirecouleur
-    nbespaces = handleMaskSubspaces()
+    # lecture du nombre d'espaces entre mots
+    nbespaces = settings.get('__subspaces__')
 
-    # lecture pour savoir s'il faut mettre un point sous les lettres muettes dans le fichier .lirecouleur
-    selectpoint = handleMaskPoint()
+    # lecture pour savoir s'il faut mettre un point sous les lettres muettes
+    selectpoint = settings.get('__point__')
 
-    # lecture pour savoir comment il faut afficher les syllabes dans le fichier .lirecouleur
-    selectsyllo = handleMaskSyllo()
+    # lecture pour savoir comment il faut afficher les syllabes
+    selectsyllo = settings.get('__syllo__')
 
     # lecture pour savoir  dans le fichier .lirecouleur
-    select_locale = handleMaskCountry()
+    select_locale = settings.get('__locale__')
 
-    # lecture de la période d'alternance de lignes dans le fichier .lirecouleur
-    tempFileName = handleMaskTemplate()
+    # lecture de la période d'alternance de lignes
+    tempFileName = settings.get('__template__')
 
     # create the dialog model and set the properties
     dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
@@ -1324,7 +633,7 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
 ######################################################################################
 def checkMethodParameter(interface_name, method_name, param_index, param_type):
     """ Check the method has specific type parameter at the specific position. """
-    cr = createUnoService("com.sun.star.reflection.CoreReflection")
+    cr = create_uno_service("com.sun.star.reflection.CoreReflection")
     try:
         idl = cr.forName(interface_name)
         m = idl.getMethod(method_name)
@@ -1581,6 +890,9 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     # dispose the dialog
     controlContainer.dispose()
 
+"""
+    Traitement de la validation du style à éditer
+"""
 class SelectStyleActionListener(unohelper.Base, XMouseListener):
     """Gestionnaire d'événement : double-clic sur un élément de l'arbre des styles"""
     def __init__(self, ctx, document):
@@ -1592,20 +904,20 @@ class SelectStyleActionListener(unohelper.Base, XMouseListener):
     def mousePressed(self, aEvent):
         try:
             noeud = aEvent.Source.getNodeForLocation(aEvent.X, aEvent.Y)
-            phonstyle = noeud.DataValue
-            if not phonstyle is None and aEvent.ClickCount == 2 and aEvent.Buttons == 1:
-                ctx = uno.getCurrentContext()
-                dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
-                prop1 = createUnoStruct("com.sun.star.beans.PropertyValue")
-                prop1.Name = 'Param'
-                prop1.Value = phonstyle
-                prop2 = createUnoStruct("com.sun.star.beans.PropertyValue")
-                prop2.Name = 'Family'
-                prop2.Value = 1
-                dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
-                prop2,))
-        except:
-            pass
+            if not noeud is None:
+                phonstyle = noeud.DataValue
+                if not phonstyle is None and aEvent.ClickCount == 2 and aEvent.Buttons == 1:
+                    dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
+                    prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+                    prop1.Name = 'Param'
+                    prop1.Value = phonstyle
+                    prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+                    prop2.Name = 'Family'
+                    prop2.Value = 1
+                    dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+                    prop2,))
+        except Exception as e:
+            print(("Failed to process Mouse Event: %s" % e))
     def mouseReleased(self, aEvent): pass
 
 ######################################################################################
@@ -1631,6 +943,12 @@ def __gestionnaire_styles_dialog__(xDocument, xContext):
 
     # i18n
     i18n()
+
+    try:
+        # Importer les styles de coloriage de texte
+        importStylesLireCouleur(xDocument)
+    except:
+        pass
 
     # get the service manager
     smgr = xContext.ServiceManager
@@ -1754,927 +1072,6 @@ def __gestionnaire_styles_dialog__(xDocument, xContext):
     # dispose the dialog
     controlContainer.dispose()
 
-######################################################################################
-# Place un point sous une lettre muette
-######################################################################################
-def marquePoint(xDocument, txt_phon, cursor):
-    from com.sun.star.text.TextContentAnchorType import AT_CHARACTER
-    from com.sun.star.text.WrapTextMode import THROUGHT
-    from com.sun.star.text.RelOrientation import CHAR
-    from com.sun.star.text.HoriOrientation import LEFT
-    from com.sun.star.text.VertOrientation import CHAR_BOTTOM
-
-    xText = cursor.getText()
-    oWindow = xDocument.getCurrentController().getFrame().getContainerWindow()
-
-    xViewCursorSupplier = xDocument.getCurrentController()
-    xTextViewCursor = xViewCursorSupplier.getViewCursor()
-    xTextViewCursor.gotoRange(cursor, False) # remet le curseur physique au début (du mot)
-    x0 = xTextViewCursor.Position.X
-
-    hh = cursor.getPropertyValue("CharHeight")
-
-    # déplace le curseur physique pour calculer la longueur de la cuvette à dessiner
-    xTextViewCursor.goRight(len(txt_phon), False)
-    x1 = xTextViewCursor.Position.X
-    if x1 < x0:
-        xTextViewCursor.goLeft(len(txt_phon), False)
-        xTextViewCursor.gotoEndOfLine(False)
-        x1 = xTextViewCursor.Position.X
-    ll = x1 - x0 # longueur de la place
-
-    # définition de l'arc de cercle (cuvette)
-    sz = makeSize(hh*8, hh*8)
-    oShape = makeShape(xDocument, "com.sun.star.drawing.EllipseShape")
-    oShape.Title= '__l_muette__'
-    oShape.LineWidth = hh
-    oShape.Size = sz
-
-    # ces lignes sont à placer AVANT le "insertTextContent" pour que la forme soit bien configurée
-    oShape.AnchorType = AT_CHARACTER # com.sun.star.text.TextContentAnchorType.AT_CHARACTER
-    oShape.HoriOrient = LEFT # com.sun.star.text.HoriOrientation.LEFT
-    oShape.LeftMargin = (ll-sz.Width)/2
-    oShape.HoriOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-    oShape.VertOrient = CHAR_BOTTOM # com.sun.star.text.VertOrientation.CHAR_BOTTOM
-    oShape.VertOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-
-    # insertion de la forme dans le texte à la position du curseur
-    xText.insertTextContent(cursor, oShape, False)
-    cursor = deplacerADroite(txt_phon, cursor)
-
-    # cette ligne est à placer APRÈS le "insertTextContent" qui écrase la propriété
-    oShape.TextWrap = THROUGHT
-
-    oShape.FillColor = 0x00888888
-    oShape.LineStyle = 0
-
-    return cursor
-
-######################################################################################
-# Place un point sous une lettre muette
-######################################################################################
-def marqueImage(xDocument, stylphon, txt_phon, cursor):
-    from com.sun.star.text.TextContentAnchorType import AT_CHARACTER
-    from com.sun.star.text.WrapTextMode import THROUGHT
-    from com.sun.star.text.RelOrientation import CHAR
-    from com.sun.star.text.HoriOrientation import LEFT
-    from com.sun.star.text.VertOrientation import CHAR_BOTTOM
-
-    # définition de l'arc de cercle (cuvette)
-    try:
-        fimgname = getLirecouleurURL()+"/images/"+style_phon_perso[stylphon]['CharStyleName']+".png"
-    except:
-        return deplacerADroite(txt_phon, cursor)
-    if os.path.isfile(uno.fileUrlToSystemPath(fimgname)):
-        hh = cursor.getPropertyValue("CharHeight")
-        
-        xViewCursorSupplier = xDocument.getCurrentController()
-        xTextViewCursor = xViewCursorSupplier.getViewCursor()
-        xTextViewCursor.gotoRange(cursor, False) # remet le curseur physique au début (du mot)
-        x0 = xTextViewCursor.Position.X
-
-        # déplace le curseur physique pour calculer la longueur de la cuvette à dessiner
-        xTextViewCursor.goRight(len(txt_phon), False)
-        x1 = xTextViewCursor.Position.X
-        if x1 < x0:
-            xTextViewCursor.goLeft(len(txt_phon), False)
-            xTextViewCursor.gotoEndOfLine(False)
-            x1 = xTextViewCursor.Position.X
-        ll = x1 - x0 # longueur de la place
-
-        sz = makeSize(hh*20, hh*20)
-        oShape = makeShape(xDocument, "com.sun.star.drawing.GraphicObjectShape")
-        oShape.GraphicURL = fimgname
-        oShape.Title= '_img_sous_'
-        oShape.Size = sz
-        oShape.FillTransparence = 100
-        oShape.LineTransparence = 100
-        ##print (oShape.Title, oShape.GraphicURL)
-
-        # ces lignes sont à placer AVANT le "insertTextContent" pour que la forme soit bien configurée
-        oShape.AnchorType = AT_CHARACTER # com.sun.star.text.TextContentAnchorType.AT_CHARACTER
-        oShape.HoriOrient = LEFT # com.sun.star.text.HoriOrientation.LEFT
-        oShape.LeftMargin = max(0, (ll-sz.Width)/2)
-        oShape.HoriOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-        oShape.VertOrient = CHAR_BOTTOM # com.sun.star.text.VertOrientation.CHAR_BOTTOM
-        oShape.VertOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-
-        # insertion de la forme dans le texte à la position du curseur
-        cursor.getText().insertTextContent(cursor, oShape, False)
-        cursor = deplacerADroite(txt_phon, cursor)
-
-        # cette ligne est à placer APRÈS le "insertTextContent" qui écrase la propriété
-        oShape.TextWrap = THROUGHT
-
-        #oShape.FillColor = 0x00888888
-        #oShape.LineStyle = 0
-    else:
-        cursor = deplacerADroite(txt_phon, cursor)
-
-    return cursor
-
-###################################################################################
-# Applique un style de caractères donné
-###################################################################################
-def setStyle(styl, ooocursor):
-    for kpv in styl:
-        try:
-            ooocursor.setPropertyValue(kpv, styl[kpv])
-        except:
-            pass
-
-###################################################################################
-# Insertion d'une chaîne de caractères selon un style donné. Retourne la position
-# suivante à laquelle insérer sous la forme d'un curseur
-###################################################################################
-def deplacerADroite(texte, ooocursor):
-    try:
-        ooocursor.goRight(len(texte), False)
-    except:
-        pass
-
-    return ooocursor
-
-###################################################################################
-# Insertion d'une chaîne de caractères selon un style donné. Retourne la position
-# suivante à laquelle insérer sous la forme d'un curseur
-###################################################################################
-def formaterTexte(texte, ooocursor, choix_styl):
-    lgr_texte = len(texte)
-
-    # coloriage du phonème courant
-    ncurs = None
-    try:
-        ncurs = ooocursor.getText().createTextCursorByRange(ooocursor)
-        ncurs.goRight(lgr_texte, True)
-    except:
-        pass
-
-    if choix_styl == "defaut":
-        try:
-            ncurs.setPropertyToDefault("CharStyleName")
-            ncurs.setPropertyToDefault("ParaLineSpacing")
-            ncurs.setPropertyToDefault("CharKerning")
-            ncurs.setPropertyToDefault("CharHeight")
-            ncurs.setPropertyToDefault("CharBackColor")
-            #ncurs.setAllPropertiesToDefault()
-        except:
-            pass
-    elif choix_styl == "noir":
-        try:
-            ncurs.setPropertyToDefault("CharStyleName")
-            ncurs.setPropertyToDefault("CharBackColor")
-        except:
-            pass
-    else:
-        setStyle(choix_styl, ncurs)
-    del ncurs
-
-    # déplacer le curseur après le phonème courant
-    return deplacerADroite(texte, ooocursor)
-
-###################################################################################
-# Transcode les phonèmes en couleurs selon le style choisi
-###################################################################################
-def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, decos_phonomes=False):
-    stylphon = ''
-    nb_phon = len(phonemes)
-    i_phon = range(nb_phon)
-
-    cur = cursor
-    for i in i_phon:
-        phon = phonemes[i]
-
-        if len(phon) > 0:
-            stylphon = phon[0]
-            txt_phon = phon[1]
-
-            if len(stylphon) == 0:
-                cur = deplacerADroite(txt_phon, cur)
-            else:
-                # voir si le phonème est sélectionné ou non pour affichage
-                try:
-                    if selecteurphonemes[stylphon] == 0:
-                        stylphon = ''
-                except:
-                    stylphon = ''
-
-                # insertion du texte
-                if len(stylphon) == 0:
-                    # pas de style : déplacer simplement le curseur
-                    cur = deplacerADroite(txt_phon, cur)
-                else:
-                    if stylphon.startswith('j_') or stylphon.startswith('w_') or stylphon.startswith('y_'):
-                        # appliquer le style de la voyelle avec marquage de la semi-voyelle sur la première lettre
-                        il = 1
-                        if stylphon.startswith('w_') and txt_phon.startswith('ou'):
-                            # micmac pour savoir s'il faut souligner une ou 2 lettres
-                            il = 2
-                        cur = formaterTexte(txt_phon[:il], cur, style_semi[stylphon[0]][stylphon[2:]])
-                        txt_phon = txt_phon[il:]
-                        stylphon = stylphon[2:]
-                    if stylphon in styles_phonemes[style]:
-                        # appliquer le style demandé
-                        cur = formaterTexte(txt_phon, cur, styles_phonemes[style][stylphon])
-                        if decos_phonomes and xDocument.supportsService("com.sun.star.text.TextDocument"):
-                            cur.goLeft(len(txt_phon), False)
-                            if stylphon == '#':
-                                cur = marquePoint(xDocument, txt_phon, cur)
-                            else:
-                                cur = marqueImage(xDocument, stylphon, txt_phon, cur)
-                    else:
-                        # style non défini : appliquer le style par défaut
-                        cur = formaterTexte(txt_phon, cur, 'defaut')
-
-    return cur
-
-###################################################################################
-# Transcode les syllabes selon le style choisi
-###################################################################################
-def code_syllabes(xDocument, syllabes, isyl, style, cursor, nb_altern=3):
-    import math
-    from com.sun.star.text.TextContentAnchorType import AT_CHARACTER
-    from com.sun.star.text.WrapTextMode import THROUGHT
-    from com.sun.star.text.RelOrientation import CHAR
-    from com.sun.star.text.HoriOrientation import LEFT
-    from com.sun.star.text.VertOrientation import CHAR_BOTTOM
-    from com.sun.star.drawing.FillStyle import NONE
-    from com.sun.star.drawing.CircleKind import ARC
-
-    sz_syllabes = len(syllabes)
-    nisyl = isyl
-
-    if style == 'souligne' and xDocument.supportsService("com.sun.star.text.TextDocument"):
-        try:
-            """
-                Traitement par ajout de formes coupes en arc de cercle pour indiquer les syllabes
-            """
-            #if sz_syllabes < 2:
-                #return deplacerADroite(syllabes[0], cursor), nisyl
-
-            xText = cursor.getText()
-            oWindow = xDocument.getCurrentController().getFrame().getContainerWindow()
-            mot = pretraitement_texte(''.join(syllabes).lower())
-
-            xViewCursorSupplier = xDocument.getCurrentController()
-            xTextViewCursor = xViewCursorSupplier.getViewCursor()
-            xTextViewCursor.gotoRange(cursor, False) # remet le curseur physique au début (du mot)
-            x1 = xTextViewCursor.Position.X
-
-            hh = cursor.getPropertyValue("CharHeight")
-            for j in range(sz_syllabes):
-                # déplace le curseur physique pour calculer la longueur de la cuvette à dessiner
-                x0 = x1
-                xTextViewCursor.goRight(len(syllabes[j]), False)
-                x1 = xTextViewCursor.Position.X
-                if x1 < x0:
-                    xTextViewCursor.goLeft(len(syllabes[j]), False)
-                    xTextViewCursor.gotoEndOfLine(False)
-                    x1 = xTextViewCursor.Position.X
-                ll = x1 - x0 # longueur de la cuvette
-
-                # définition de l'arc de cercle (cuvette)
-                sz = makeSize(ll, min(hh*25, 600))
-                oShape = makeShape(xDocument, "com.sun.star.drawing.EllipseShape")
-                oShape.Title= '__'+mot+'__'
-                #oShape.FillStyle = uno.getConstantByName("com.sun.star.drawing.FillStyle.NONE")
-                # Bug https://bugs.freedesktop.org/show_bug.cgi?id=66031
-                # uno.getConstantByName no longer works for enum members
-                oShape.FillStyle = NONE
-                #oShape.CircleKind = uno.getConstantByName("com.sun.star.drawing.CircleKind.ARC")
-                # Bug https://bugs.freedesktop.org/show_bug.cgi?id=66031
-                # uno.getConstantByName no longer works for enum members
-                oShape.CircleKind = ARC
-                oShape.CircleStartAngle = -6*math.pi*1000
-                oShape.CircleEndAngle = 0
-                oShape.LineWidth = hh
-                oShape.Size = sz
-
-                # ces lignes sont à placer AVANT le "insertTextContent" pour que la forme soit bien configurée
-                oShape.AnchorType = AT_CHARACTER # com.sun.star.text.TextContentAnchorType.AT_CHARACTER
-                oShape.HoriOrient = LEFT # com.sun.star.text.HoriOrientation.LEFT
-                oShape.HoriOrientPosition = 0
-                oShape.HoriOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-                oShape.VertOrient = CHAR_BOTTOM # com.sun.star.text.VertOrientation.CHAR_BOTTOM
-                oShape.VertOrientPosition = 0
-                oShape.VertOrientRelation = CHAR # com.sun.star.text.RelOrientation.CHAR
-
-                # insertion de la forme dans le texte à la position du curseur
-                xText.insertTextContent(cursor, oShape, False)
-                cursor = deplacerADroite(syllabes[j], cursor)
-
-                # cette ligne est à placer APRÈS le "insertTextContent" qui écrase la propriété
-                oShape.TextWrap = THROUGHT
-
-            return cursor, nisyl
-        except:
-            pass
-
-    """
-        Traitement par coloriage des syllabes (affectation d'un style de caractère)
-    """
-    for j in range(sz_syllabes):
-        cursor = formaterTexte(syllabes[j], cursor, styles_syllabes[style][str(nisyl+1)])
-        nisyl += 1
-        nisyl = nisyl%nb_altern
-
-    return cursor, nisyl
-
-###################################################################################
-# Récupère le textRange correspondant au mot sous le curseur ou à la sélection
-###################################################################################
-def getXCellTextRange(xDocument, xCursor):
-    xTextRanges = []
-    if xCursor.supportsService("com.sun.star.text.TextTableCursor"):
-        cellRangeName = xCursor.getRangeName()
-        #print(cellRangeName)
-        startColumn = cellRangeName.split(':')[0][0]
-        endColumn = cellRangeName.split(':')[1][0]
-        startRow = cellRangeName.split(':')[0][1]
-        endRow = cellRangeName.split(':')[1][1]
-        oTable = xDocument.getCurrentController().getViewCursor().TextTable #########
-        for col in range(ord(startColumn)-64, ord(endColumn)-63):
-            for row in range(int(startRow), int(endRow)+1):
-                cellName = chr(col+64)+str(row)
-                cell = oTable.getCellByName(cellName)
-                try:
-                    xTextRanges.append(cell.getText().createTextCursorByRange(cell))
-                except:
-                    pass
-    return xTextRanges
-
-def extraitMots(xCursor):
-    """
-        Extrait les mots d'un curseur de texte
-    """
-    lWordCursors = []
-    xText = xCursor.getText() ## get the XText interface
-    xtr_p = xText.createTextCursorByRange(xCursor)
-
-    xtr_p.collapseToStart()
-    xtr_p.gotoEndOfWord(True)
-    while xtr_p.getText().compareRegionEnds(xtr_p, xCursor) > 0:
-        # mot par mot
-        if not xtr_p.isCollapsed():
-            lWordCursors.append(xText.createTextCursorByRange(xtr_p))
-        if not xtr_p.gotoNextWord(False):
-            break
-        xtr_p.gotoEndOfWord(True)
-
-    # dernier morceau de mot
-    if not xtr_p.isCollapsed():
-        lWordCursors.append(xText.createTextCursorByRange(xtr_p))
-    del xtr_p
-    return lWordCursors
-
-def segmenteParagraphe(xCursor):
-    """
-        Segmente un paragraphe en mots et non mots
-    """
-    lCursors = []
-    xText = xCursor.getText() ## get the XText interface
-    xtr_p = xText.createTextCursorByRange(xCursor)
-
-    xtr_p.collapseToStart()
-    xtr_p.gotoEndOfWord(True)
-    while xtr_p.getText().compareRegionEnds(xtr_p, xCursor) > 0:
-        # mot par mot
-        if not xtr_p.isCollapsed():
-            lCursors.append(xText.createTextCursorByRange(xtr_p))
-        xtr_p.collapseToEnd()
-        if not xtr_p.gotoNextWord(True):
-            break
-        if not xtr_p.isCollapsed():
-            lCursors.append(xText.createTextCursorByRange(xtr_p))
-        xtr_p.collapseToEnd()
-        xtr_p.gotoEndOfWord(True)
-
-    # dernier morceau de mot
-    if not xtr_p.isCollapsed():
-        lCursors.append(xText.createTextCursorByRange(xtr_p))
-    del xtr_p
-    return lCursors
-
-def getXTextRange(xDocument, fonction='mot', mode=0):
-    """
-        Récupère le textRange correspondant au mot sous le curseur ou à la sélection
-        mode = 0 : récupère le bloc de texte sélectionné
-        mode = 1 : récupère le bloc segmenté en paragraphes
-        mode = 2 : récupère le bloc segmenté en phrases
-        mode = autre : récupère le bloc segmenté en unités de traitement les plus petites possibles
-    """
-
-    if not xDocument.supportsService("com.sun.star.text.TextDocument"):
-        return []
-
-    # Importer les styles de coloriage de texte
-    importStylesLireCouleur(xDocument)
-
-    #the writer controller impl supports the css.view.XSelectionSupplier interface
-    xSelectionSupplier = xDocument.getCurrentController()
-    xIndexAccess = xSelectionSupplier.getSelection()
-
-    if xIndexAccess.supportsService("com.sun.star.text.TextTableCursor"):
-        return getXCellTextRange(xDocument, xIndexAccess)
-
-    xTextRanges = []
-    count = 0
-    try:
-        count = xIndexAccess.getCount()
-    except:
-        return None
-
-    xTextRange = xIndexAccess.getByIndex(0)
-    theString = xTextRange.getString()
-    xText = xTextRange.getText() ## get the XText interface
-
-    if len(theString)==0:
-        # pas de texte sélectionné, il faut chercher le mot ou le paragraphe positionné sous le curseur
-        try:
-            if fonction == 'mot':
-                # sélection du mot courant
-                xWordCursor = xText.createTextCursorByRange(xTextRange)
-                if not xWordCursor.isStartOfWord():
-                    xWordCursor.gotoStartOfWord(False)
-                xWordCursor.gotoEndOfWord(True)
-                xTextRanges.append(xWordCursor)
-            elif fonction == 'paragraphe':
-                # sélection du paragraphe courant
-                xCursor = xText.createTextCursorByRange(xTextRange)
-                if not xCursor.isStartOfParagraph():
-                    xCursor.gotoStartOfParagraph(False)
-                xCursor.gotoEndOfParagraph(True)
-                xTextRanges.append(xCursor)
-            elif fonction == 'phrase':
-                # sélection de la phrase courante
-                xCursor = xText.createTextCursorByRange(xTextRange)
-                if not xCursor.isStartOfSentence():
-                    xCursor.gotoStartOfSentence(False)
-                xCursor.gotoEndOfSentence(True)
-                xTextRanges.append(xCursor)
-            else:
-                # sélection de tout le texte
-                xCursor = xText.createTextCursorByRange(xDocument.getText())
-                xCursor.gotoStart(False)
-                xCursor.gotoEnd(True)
-                xTextRanges.append(xCursor)
-        except:
-            pass
-        return xTextRanges
-
-    # Premier cas : lecture globale de tout ce qui a été sélectionné
-    xtr_p = xText.createTextCursorByRange(xTextRange)
-    if mode == 0:
-        # récupération du bloc de texte sélectionné
-        xTextRanges.append(xtr_p)
-        return xTextRanges
-
-    xtr_p.collapseToStart()
-    if not xtr_p.isStartOfWord():
-        xtr_p.gotoStartOfWord(False)
-    xtr_p.gotoEndOfParagraph(True)
-
-    # Deuxième cas : lecture paragraphe par paragraphe
-    if mode == 1 or xtr_p.getText().compareRegionEnds(xtr_p, xTextRange) > 0:
-        while xtr_p.getText().compareRegionEnds(xtr_p, xTextRange) > 0:
-            # paragraphe par paragraphe
-            if not xtr_p.isCollapsed():
-                xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-            if not xtr_p.gotoNextParagraph(False):
-                break
-            xtr_p.gotoEndOfParagraph(True)
-
-        # dernier morceau de paragraphe
-        xtr_p.gotoRange(xTextRange, False)
-        xtr_p.collapseToEnd()
-        if not xtr_p.isEndOfWord():
-            xtr_p.gotoEndOfWord(False)
-        xtr_p.gotoStartOfParagraph(True)
-        if xtr_p.getText().compareRegionStarts(xtr_p, xTextRange) > 0:
-            xTextRanges.append(xText.createTextCursorByRange(xTextRange))
-        else:
-            if not xtr_p.isCollapsed():
-                xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-        del xtr_p
-        return xTextRanges
-
-    # Troisième cas : lecture phrase par phrase
-    xtr_p.collapseToStart()
-    xtr_p.gotoEndOfSentence(True)
-    if mode == 2 or xtr_p.getText().compareRegionEnds(xtr_p, xTextRange) > 0:
-        # fin de phrase avant fin de sélection : on procède phrase par phrase
-        while xtr_p.getText().compareRegionEnds(xtr_p, xTextRange) > 0:
-            # phrase par phrase
-            if not xtr_p.isCollapsed():
-                xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-            if not xtr_p.gotoNextSentence(False):
-                break
-            xtr_p.gotoEndOfSentence(True)
-        
-        # dernier morceau de phrase
-        xtr_p.gotoRange(xTextRange, False)
-        xtr_p.collapseToEnd()
-        if not xtr_p.isEndOfWord():
-            xtr_p.gotoEndOfWord(False)
-        xtr_p.collapseToEnd()
-        xtr_p.gotoStartOfSentence(True)
-        if not xtr_p.isCollapsed():
-            xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-        del xtr_p
-        return xTextRanges
-
-    # Quatrième cas : lecture mot par mot
-    xtr_p.collapseToStart()
-    xtr_p.gotoEndOfWord(True)
-    while xtr_p.getText().compareRegionEnds(xtr_p, xTextRange) > 0:
-        # mot par mot
-        if not xtr_p.isCollapsed():
-            xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-        if not xtr_p.gotoNextWord(False):
-            break
-        xtr_p.gotoEndOfWord(True)
-
-    # dernier morceau de mot
-    if not xtr_p.isCollapsed():
-        xTextRanges.append(xText.createTextCursorByRange(xtr_p))
-    del xtr_p
-
-    return xTextRanges
-
-#########################################################################################################
-#########################################################################################################
-###                                       FONCTIONS D'INTERFACE
-#########################################################################################################
-#########################################################################################################
-
-###################################################################################
-# Remet un paragraphe dans son style d'origine en espaçant les mots
-###################################################################################
-def colorier_defaut(paragraphe, cursor, style, choix):
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-    cursor2 = cursor.getText().createTextCursorByRange(cursor)
-
-    # suppressions et remplacements de caractères perturbateurs
-    paragraphe = nettoyeur_caracteres(paragraphe)
-
-    # code le coloriage du paragraphe
-    curs = formaterTexte(paragraphe, cursor, choix)
-
-    # supprimer les espaces dupliqués
-    if (choix == 'defaut'):
-        # replacer le curseur au début de la zone de traitement
-        curs = cursor2
-
-        i = 0
-        while i < len(paragraphe):
-            j = i
-            if (paragraphe[i] == ' '):
-                k = 0
-                while (i < len(paragraphe)) and (paragraphe[i] == ' '):
-                    i += 1
-                    k += 1
-                curs = deplacerADroite(paragraphe[j:j+1], curs)
-                if k > 1:
-                    # il y a plusieurs espaces à remplacer par un seul
-                    ncurs = curs.getText().createTextCursorByRange(curs)
-                    ncurs.goRight(k-1, True)
-                    ncurs.setString("")
-                    del ncurs
-            else:
-                while (i < len(paragraphe)) and (paragraphe[i] != ' '):
-                    i += 1
-                curs = deplacerADroite(paragraphe[j:i], curs)
-    del cursor2
-
-###################################################################################
-# Change le style des majuscules de début de phrase et de la ponctuation de fin de phrase
-###################################################################################
-def colorier_phrase(texte, cursor, style):
-    # caractères de ponctuation qui marquent une fin de phrase
-    ponct_fin_phrase = u('.!?…')
-
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-
-    # suppressions et remplacements de caractères perturbateurs
-    utexte = u(texte) # codage unicode
-    paragraphe = nettoyeur_caracteres(utexte).replace('-', ' ')
-
-    # code le coloriage du paragraphe
-    curs = cursor
-    i = 0
-    while i < len(paragraphe):
-        j = i
-        # parcours jusqu'à la prochaine majuscule ou une marque de ponctuation de fin de phrase
-        while (i < len(paragraphe)) and (not (paragraphe[i].isupper() or (ponct_fin_phrase.find(paragraphe[i]) >= 0))):
-            i += 1
-        curs = deplacerADroite(paragraphe[j:i], curs)
-
-        if paragraphe[i].isupper():
-            j = i
-            # on a trouvé une majuscule
-            while (i < len(paragraphe)) and (not paragraphe[i].isspace()):
-                i += 1
-            if paragraphe[j:i].istitle():
-                # Mot qui commence par une majuscule
-                curs = formaterTexte(paragraphe[j], curs, styles_phonemes[style]['Majuscule'])
-                j += 1
-                i = j
-
-            # parcours jusqu'à une marque de ponctuation de fin de phrase
-            while (i < len(paragraphe)) and (ponct_fin_phrase.find(paragraphe[i]) < 0):
-                i += 1
-            curs = deplacerADroite(paragraphe[j:i], curs)
-
-        if paragraphe[i] in ponct_fin_phrase:
-            j = i
-            while (i < len(paragraphe)) and (paragraphe[i] in ponct_fin_phrase):
-                i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['Ponctuation'])
-
-###################################################################################
-# Conversion d'un paragraphe en mettant ses phonèmes en couleur
-###################################################################################
-def colorier_phonemes_style(xDocument, paragraphe, cursor, style):
-    # chargement du dictionnaire de décodage
-    loadLCDict(getLirecouleurDictionary())
-
-    # récupération de l'information sur le marquage des lettres muettes par des points
-    point_lmuette = handleMaskPoint()
-
-    # récup du masque des phonèmes à afficher
-    selecteurphonemes = handleMaskPhonems()
-
-    lMots = extraitMots(cursor)
-    for curMot in lMots:
-        # suppressions et remplacements de caractères perturbateurs
-        paragraphe = nettoyeur_caracteres(curMot.getString())
-
-        # traite le paragraphe en phonèmes
-        pp = generer_paragraphe_phonemes(paragraphe)
-
-        # code le coloriage du paragraphe
-        curs = curMot
-        curs.collapseToStart()
-        for umot in pp:
-            if isinstance(umot, list):
-                # recodage du mot en couleurs
-                curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_lmuette)
-            else:
-                # passage de la portion de texte non traitée (ponctuation, espaces...)
-                curs = deplacerADroite(umot, curs)
-
-        # ménage
-        del pp
-    del lMots
-
-###################################################################################
-# Conversion d'un paragraphe en mettant les lettres muettes en évidence
-###################################################################################
-def colorier_lettres_muettes(xDocument, paragraphe, cursor, style):
-    # chargement du dictionnaire de décodage
-    loadLCDict(getLirecouleurDictionary())
-
-    # récupération de l'information sur le marquage des lettres muettes par des points
-    point_lmuette = handleMaskPoint()
-
-    # récup du masque des phonèmes à afficher : uniquement les lettres muettes
-    selecteurphonemes = {'#':1, 'verb_3p':1}
-
-    lMots = extraitMots(cursor)
-    for curMot in lMots:
-        # suppressions et remplacements de caractères perturbateurs
-        paragraphe = nettoyeur_caracteres(curMot.getString())
-
-        # traite le paragraphe en phonèmes
-        pp = generer_paragraphe_phonemes(paragraphe)
-
-        # code le coloriage du paragraphe
-        curs = curMot
-        curs.collapseToStart()
-        for umot in pp:
-            if isinstance(umot, list):
-                # recodage du mot en couleurs
-                curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_lmuette)
-            else:
-                # passage de la portion de texte non traitée (ponctuation, espaces...)
-                curs = deplacerADroite(umot, curs)
-
-        # ménage
-        del pp
-    del lMots
-
-###################################################################################
-# Marque les liaisons dans un paragraphe
-###################################################################################
-def colorier_liaisons(texte, cursor, style, forcer=False):
-    # segmente le texte en portions mots / non mots
-    pp = segmenteParagraphe(cursor)
-    
-    # code le coloriage du paragraphe
-    l_pp = len(pp)
-    if l_pp < 2:
-        return
-
-    xText = pp[0].getText()
-    mot_prec = u(pp[0].getString())
-    mot_prec = re.sub(u('[\'´’]'), '@', mot_prec.lower())
-    umot = u(pp[1].getString())
-    umot = re.sub(u('[\'´’]'), '@', umot.lower())
-    mot_suiv = ""
-    for i_mot in range(1,l_pp-1):
-        mot_suiv = u(pp[i_mot+1].getString())
-        mot_suiv = re.sub(u('[\'´’]'), '@', mot_suiv.lower())
-        format_liaison = False
-
-        if len(umot.strip()) == 0:
-            if forcer or teste_liaison(mot_prec, mot_suiv):
-                # formatage de la liaison
-                curs = pp[i_mot]
-                curs.collapseToStart()
-                curs = formaterTexte(umot, curs, styles_phonemes[style]['liaison'])
-                format_liaison = True
-                
-                # formater la dernière lettre du mot précédent comme lettre non muette
-                cur_p = xText.createTextCursorByRange(pp[i_mot-1])
-                cur_p.collapseToEnd()
-                cur_p.goLeft(1, True)
-                if cur_p.getPropertyValue("CharStyleName") == "phon_muet":
-                    try:
-                        cur_p.setPropertyToDefault("CharStyleName")
-                    except:
-                        pass
-                del cur_p
-
-        if not format_liaison:
-            # mot : déplacement à droite
-            curs = xText.createTextCursorByRange(pp[i_mot])
-            curs = deplacerADroite(umot, curs)
-            del curs
-
-        mot_prec = umot
-        umot = mot_suiv
-    del pp
-
-###################################################################################
-# Conversion d'un paragraphe en mettant ses syllabes en évidence
-###################################################################################
-def colorier_syllabes_style(xDocument, paragraphe, cursor, style, nb_altern):
-    # chargement du dictionnaire de décodage
-    loadLCDict(getLirecouleurDictionary())
-
-    # récupération de l'information sur le choix entre syllabes orales ou syllabes écrites
-    choix_syllo = handleMaskSyllo()
-
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-
-    # suppressions et remplacements de caractères perturbateurs
-    paragraphe = nettoyeur_caracteres(paragraphe)
-
-    # traite le paragraphe en phonèmes
-    pp = generer_paragraphe_phonemes(paragraphe)
-
-    # recompose les syllabes
-    ps = generer_paragraphe_syllabes(pp, choix_syllo)
-
-    # code le coloriage du paragraphe
-    curs = cursor
-    isyl = 0
-    for i in range(len(ps)):
-        try:
-            if isinstance(ps[i], list):
-                # recodage du mot en couleurs
-                curs, isyl = code_syllabes(xDocument, ps[i], isyl, style, curs, nb_altern)
-            else:
-                # passage de la portion de texte non traitée (ponctuation, espaces...)
-                curs = deplacerADroite(ps[i], curs)
-        except:
-            # passage de la portion de texte non traitée (ponctuation, espaces...)
-            curs = deplacerADroite(ps[i], curs)
-
-    # ménage
-    del ps
-    del pp
-
-###################################################################################
-# Colorie les lettres B, D, P, Q pour éviter les confusions
-###################################################################################
-def colorier_bdpq(paragraphe, cursor, style):
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-
-    # suppression des \r qui engendrent des décalages de codage sous W*
-    paragraphe = paragraphe.replace('\r', '')
-
-    # code le coloriage du paragraphe
-    ensemble_confus = ['b','d','p','q']
-    curs = cursor
-    i = 0
-    while i < len(paragraphe):
-        j = i
-        if paragraphe[i] in ensemble_confus:
-            while (i < len(paragraphe)) and (paragraphe[i] == paragraphe[j]):
-                i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['lettre_'+paragraphe[j]])
-        else:
-            while (i < len(paragraphe)) and not(paragraphe[i] in ensemble_confus):
-                i += 1
-            curs = deplacerADroite(paragraphe[j:i], curs)
-
-###################################################################################
-# Colorie les consonnes et les voyelles
-###################################################################################
-def colorier_consonnes_voyelles(paragraphe, cursor, style):
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-
-    # suppression des \r qui engendrent des décalages de codage sous W*
-    paragraphe = paragraphe.replace('\r', '')
-
-    # code le coloriage du paragraphe
-    e_consonnes = []
-    for lettre in ['b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','z']:
-        e_consonnes.append(lettre)
-        e_consonnes.append(lettre.upper())
-    e_voyelles = []
-    for lettre in ['a','e','i','o','u','y',u('é'),u('è'),u('ë'),u('ê'),u('à'),u('â'),u('ä'),u('î'),u('î'),u('ù'),u('û'),u('ö'),u('ô')]:
-        e_voyelles.append(lettre)
-        e_voyelles.append(lettre.upper())
-
-    curs = cursor
-    i = 0
-    while i < len(paragraphe):
-        j = i
-        if paragraphe[i] in e_consonnes:
-            while (i < len(paragraphe)) and (paragraphe[i] in e_consonnes):
-                i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['consonne'])
-        elif paragraphe[i] in e_voyelles:
-            while (i < len(paragraphe)) and (paragraphe[i] in e_voyelles):
-                i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['voyelle'])
-        else:
-            while (i < len(paragraphe)) and not(paragraphe[i] in e_consonnes) and not(paragraphe[i] in e_voyelles):
-                i += 1
-            curs = deplacerADroite(paragraphe[j:i], curs)
-
-###################################################################################
-# Suppression des arcs de marquage des syllabes pur le paragraphe sélectionné
-###################################################################################
-def supprimer_arcs_syllabes(xDocument, texte, cursor):
-    if xDocument.supportsService("com.sun.star.drawing.DrawingDocument"):
-        oDrawDocCtrl = xDocument.getCurrentController()
-        oDrawPage = oDrawDocCtrl.getCurrentPage()
-    else:
-        oDrawPage = xDocument.DrawPage
-
-    ultexte = pretraitement_texte(texte)
-    mots = ['__'+x+'__' for x in ultexte.split()] # extraire des étiquettes des mots"
-
-    shapesup=[]
-    nNumShapes = oDrawPage.getCount()
-    for x in range (nNumShapes): # toutes les formes de la page
-        oShape = oDrawPage.getByIndex(x)
-        if oShape.Title in mots:
-            shapesup.append(oShape)
-
-    for oShape in shapesup:
-        oDrawPage.remove(oShape)
-    del shapesup
-
-###################################################################################
-# Suppression des décorations sous les sons pour la page en cours
-###################################################################################
-def supprimer_deco_sons(xDocument):
-    oDrawPage = xDocument.DrawPage
-
-    shapesup=[]
-    nNumShapes = oDrawPage.getCount()
-    for x in range (nNumShapes): # toutes les formes de la page
-        oShape = oDrawPage.getByIndex(x)
-        if oShape.Title == '__l_muette__' or oShape.Title == '_img_sous_':
-            shapesup.append(oShape)
-
-    for oShape in shapesup:
-        oDrawPage.remove(oShape)
-    del shapesup
-
-#########################################################################################################
-#########################################################################################################
-#
-#    À partir de là, le code ne fait que déclarer les points d'entrées dans l'extension.
-#    Pour chaque type de traitement, on a successivement :
-#        - une classe, nécessaire comme point d'entrée dans l'extension
-#        - une fonction, nécessaire comme point d'entrée sous forme de macro simple
-#        - la fonction qui extrait le texte et lance le traitement
-#
-#                                    @@@@@@@@@@@@@@@@@@@@@@
-#
-#########################################################################################################
-#########################################################################################################
-
 ###################################################################################
 # Élimine tout style de caractère
 ###################################################################################
@@ -2690,22 +1087,6 @@ def lirecouleur_defaut( args=None ):
     """Applique le style par défaut à la sélection"""
     __lirecouleur_defaut__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_defaut__(xDocument, choix='defaut'):
-    __arret_dynsylldys__(xDocument)
-
-    """Applique le style par défaut à la sélection"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-
-            colorier_defaut(theString, xtr, 'perso', choix)
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Recode le texte sélectionné en noir
@@ -2716,13 +1097,11 @@ class StyleNoir(unohelper.Base, XJobExecutor):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __lirecouleur_suppr_decos__(desktop.getCurrentComponent())
-        __lirecouleur_defaut__(desktop.getCurrentComponent(), 'noir')
+        __lirecouleur_noir__(desktop.getCurrentComponent())
 
 def lirecouleur_noir( args=None ):
     """Recode le texte sélectionné en noir"""
-    __lirecouleur_suppr_decos__(XSCRIPTCONTEXT.getDocument())
-    __lirecouleur_defaut__(XSCRIPTCONTEXT.getDocument(), 'noir')
+    __lirecouleur_noir__(XSCRIPTCONTEXT.getDocument())
 
 ###################################################################################
 # Espace les mots de la sélection en dupliquant les espaces
@@ -2739,57 +1118,6 @@ def lirecouleur_espace( args=None ):
     """Espace les mots de la sélection"""
     __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_espace__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Espace les mots de la sélection"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-        if xTextRange == None:
-            return False
-
-        # lecture du nombre d'espaces pour remplacer un espace standard
-        nb_sub_espaces = handleMaskSubspaces()
-        sub_espaces = ''.join([' ' for i in range(nb_sub_espaces)])
-
-        for xtr in xTextRange:
-            paragraphe = xtr.getString()
-
-            # placer le curseur au début de la zone de traitement
-            xtr.collapseToStart()
-            curs = xtr
-
-            # suppressions et remplacements de caractères perturbateurs
-            paragraphe = nettoyeur_caracteres(paragraphe)
-
-            # code la duplication des espaces
-            i = 0
-            while i < len(paragraphe):
-                j = i
-                if (paragraphe[i] == ' '):
-                    k = 0
-                    while (i < len(paragraphe)) and (paragraphe[i] == ' '):
-                        i += 1
-                        k += 1
-
-                    if k != nb_sub_espaces:
-                        # il y n'y a pas le bon nombre d'espaces
-                        ncurs = curs.getText().createTextCursorByRange(curs)
-                        ncurs.goRight(k, True)
-                        ncurs.setString(sub_espaces)
-                        ncurs.collapseToEnd()
-                        del curs
-                        curs = ncurs
-                    else:
-                        curs.goRight(k, False)
-                else:
-                    while (i < len(paragraphe)) and (paragraphe[i] != ' '):
-                        i += 1
-                    curs = deplacerADroite(paragraphe[j:i], curs)
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Espace les mots de la sélection en dupliquant les espaces
@@ -2806,45 +1134,6 @@ def lirecouleur_separe_mots( args=None ):
     """Sépare les mots de la sélection en coloriant les espaces"""
     __lirecouleur_separe_mots__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_separe_mots__(xDocument):
-    """Sépare les mots de la sélection en coloriant les espaces"""
-    xTextRange = getXTextRange(xDocument, fonction='phrase', mode=0)
-    if xTextRange == None:
-        return False
-
-    # Importer les styles de coloriage de texte
-    importStylesLireCouleur(xDocument)
-    stylEspace = styles_phonemes['perso']['espace']
-
-    for xTextR in xTextRange:
-        xText = xTextR.getText()
-        xWordCursor = xText.createTextCursorByRange(xTextR)
-        xWordCursor.collapseToStart()
-                    
-        # placement au début du dernier mot du paragraphe
-        xTextR.collapseToEnd()
-        xTextR.gotoPreviousWord(False)
-        xTextR.gotoStartOfWord(False)
-        xTextR.collapseToStart()
-
-        i = 0
-        while xText.compareRegionStarts(xWordCursor, xTextR) > 0 and i < 10000:
-            # mot par mot
-            xWordCursor.gotoEndOfWord(True)
-            xWordCursor.collapseToEnd()
-            
-            if not xWordCursor.gotoNextWord(True):
-                return True
-            if xWordCursor.isEndOfParagraph():
-                xWordCursor.gotoNextParagraph(False)
-            if not xWordCursor.gotoStartOfWord(True):
-                return True
-
-            setStyle(stylEspace, xWordCursor)
-            xWordCursor.collapseToEnd()
-            i += 1
-
-    return True
 
 ###################################################################################
 # Espace les mots de la sélection en dupliquant les espaces
@@ -2861,51 +1150,6 @@ def lirecouleur_couleur_mots( args=None ):
     """Colorie les mots en alternant les couleurs (comme syll_dys)"""
     __lirecouleur_couleur_mots__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_couleur_mots__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Sépare les mots de la sélection en coloriant les espaces"""
-    xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-    if xTextRange == None:
-        return False
-
-    # Importer les styles de coloriage de texte
-    importStylesLireCouleur(xDocument)
-
-    # récup de la période d'alternance des couleurs
-    settings = Settings()
-    nb_altern = settings.get('__alternate__')
-
-    imot = 0
-    for xTextR in xTextRange:
-        xText = xTextR.getText()
-        xWordCursor = xText.createTextCursorByRange(xTextR)
-        xWordCursor.collapseToStart()
-        xWordCursor.gotoStartOfWord(False)
-        
-        # placement à la fin du dernier mot du paragraphe
-        xTextR.collapseToEnd()
-        xTextR.gotoPreviousWord(False)
-        xTextR.gotoStartOfWord(False)
-        xTextR.gotoEndOfWord(True)
-        
-        i = 0
-        while xText.compareRegionEnds(xWordCursor, xTextR) >= 0 and i < 10000:
-            xWordCursor.collapseToStart()
-            xWordCursor.gotoStartOfWord(False)
-            xWordCursor.gotoEndOfWord(True)
-            setStyle(styles_mots['dys'][str(imot+1)], xWordCursor)
-            imot = (imot + 1) % nb_altern 
-            
-            # mot suivant
-            xWordCursor.collapseToEnd()
-            if not xWordCursor.gotoNextWord(False):
-                return True
-            if xWordCursor.isEndOfParagraph():
-                xWordCursor.gotoNextParagraph(False)
-            i += 1
-
-    return True
 
 ###################################################################################
 # Espace les lignes de la sélection
@@ -2922,22 +1166,6 @@ def lirecouleur_espace_lignes( args=None ):
     """Espace les lignes de la sélection"""
     __lirecouleur_espace_lignes__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_espace_lignes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-        if xTextRange == None:
-            return False
-        
-        for xtr in xTextRange:
-            args = xtr.getPropertyValue('ParaLineSpacing')
-            args.Height += 10
-            xtr.setPropertyValue('ParaLineSpacing', args)
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Espace les lignes et les mots de la sélection
@@ -2954,34 +1182,6 @@ def lirecouleur_large( args=None ):
     """Espace les lignes et les mots de la sélection"""
     __lirecouleur_large__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_large__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    # espacement des mots
-    __lirecouleur_espace__(xDocument)
-
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-        if xTextRange == None:
-            return False
-        
-        for xtr in xTextRange:
-            # double interligne
-            args = xtr.getPropertyValue('ParaLineSpacing')
-            args.Height = 200
-            xtr.setPropertyValue('ParaLineSpacing', args)
-
-            # espacement des caractères normal
-            xtr.setPropertyValue('CharKerning', 100)
-
-            # taille de caractères : 16 points minimum
-            args = xtr.getPropertyValue('CharHeight')
-            if (args < 16.0):
-                xtr.setPropertyValue('CharHeight', 16.0)
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Espace les lignes de la sélection ainsi que les caractères
@@ -2998,27 +1198,6 @@ def lirecouleur_extra_large( args=None ):
     """Espace les lignes de la sélection ainsi que les caractères"""
     __lirecouleur_extra_large__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_extra_large__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    # espacement des mots
-    __lirecouleur_large__(xDocument)
-
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
-        if xTextRange == None:
-            return False
-        
-        for xtr in xTextRange:
-            # espacement des caractères
-            args = xtr.getPropertyValue('CharKerning')
-            if (args < 200):
-                xtr.setPropertyValue('CharKerning', 200)
-
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Marque les phonèmes sous forme de couleurs en fonction des styles du document
@@ -3035,25 +1214,6 @@ def lirecouleur_phonemes( args=None ):
     """Colorie les phonèmes en couleurs arc en ciel"""
     __lirecouleur_phonemes__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_phonemes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Colorie les phonèmes en couleurs arc en ciel"""
-
-    __lirecouleur_defaut__(xDocument, 'noir')
-
-    xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
-    if xTextRange == None:
-        return False
-
-    try:
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            colorier_phonemes_style(xDocument, theString, xtr, 'perso')
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Marque les phonèmes sous forme de couleurs en fonction des styles du document
@@ -3070,24 +1230,6 @@ def lirecouleur_phonemes_complexes( args=None ):
     """Colorie les phonèmes complexes"""
     __lirecouleur_phonemes_complexes__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_phonemes_complexes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Colorie les phonèmes complexes"""
-
-    xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
-    if xTextRange == None:
-        return False
-
-    try:
-        for xtr in xTextRange:
-            theString = xtr.getString()
-
-            colorier_phonemes_style(xDocument, theString, xtr, 'complexes')
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Marque les syllabes sous forme de ponts.
@@ -3123,28 +1265,6 @@ def lirecouleur_sylldys( args=None ):
     __lirecouleur_syllabes__(xDocument, 'dys')
     __lirecouleur_dynsylldys__(xDocument)
 
-def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
-    __arret_dynsylldys__(xDocument)
-
-    """Mise en évidence des syllabes soulignées"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='mot', mode=1)
-        if xTextRange == None:
-            return False
-
-        # Importer les styles de coloriage de texte
-        importStylesLireCouleur(xDocument)
-
-        # récup de la période d'alternance des couleurs
-        nb_altern = handleMaskAlternate()
-
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            colorier_syllabes_style(xDocument, theString, xtr, style, nb_altern)
-        del xTextRange
-    except:
-        return False
-    return __lirecouleur_l_muettes__(xDocument)
 
 ###################################################################################
 # Supprime les arcs sous les syllabes dans le texte sélectionné.
@@ -3161,20 +1281,6 @@ def lirecouleur_suppr_syllabes( args=None ):
     """Supprime les cuvettes qui marquent les liaisons"""
     __lirecouleur_suppr_syllabes__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_suppr_syllabes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            supprimer_arcs_syllabes(xDocument, theString, xtr)
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Ne marque que les lettres muettes dans le texte sélectionné.
@@ -3191,23 +1297,6 @@ def lirecouleur_l_muettes( args=None ):
     """Met uniquement en évidence les lettres muettes"""
     __lirecouleur_l_muettes__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_l_muettes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Met uniquement en évidence les lettres muettes"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='mot', mode=1)
-        if xTextRange == None:
-            return False
-
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            colorier_lettres_muettes(xDocument, theString, xtr, 'perso')
-
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Formatte toute la sélection comme phonème muet
@@ -3224,37 +1313,6 @@ def lirecouleur_phon_muet( args=None ):
     """Formate la sélection comme phonème muet"""
     __lirecouleur_phon_muet__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_phon_muet__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Met uniquement en évidence les lettres muettes"""
-    try:
-        # Importer les styles de coloriage de texte
-        importStylesLireCouleur(xDocument)
-
-        #the writer controller impl supports the css.view.XSelectionSupplier interface
-        xSelectionSupplier = xDocument.getCurrentController()
-        xIndexAccess = xSelectionSupplier.getSelection()
-        xTextRange = xIndexAccess.getByIndex(0)
-    
-        if xTextRange == None or len(xTextRange.getString()) == 0:
-            return False
-
-        # récupération de l'information sur le marquage des lettres muettes par des points
-        point_lmuette = handleMaskPoint()
-
-        xtr = xTextRange.getText().createTextCursorByRange(xTextRange)
-        theString = xtr.getString()
-        xtr.collapseToStart()
-        xtr = formaterTexte(theString, xtr, styles_phonemes['perso']['#'])
-        if point_lmuette and xDocument.supportsService("com.sun.star.text.TextDocument"):
-            xtr.goLeft(len(theString), False)
-            xtr = marquePoint(xDocument, theString, xtr)
-
-        del xtr
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Supprime d'éventuelles décorations sous certains sons
@@ -3271,14 +1329,6 @@ def lirecouleur_suppr_decos( args=None ):
     """Supprime les formes ajoutées sur al page pour marquer certains sons"""
     __lirecouleur_suppr_decos__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_suppr_decos__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    try:
-        supprimer_deco_sons(xDocument)
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Colorie les majuscules de début de phrase et les point de fin de phrase.
@@ -3295,21 +1345,6 @@ def lirecouleur_phrase( args=None ):
     """Marque les majuscules de début de phrase et les points de fin de phrase."""
     __lirecouleur_phrase__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_phrase__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Marque les majuscules de début de phrase et les points de fin de phrase."""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='phrase', mode=2)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            colorier_phrase(theString, xtr, 'perso')
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Marque les liaisons dans le texte sélectionné.
@@ -3338,26 +1373,6 @@ def lirecouleur_liaisons_forcees( args=None ):
     """Mise en évidence des liaisons"""
     __lirecouleur_liaisons__(XSCRIPTCONTEXT.getDocument(), forcer=True)
 
-def __lirecouleur_liaisons__(xDocument, forcer=False):
-    __arret_dynsylldys__(xDocument)
-
-    """Mise en évidence des liaisons"""
-    
-    # Commencer par espacer les mots du texte
-    __lirecouleur_espace__(xDocument)
-    
-    # Mettre les liaisons en évidence
-    xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
-    if xTextRange == None:
-        return False
-    for xtr in xTextRange:
-        try:
-            theString = xtr.getString()
-            colorier_liaisons(theString, xtr, 'perso', forcer)
-        except:
-            pass
-    del xTextRange
-    return True
 
 ###################################################################################
 # Colorie les lettres b, d, p, q pour éviter des confusions.
@@ -3374,22 +1389,6 @@ def lirecouleur_bdpq( args=None ):
     """Colorie les lettres B, D, P, Q pour éviter les confusions"""
     __lirecouleur_bdpq__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_bdpq__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Colorie les lettres B, D, P, Q pour éviter les confusions"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-
-            colorier_bdpq(theString, xtr, 'perso')
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Colorie les consonnes et les voyelles.
@@ -3406,22 +1405,6 @@ def lirecouleur_consonne_voyelle( args=None ):
     """Colorie les consonnes et les voyelles"""
     __lirecouleur_consonne_voyelle__(XSCRIPTCONTEXT.getDocument())
 
-def __lirecouleur_consonne_voyelle__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    """Colorie les consonnes et les voyelles"""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-
-            colorier_consonnes_voyelles(theString, xtr, 'complexes')
-        del xTextRange
-    except:
-        return False
-    return True
 
 ###################################################################################
 # Colorie les lignes avec une alternance de couleurs.
@@ -3434,61 +1417,10 @@ class StyleLignesAlternees(unohelper.Base, XJobExecutor):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_lignes__(desktop.getCurrentComponent())
 
-def __lirecouleur_lignes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
-    #the writer controller impl supports the css.view.XSelectionSupplier interface
-    xSelectionSupplier = xDocument.getCurrentController()
-    xIndexAccess = xSelectionSupplier.getSelection()
-    xTextRange = xIndexAccess.getByIndex(0)
-    if xTextRange is None or len(xTextRange.getString()) == 0:
-        xTextRange = getXTextRange(xDocument, fonction='texte', mode=0)[0]
-
-    # Importer les styles de coloriage de texte
-    importStylesLireCouleur(xDocument)
-
-    # récup de la période d'alternance des couleurs
-    nb_altern = handleMaskAlternate()
-
-    xText = xTextRange.getText()
-    xCursPara = xText.createTextCursorByRange(xTextRange)
-    
-    xCursLi = xSelectionSupplier.getViewCursor()
-    xCursLi.gotoRange(xTextRange, False)
-    xCursLi.collapseToStart()
-    xCursLi.gotoStartOfLine(False)
-    stylignes = [dict([['CharStyleName',styles_lignes+str(i+1)]]) for i in range(nb_altern)]
-    nligne = 0
-
-    while xText.compareRegionEnds(xCursLi, xTextRange) >= 0:
-        # paragraphe par paragraphe
-        xCursPara.gotoEndOfParagraph(False)
-        while xText.compareRegionEnds(xCursLi, xCursPara) >= 0:
-            # ligne par ligne
-            xCursLi.gotoStartOfLine(False)
-            xCursLi.gotoEndOfLine(True)
-            setStyle(stylignes[nligne], xCursLi)
-            ll = u(xCursLi.getString())
-
-            # fait pour éviter de changer de couleur de ligne lorsqu'une ligne est vide
-            if len(ll.encode('UTF-8')) > 0:
-                nligne = (nligne + 1) % nb_altern
-
-            # retour au début de ligne et passage à la ligne suivante
-            xCursLi.collapseToStart()
-            if not xCursLi.goDown(1, False):
-                del xCursPara
-                return True
-            
-        if not xCursPara.gotoNextParagraph(False):
-            del xCursPara
-            return True
-
-    return True
-
 def lirecouleur_lignes( args=None ):
     """Alterne les styles pour les lignes du document -- dyslexiques"""
     __lirecouleur_lignes__(XSCRIPTCONTEXT.getDocument())
+
 
 """
     Création d'un nouveau document LireCouleur
@@ -3498,32 +1430,12 @@ class NewLireCouleurDocument(unohelper.Base, XJobExecutor):
     def __init__(self, ctx):
         self.ctx = ctx
     def trigger(self, args):
-        __new_lirecouleur_document__(self.ctx)
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __new_lirecouleur_document__(desktop.getCurrentComponent(), self.ctx)
 
 def new_lirecouleur_document(args=None):
-    __new_lirecouleur_document__(uno.getComponentContext())
+    __new_lirecouleur_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
 
-def __new_lirecouleur_document__(ctx):
-    __arret_dynsylldys__(xDocument)
-
-    url = getLirecouleurTemplateURL()
-    try:
-        desktop = createUnoService('com.sun.star.frame.Desktop', ctx)
-        if url.endswith('.odt'):
-            ppp = createUnoStruct("com.sun.star.beans.PropertyValue")
-            ppp.Name = "AsTemplate" # le fichier va servir de modèle
-            ppp.Value = True
-            monDocument = desktop.loadComponentFromURL(url, "_blank", 0, (ppp,))
-        else:
-            monDocument = desktop.loadComponentFromURL(url, "_blank", 0, ())
-        return
-    except:
-        pass
-
-    try:
-        monDocument = desktop.loadComponentFromURL('private:factory/swriter', "_blank", 0, ())
-    except:
-        pass
 
 ###################################################################################
 # Lit le passage courant sous le curseur
@@ -3653,6 +1565,8 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
     def __init__(self, xDocument, applic):
         self.xDocument = xDocument
         self.is_text_doc = self.xDocument.supportsService("com.sun.star.text.TextDocument")
+        
+        settings = Settings()
 
         # Importer les styles de coloriage de texte
         importStylesLireCouleur(xDocument)
@@ -3661,10 +1575,10 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
         loadLCDict(getLirecouleurDictionary())
 
         # récup de la période d'alternance des couleurs
-        nb_altern = handleMaskAlternate()
+        nb_altern = settings.get('__alternate__')
 
         # récupération de l'information sur le choix entre syllabes orales ou syllabes écrites
-        choix_syllo = handleMaskSyllo()
+        choix_syllo = settings.get('__syllo__')
 
         self.lit = Lire(self.xDocument, applic, nb_altern, choix_syllo)
 
@@ -3685,53 +1599,6 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
     def enable(self, val=True):
         LireCouleurHandler.enabled = val
 
-###################################################################################
-# Fonctions appelées pour le coloriage dynamique des syllabes
-###################################################################################
-def __lirecouleur_dynsylldys__(xDocument):
-    """Mise en évidence des syllabes soulignées dynamiquement"""
-
-    oConfigProvider = createUnoService('com.sun.star.configuration.ConfigurationProvider')
-    ppp = createUnoStruct("com.sun.star.beans.PropertyValue")
-    ppp.Name = "nodepath"
-    ppp.Value = "/org.openoffice.Setup/Product"
-    xConfig = oConfigProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (ppp,))
-    # le bug à corriger apparaît sur Apache OpenOffice sous Linux (pas Windows) - Mac non testé
-    applic = xConfig.getByName("ooName").lower().startswith('openoffice') and not sys.platform.startswith('win')
-
-    try:
-        global __memoKeys__
-        __arret_dynsylldys__(xDocument)
-        
-        key = xDocument.RuntimeUID
-        __memoKeys__[key] = {'doc':xDocument, 'handler':LireCouleurHandler(xDocument, applic)}
-
-        # enable/disable the key handlers
-        __memoKeys__[key]['handler'].enable(True)
-
-        # register the key handlers
-        xDocument.getCurrentController().addKeyHandler(__memoKeys__[key]['handler'])
-    except:
-        pass
-
-def __arret_dynsylldys__(xDocument):
-    """Arrêt de la mise en évidence des syllabes soulignées dynamiquement"""
-    try:
-        global __memoKeys__
-        key = xDocument.RuntimeUID
-        xDocument.getCurrentController().removeKeyHandler(__memoKeys__[key]['handler'])
-        del __memoKeys__[key]['handler']
-        __memoKeys__[key]['handler'] = None
-        __memoKeys__[key]['doc'] = None
-        
-        xTextViewCursor = xDocument.getCurrentController().getViewCursor()
-        curseur = xTextViewCursor.getText().createTextCursorByRange(xTextViewCursor)
-        curseur.gotoStartOfWord(False)
-        curseur.gotoEndOfWord(True)
-        curseur.setPropertyToDefault('CharBackColor')
-        del curseur
-    except:
-        pass
 
 ###################################################################################
 # lists the scripts, that shall be visible inside OOo. Can be omitted.

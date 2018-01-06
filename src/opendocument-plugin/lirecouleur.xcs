@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<oor:component-schema  
+    oor:name="lirecouleur"
+    oor:package="lire.libre" xml:ang="fr-FR" 
+    xmlns:oor="http://openoffice.org/2001/registry" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <templates/>
+    <component>
+        <group oor:name="Settings">
+            <info>
+                <desc>Writer LireCouleur settings.</desc>
+            </info>
+            <prop oor:name="__taille_icones__" oor:type="xs:int">
+                <info>
+                    <desc>Taille des icones</desc>
+                </info>
+            </prop>
+            <prop oor:name="__fonctions_possibles__" oor:type="xs:string">
+                <info>
+                    <desc>Liste des fonctions possibles</desc>
+                </info>
+            </prop>
+            <prop oor:name="GestionnaireConfiguration" oor:type="xs:string">
+                <info>
+                    <desc>GestionnaireConfiguration</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleDefaut" oor:type="xs:string">
+                <info>
+                    <desc>StyleDefaut</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleEspace" oor:type="xs:string">
+                <info>
+                    <desc>StyleEspace</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleLMuettes" oor:type="xs:string">
+                <info>
+                    <desc>StyleLMuettes</desc>
+                </info>
+            </prop>
+            <prop oor:name="StylePhonemes" oor:type="xs:string">
+                <info>
+                    <desc>StylePhonemes</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleSyllabes" oor:type="xs:string">
+                <info>
+                    <desc>StyleSyllabes</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleSyllDys" oor:type="xs:string">
+                <info>
+                    <desc>StyleSyllDys</desc>
+                </info>
+            </prop>
+            <prop oor:name="SupprimerSyllabes" oor:type="xs:string">
+                <info>
+                    <desc>SupprimerSyllabes</desc>
+                </info>
+            </prop>
+            <prop oor:name="StylePhonMuet" oor:type="xs:string">
+                <info>
+                    <desc>StylePhonMuet</desc>
+                </info>
+            </prop>
+            <prop oor:name="SupprimerDecos" oor:type="xs:string">
+                <info>
+                    <desc>SupprimerDecos</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleLignesAlternees" oor:type="xs:string">
+                <info>
+                    <desc>StyleLignesAlternees</desc>
+                </info>
+            </prop>
+            <prop oor:name="NewLireCouleurDocument" oor:type="xs:string">
+                <info>
+                    <desc>NewLireCouleurDocument</desc>
+                </info>
+            </prop>
+            <prop oor:name="StylePhrase" oor:type="xs:string">
+                <info>
+                    <desc>StylePhrase</desc>
+                </info>
+            </prop>
+            <prop oor:name="StylePhonemesComplexes" oor:type="xs:string">
+                <info>
+                    <desc>StylePhonemesComplexes</desc>
+                </info>
+            </prop>
+            <prop oor:name="ConfusionBDPQ" oor:type="xs:string">
+                <info>
+                    <desc>ConfusionBDPQ</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleLiaisons" oor:type="xs:string">
+                <info>
+                    <desc>StyleLiaisons</desc>
+                </info>
+            </prop>
+            <prop oor:name="GestionnaireDictionnaire" oor:type="xs:string">
+                <info>
+                    <desc>GestionnaireDictionnaire</desc>
+                </info>
+            </prop>
+            <prop oor:name="StylePara" oor:type="xs:string">
+                <info>
+                    <desc>StylePara</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleLarge" oor:type="xs:string">
+                <info>
+                    <desc>StyleLarge</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleExtraLarge" oor:type="xs:string">
+                <info>
+                    <desc>StyleExtraLarge</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleNoir" oor:type="xs:string">
+                <info>
+                    <desc>StyleNoir</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleCouleurMots" oor:type="xs:string">
+                <info>
+                    <desc>StyleCouleurMots</desc>
+                </info>
+            </prop>
+            <prop oor:name="StyleSepareMots" oor:type="xs:string">
+                <info>
+                    <desc>StyleSepareMots</desc>
+                </info>
+            </prop>
+            <prop oor:name="ConsonneVoyelle" oor:type="xs:string">
+                <info>
+                    <desc>ConsonneVoyelle</desc>
+                </info>
+            </prop>
+            <prop oor:name="__selection_phonemes__" oor:type="xs:string">
+                <info>
+                    <desc>Phonèmes sélectionnés pour l'affichage</desc>
+                </info>
+            </prop>
+            <prop oor:name="__template__" oor:type="xs:string">
+                <info>
+                    <desc>Modèle de document à utiliser</desc>
+                </info>
+            </prop>
+            <prop oor:name="__point__" oor:type="xs:int">
+                <info>
+                    <desc>Indique s'il y a un point sous les lettres muettes ou non</desc>
+                </info>
+            </prop>
+            <prop oor:name="__alternate__" oor:type="xs:int">
+                <info>
+                    <desc>Nombre de lignes/mots/syllabes d'alternance</desc>
+                </info>
+            </prop>
+            <prop oor:name="__syllo__" oor:type="xs:int">
+                <info>
+                    <desc>Indique s'il y faut utiliser des syllabes orales ou écrites</desc>
+                </info>
+            </prop>
+            <prop oor:name="__locale__" oor:type="xs:string">
+                <info>
+                    <desc>fr ou autre</desc>
+                </info>
+            </prop>
+            <prop oor:name="__subspaces__" oor:type="xs:int">
+                <info>
+                    <desc>Nombre d'espaces entre 2 mots</desc>
+                </info>
+            </prop>
+        </group>
+    </component>
+</oor:component-schema>

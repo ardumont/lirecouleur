@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<oor:component-data 
+    xmlns:oor="http://openoffice.org/2001/registry" 
+    xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+    oor:name="lirecouleur" 
+    oor:package="lire.libre">
+    <node oor:name="Settings">
+        <prop oor:name="__taille_icones__">
+            <value>32</value>
+        </prop>
+        <prop oor:name="__fonctions_possibles__">
+            <value>StyleDefaut:StyleNoir:StylePhonemes:StyleLMuettes:StylePhonemesComplexes:StylePhonMuet:SupprimerDecos:ConsonneVoyelle:StyleSyllDys:StyleSyllabes:SupprimerSyllabes:StyleCouleurMots:StyleSepareMots:ConfusionBDPQ:StyleLiaisons:StylePhrase:StyleEspace:StylePara:StyleLignesAlternees:StyleLarge:StyleExtraLarge:NewLireCouleurDocument</value>
+        </prop>
+        <prop oor:name="StyleDefaut">
+            <value>normal.png:Style standard:1</value>
+        </prop>
+        <prop oor:name="StyleEspace">
+            <value>enlarge.png:Espacer les mots:1</value>
+        </prop>
+        <prop oor:name="StyleLMuettes">
+            <value>l_muettes.png:Lettres muettes:1</value>
+        </prop>
+        <prop oor:name="StylePhonemes">
+            <value>phon.png:Phonèmes:1</value>
+        </prop>
+        <prop oor:name="StyleSyllabes">
+            <value>syll.png:Syllabes soulignées:1</value>
+        </prop>
+        <prop oor:name="StyleSyllDys">
+            <value>syll_dys.png:Syllabes en couleur:1</value>
+        </prop>
+        <prop oor:name="SupprimerSyllabes">
+            <value>cleaner.png:Supprimer arcs syllabes:1</value>
+        </prop>
+        <prop oor:name="StylePhonMuet">
+            <value>mute.png:Marquer comme phonème muet:1</value>
+        </prop>
+        <prop oor:name="SupprimerDecos">
+            <value>clean_point.png:Enlever symboles sous les sons:0</value>
+        </prop>
+        <prop oor:name="StyleLignesAlternees">
+            <value>lines.png:Surligner les lignes:1</value>
+        </prop>
+        <prop oor:name="NewLireCouleurDocument">
+            <value>new.png:Nouveau document LireCouleur:0</value>
+        </prop>
+        <prop oor:name="StylePhrase">
+            <value>phrase.png:Marquer début et fin de phrase:0</value>
+        </prop>
+        <prop oor:name="StylePhonemesComplexes">
+            <value>phon_comp.png:Phonèmes complexes:0</value>
+        </prop>
+        <prop oor:name="ConfusionBDPQ">
+            <value>bdpq.png:Confusions b, d, p, q:0</value>
+        </prop>
+        <prop oor:name="StyleLiaisons">
+            <value>liaisons.png:Marquer liaisons:1</value>
+        </prop>
+        <prop oor:name="StylePara">
+            <value>spacepara.png:Espaer les lignes:1</value>
+        </prop>
+        <prop oor:name="StyleLarge">
+            <value>large.png:Texte large:1</value>
+        </prop>
+        <prop oor:name="StyleExtraLarge">
+            <value>extra_large.png:Texte extra-large:1</value>
+        </prop>
+        <prop oor:name="StyleNoir">
+            <value>black.png:Style noir sur fond blanc:1</value>
+        </prop>
+        <prop oor:name="StyleCouleurMots">
+            <value>mots.png:Colorer les mots:0</value>
+        </prop>
+        <prop oor:name="StyleSepareMots">
+            <value>sep_mots.png:Séparer les mots:0</value>
+        </prop>
+        <prop oor:name="ConsonneVoyelle">
+            <value>voycons.png:Consonnes / voyelles:0</value>
+        </prop>
+        <prop oor:name="__selection_phonemes__">
+            <value>n:0;f_ph:0;x~:1;w_x:1;w_a~:1;y:1;v:0;j_o~:1;t:0;j_e_comp:1;w_e:1;u:1;j_e^:1;w:1;j_x^:1;j_x:1;#:1;j_e~:1;e^:1;x^:1;j_u:1;e_comp:1;s_t:0;z^_g:0;e:1;z_s:0;o_ouvert:1;w_a:1;j_o:1;g~:0;o_comp:1;s^:0;o~:1;b:0;w_e^_comp:1;ks:0;l:0;j_e:1;k:0;x:1;o:1;q:1;gz:0;a:1;k_qu:0;wa:1;n~:0;j:1;s:0;p:0;g:0;e^_comp:1;w_e~:1;w_u:1;w_o:1;g_u:0;w_o~:1;d:0;w_e^:1;w_x^:1;f:0;s_c:0;j_e^_comp:1;j_i:1;w_i:1;w_e_comp:1;w5:1;q_caduc:1;m:0;j_a~:1;verb_3p:1;j_a:1;i:1;e~:1;r:0;a~:1;z^:0;z:0</value>
+        </prop>
+        <prop oor:name="__template__">
+            <value></value>
+        </prop>
+        <prop oor:name="__point__">
+            <value>0</value>
+        </prop>
+        <prop oor:name="__alternate__">
+            <value>3</value>
+        </prop>
+        <prop oor:name="__syllo__">
+            <value>0</value>
+        </prop>
+        <prop oor:name="__locale__">
+            <value>fr</value>
+        </prop>
+        <prop oor:name="__subspaces__">
+            <value>2</value>
+        </prop>
+    </node>
+</oor:component-data>
