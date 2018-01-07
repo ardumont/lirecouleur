@@ -90,7 +90,11 @@ LCPhoneme.prototype.estUneVoyelle = function() {
 
 LCPhoneme.prototype.estSemiConsonne = function() {
     // yod+voyelle, 'w'+voyelle, 'y'+voyelle sans diérèse
-    return (this.phoneme.startsWith('j_') || this.phoneme.startsWith('w_') || this.phoneme.startsWith('y_'));
+    var p0 = this.phoneme[0];
+    if ( this.phoneme[1] == '_' ) {
+		return ( ( p0 == 'j' ) || ( p0 == 'w' ) || ( p0 == 'y' ) );
+	}
+    return false;
 }
 
 LCPhoneme.prototype.estPhonemeMuet = function() {
@@ -551,6 +555,9 @@ function LireCouleurEngine() {
 				'*':[{},'z',1],
 				'@':[{},'#',1]}],
 		'\'' : [[],
+				{'*':[{},'#',1],
+				'@':[{},'#',1]}],
+		'’' : [[],
 				{'*':[{},'#',1],
 				'@':[{},'#',1]}],
 		'@' : [[],
