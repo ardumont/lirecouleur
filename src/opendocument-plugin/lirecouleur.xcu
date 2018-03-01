@@ -9,7 +9,7 @@
             <value>32</value>
         </prop>
         <prop oor:name="__fonctions_possibles__">
-            <value>NewLireCouleurDocument:StyleDefaut:StyleNoir:ConsonneVoyelle:ConfusionLettres:StylePhonemesAlternes:StylePhonemes:StyleGraphemesComplexes:StyleLMuettes:SupprimerDecos:StylePhonMuet:StyleSyllDys:StyleSyllabes:SupprimerSyllabes:StyleCouleurMots:StyleSepareMots:StyleLignesAlternees:StylePhrase:StyleLiaisons:StyleEspace:StylePara:StyleLarge:StyleExtraLarge</value>
+            <value>NewLireCouleurDocument:StyleDefaut:StyleNoir:ConsonneVoyelle:ConfusionLettres:StylePhonemesAlternes:StylePhonemes:StyleGraphemesComplexes:StyleLMuettes:SupprimerDecos:StylePhonMuet:StyleSyllDys:StyleSyllabes:SupprimerSyllabes:StyleCouleurMots:StyleSepareMots:StyleLignesAlternees:StylePonctuation:StyleLiaisons:StyleEspace:StylePara:StyleLarge:StyleExtraLarge</value>
         </prop>
         <prop oor:name="StyleDefaut">
             <value>normal.png:Style standard:1</value>
@@ -44,8 +44,8 @@
         <prop oor:name="NewLireCouleurDocument">
             <value>new.png:Nouveau document LireCouleur:0</value>
         </prop>
-        <prop oor:name="StylePhrase">
-            <value>phrase.png:Surligner les phrases:0</value>
+        <prop oor:name="StylePonctuation">
+            <value>phrase.png:Surligner la ponctuation:0</value>
         </prop>
         <prop oor:name="StyleGraphemesComplexes">
             <value>phon_comp.png:Graphèmes complexes:0</value>

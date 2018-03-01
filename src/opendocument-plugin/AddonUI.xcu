@@ -245,10 +245,10 @@
                             </node>
                             <node oor:name="lire.libre.lirecouleur.menu05.menu18" oor:op="replace">
                                 <prop oor:name="Title" oor:type="xs:string">
-                                    <value>Marquer les phrases</value>
+                                    <value>Marquer la ponctuation</value>
                                 </prop>
                                 <prop oor:name="URL" oor:type="xs:string">
-                                    <value>service:org.lirecouleur.ConfigurationStylePhrase</value>
+                                    <value>service:org.lirecouleur.ConfigurationStylePonctuation</value>
                                 </prop>
                                 <prop oor:name="Target" oor:type="xs:string">
                                     <value>_self</value>
@@ -506,11 +506,11 @@
                     </node>
                     <node oor:name="lire.libre.lirecouleur.menu27" oor:op="replace">
                         <prop oor:name="Title" oor:type="xs:string">
-                            <value xml:lang="fr">Surligner les phrases</value>
-                            <value xml:lang="en">Highlight sentences</value>
+                            <value xml:lang="fr">Marquer la ponctuation</value>
+                            <value xml:lang="en">Highlight the punctuation</value>
                         </prop>
                         <prop oor:name="URL" oor:type="xs:string">
-                            <value>service:org.lirecouleur.StylePhrase</value>
+                            <value>service:org.lirecouleur.StylePonctuation</value>
                         </prop>
                         <prop oor:name="Target" oor:type="xs:string">
                             <value>_self</value>
@@ -708,7 +708,7 @@
 			</node>
 			<node oor:name="org.lirecouleur.img13" oor:op="replace">
 				<prop oor:name="URL" oor:type="xs:string">
-					<value>service:org.lirecouleur.StylePhrase</value>
+					<value>service:org.lirecouleur.StylePonctuation</value>
 				</prop>
 				<node oor:name="UserDefinedImages">
 					<prop oor:name="ImageSmallURL" oor:type="xs:string">

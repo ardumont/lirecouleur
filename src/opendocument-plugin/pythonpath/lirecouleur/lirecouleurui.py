@@ -244,14 +244,9 @@ style_phon_perso = {
         '#_amb':{'CharStyleName':__style_par_defaut__},
         'espace':{'CharStyleName':'espace'},
         'liaison':{'CharStyleName':'liaison'},
-        'lettre_b':{'CharStyleName':'lettre_b'},
-        'lettre_d':{'CharStyleName':'lettre_d'},
-        'lettre_p':{'CharStyleName':'lettre_p'},
-        'lettre_q':{'CharStyleName':'lettre_q'},
         'consonne':{'CharStyleName':'phon_consonne'},
         'voyelle':{'CharStyleName':'phon_voyelle'},
-        'Majuscule':{'CharStyleName':'Majuscule'},
-        'Ponctuation':{'CharStyleName':'Ponctuation'},
+        'ponctuation':{'CharStyleName':'ponctuation'},
         'defaut':{'CharStyleName':__style_par_defaut__}
         }
 
@@ -311,14 +306,9 @@ style_phon_complexes = {
         '#_amb':{'CharStyleName':__style_par_defaut__},
         'espace':{'CharStyleName':'espace'},
         'liaison':{'CharStyleName':'liaison'},
-        'lettre_b':{'CharStyleName':'lettre_b'},
-        'lettre_d':{'CharStyleName':'lettre_d'},
-        'lettre_p':{'CharStyleName':'lettre_p'},
-        'lettre_q':{'CharStyleName':'lettre_q'},
         'consonne':{'CharStyleName':'phon_consonne'},
         'voyelle':{'CharStyleName':'phon_voyelle'},
-        'Majuscule':{'CharStyleName':'Majuscule'},
-        'Ponctuation':{'CharStyleName':'Ponctuation'},
+        'ponctuation':{'CharStyleName':'ponctuation'},
         'defaut':{'CharStyleName':__style_par_defaut__}
         }
 
@@ -388,14 +378,9 @@ __style_phon_perso__ = {
         'gz':{'CharColor':0x0000000, 'CharWeight':150.0},
         'espace':{'CharBackColor':0x00ff00ff},
         'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
-        'lettre_b':{'CharColor':0x0000ff00, 'CharWeight':150.0},
-        'lettre_d':{'CharColor':0x00ff0000, 'CharWeight':150.0},
-        'lettre_p':{'CharColor':0x000000ff, 'CharWeight':150.0},
-        'lettre_q':{'CharColor':0x00555555, 'CharWeight':150.0},
         'consonne':{'CharColor':0x000000ff},
         'voyelle':{'CharColor':0x00ff0000},
-        'Majuscule':{'CharBackColor':0x00ffff00},
-        'Ponctuation':{'CharBackColor':0x00ff0000},
+        'ponctuation':{'CharBackColor':0x00ff0000},
         'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
         }
 
@@ -455,14 +440,9 @@ __style_phon_complexes__ = {
         '#_amb':{'CharColor':0x0000000},
         'espace':{'CharBackColor':0x00ff00ff},
         'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
-        'lettre_b':{'CharColor':0x0000ff00, 'CharWeight':150.0},
-        'lettre_d':{'CharColor':0x00ff0000, 'CharWeight':150.0},
-        'lettre_p':{'CharColor':0x000000ff, 'CharWeight':150.0},
-        'lettre_q':{'CharColor':0x00555555, 'CharWeight':150.0},
         'consonne':{'CharColor':0x000000ff},
         'voyelle':{'CharColor':0x00ff0000},
-        'Majuscule':{'CharBackColor':0x00ffff00},
-        'Ponctuation':{'CharBackColor':0x00ff0000},
+        'ponctuation':{'CharBackColor':0x00ff0000},
         'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
         }
 
@@ -2118,10 +2098,13 @@ def __lirecouleur_suppr_decos__(xDocument):
     return True
 
 ###################################################################################
-# Colorie les majuscules de début de phrase et les point de fin de phrase.
+# Marque la ponctuation d'un texte
 ###################################################################################
-def __lirecouleur_phrase__(xDocument):
+def __lirecouleur_ponctuation__(xDocument):
     __arret_dynsylldys__(xDocument)
+    
+    # caractères de ponctuation recherchés
+    ponctuation = u('.!?…,;:«»—()[]')
 
     #the writer controller impl supports the css.view.XSelectionSupplier interface
     xSelectionSupplier = xDocument.getCurrentController()
@@ -2133,35 +2116,31 @@ def __lirecouleur_phrase__(xDocument):
     # Importer les styles de coloriage de texte
     importStylesLireCouleur(xDocument)
 
-    # récup de la période d'alternance des couleurs
-    settings = Settings()
-    nb_altern = settings.get('__alternate__')
+    # placer le curseur au début de la zone de traitement
+    curs = xTextRange.getText().createTextCursorByRange(xTextRange)
+    curs.collapseToStart()
 
-    xText = xTextRange.getText()
-    xCursLi = xText.createTextCursorByRange(xTextRange)
-    xCursLi.gotoRange(xTextRange, False)
-    xCursLi.collapseToStart()
-    xCursLi.gotoStartOfSentence(False)
-    stylignes = [dict([['CharStyleName',styles_lignes+str(i+1)]]) for i in range(nb_altern)]
-    nligne = 0
+    # suppressions et remplacements de caractères perturbateurs
+    utexte = u(xTextRange.getString()) # codage unicode
+    paragraphe = nettoyeur_caracteres(utexte)
+    l_para = len(paragraphe)
 
-    while xText.compareRegionEnds(xCursLi, xTextRange) >= 0:
-       # ligne par ligne
-        if not xCursLi.gotoStartOfSentence(False):
-            del xCursLi
-            return True
-        if not xCursLi.gotoEndOfSentence(True):
-            del xCursLi
-            return True
-        setStyle(stylignes[nligne], xCursLi)
-        nligne = (nligne + 1) % nb_altern
+    # code le coloriage du paragraphe
+    i = 0
+    while i < l_para:
+        j = i
+        # parcours jusqu'à la prochaine marque de ponctuation
+        while i < l_para and ponctuation.find(paragraphe[i]) < 0:
+            i += 1
+        curs = deplacerADroite(paragraphe[j:i], curs)
 
-        # retour au début de ligne et passage à la phrase suivante
-        if not xCursLi.gotoNextSentence(False):
-            del xCursLi
-            return True
-
-    return True
+        if i < l_para and paragraphe[i] in ponctuation:
+            j = i
+            while i < l_para and ponctuation.find(paragraphe[i]) >= 0:
+                i += 1
+            curs = formaterTexte(paragraphe[j:i], curs, style_phon_perso['ponctuation'])
+    del curs
+    del xTextRange
 
 ###################################################################################
 # Marque les liaisons dans le texte sélectionné.

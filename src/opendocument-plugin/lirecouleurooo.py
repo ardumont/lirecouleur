@@ -58,7 +58,7 @@ from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecoule
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
         __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
-        __lirecouleur_phrase__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
+        __lirecouleur_ponctuation__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
         __lirecouleur_syllabes__,__arret_dynsylldys__,__new_lirecouleur_document__,getLirecouleurDirectory,
         getLirecouleurDictionary,__lirecouleur_dynsylldys__,__lirecouleur_alterne_phonemes__,importStylesLireCouleur,
         getLirecouleurURL)
@@ -957,15 +957,15 @@ def __configuration_lignes__(xDocument, xContext):
     __configuration_alternance__(xDocument, xContext, "lignes", "altern_ligne_", "surligner1")
 
 ######################################################################################
-# Configuration de la fonction de mise en évidence des phrases
+# Configuration de la fonction de mise en évidence de la ponctuation
 ######################################################################################
-class ConfigurationStylePhrase(unohelper.Base, XJobExecutor):
-    """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence des phrases."""
+class ConfigurationStylePonctuation(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence de la ponctuation."""
     def __init__(self, ctx):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __configuration_alternance__(desktop.getCurrentComponent(), self.ctx, "phrases", "altern_ligne_", "surligner1")
+        __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "ponctuation")
 
 ######################################################################################
 # Configuration de la fonction de mise en évidence des liaisons
@@ -1999,19 +1999,19 @@ def lirecouleur_suppr_decos( args=None ):
 
 
 ###################################################################################
-# Colorie les majuscules de début de phrase et les point de fin de phrase.
+# Marque la ponctuation d'un texte
 ###################################################################################
-class StylePhrase(unohelper.Base, XJobExecutor):
-    """Marque les majuscules de début de phrase et les points de fin de phrase."""
+class StylePonctuation(unohelper.Base, XJobExecutor):
+    """Marque la ponctuation d'un texte."""
     def __init__(self, ctx):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __lirecouleur_phrase__(desktop.getCurrentComponent())
+        __lirecouleur_ponctuation__(desktop.getCurrentComponent())
 
-def lirecouleur_phrase( args=None ):
-    """Marque les majuscules de début de phrase et les points de fin de phrase."""
-    __lirecouleur_phrase__(XSCRIPTCONTEXT.getDocument())
+def lirecouleur_ponctuation( args=None ):
+    """Marque la ponctuation d'un texte."""
+    __lirecouleur_ponctuation__(XSCRIPTCONTEXT.getDocument())
 
 
 ###################################################################################
@@ -2329,7 +2329,7 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
 g_exportedScripts = lirecouleur_defaut, lirecouleur_espace, lirecouleur_phonemes, lirecouleur_syllabes, \
 lirecouleur_sylldys, lirecouleur_l_muettes, gestionnaire_config_dialog, lirecouleur_liaisons, \
 lirecouleur_liaisons_forcees, lirecouleur_confusion_lettres, lirecouleur_suppr_syllabes, lirecouleur_lignes, \
-lirecouleur_phrase, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_graphemes_complexes, \
+lirecouleur_ponctuation, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_graphemes_complexes, \
 new_lirecouleur_document, gestionnaire_dictionnaire_dialog, lirecouleur_espace_lignes, lirecouleur_consonne_voyelle, \
 lirecouleur_large, lirecouleur_extra_large, lirecouleur_noir, lirecouleur_separe_mots, \
 lirecouleur_couleur_mots, lirecouleur_alterne_phonemes, \
@@ -2401,7 +2401,7 @@ g_ImplementationHelper.addImplementation( \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
-    StylePhrase,'org.lirecouleur.StylePhrase', \
+    StylePonctuation,'org.lirecouleur.StylePonctuation', \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
@@ -2497,7 +2497,7 @@ g_ImplementationHelper.addImplementation( \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
-    ConfigurationStylePhrase,'org.lirecouleur.ConfigurationStylePhrase', \
+    ConfigurationStylePonctuation,'org.lirecouleur.ConfigurationStylePonctuation', \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \

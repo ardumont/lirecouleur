@@ -81,9 +81,9 @@
                     <desc>NewLireCouleurDocument</desc>
                 </info>
             </prop>
-            <prop oor:name="StylePhrase" oor:type="xs:string">
+            <prop oor:name="StylePonctuation" oor:type="xs:string">
                 <info>
-                    <desc>StylePhrase</desc>
+                    <desc>StylePonctuation</desc>
                 </info>
             </prop>
             <prop oor:name="StyleGraphemesComplexes" oor:type="xs:string">
