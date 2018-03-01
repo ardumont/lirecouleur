@@ -8,7 +8,7 @@
 # voir http://lirecouleur.arkaline.fr
 #
 # @author Marie-Pierre Brungard
-# @version 4.0.0
+# @version 4.5.0
 # @since 2017
 #
 # GNU General Public Licence (GPL) version 3
@@ -31,6 +31,7 @@ import unohelper
 import traceback
 import sys
 import os
+import random
 import gettext
 from gettext import gettext as _
 from com.sun.star.awt import (XWindowListener, XActionListener, XMouseListener)
@@ -53,131 +54,194 @@ import string
 import re
 from lirecouleur.lirecouleur import *
 from lirecouleur.utils import (Settings, create_uno_service, create_uno_struct)
-from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_bdpq__,
+from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_confusion_lettres__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
         __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
         __lirecouleur_phrase__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
         __lirecouleur_syllabes__,__arret_dynsylldys__,__new_lirecouleur_document__,getLirecouleurDirectory,
-        getLirecouleurDictionary,__lirecouleur_dynsylldys__,__lirecouleur_alterne_phonemes__,importStylesLireCouleur)
+        getLirecouleurDictionary,__lirecouleur_dynsylldys__,__lirecouleur_alterne_phonemes__,importStylesLireCouleur,
+        getLirecouleurURL)
+
+
+l_styles_phon = ['phon_a', 'phon_e', 'phon_i', 'phon_u', 'phon_ou', 'phon_ez', 'phon_o_ouvert', 'phon_et',
+    'phon_an', 'phon_on', 'phon_eu', 'phon_in', 'phon_un', 'phon_muet',
+    'phon_r', 'phon_l', 'phon_m', 'phon_n', 'phon_v', 'phon_z',
+    'phon_ge', 'phon_f', 'phon_s', 'phon_ch', 'phon_p', 'phon_t', 'phon_k', 'phon_b',
+    'phon_d', 'phon_g', 'phon_ks', 'phon_gz', 'phon_w', 'phon_wa', 'phon_y', 'phon_ng', 'phon_gn']
 
 ######################################################################################
 # Gestionnaire d'événement de la boite de dialogue
 ######################################################################################
-class MyActionListener(unohelper.Base, XActionListener):
-    def __init__(self, controlContainer, checkListPhonemes, fieldCoul, fieldEsp, checkPoint,
-                    selectTyp1Syll, selectTyp2Syll, selectLoc, fieldTemp):
+class CancelActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        self.checkListPhonemes = checkListPhonemes
-        self.fieldCoul = fieldCoul
-        self.fieldEsp = fieldEsp
-        self.checkPoint = checkPoint
-        self.selectTyp1Syll = selectTyp1Syll
-        self.selectTyp2Syll = selectTyp2Syll
-        self.selectLocale = selectLoc
-        self.fieldTemp = fieldTemp
 
     def actionPerformed(self, actionEvent):
-        global __style_phon_perso__
+        self.controlContainer.endExecute()
+
+class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
+        self.controlContainer = controlContainer
+        
+    def getState(self, val):
+        try:
+            return self.controlContainer.getControl('chk_'+val).State
+        except:
+            return False
+
+    def actionPerformed(self, actionEvent):
+        global l_styles_phon
         
         settings = Settings()
 
         selectphonemes = settings.get('__selection_phonemes__')
-        nbcouleurs = settings.get('__alternate__')
-        nbespaces = settings.get('__subspaces__')
-        tempFilename = settings.get('__template__')
 
-        selectphonemes['a'] = self.checkListPhonemes['checkA'].State
-        selectphonemes['e'] = selectphonemes['e_comp'] = self.checkListPhonemes['checkE'].State
-        selectphonemes['e^'] = selectphonemes['e^_comp'] = self.checkListPhonemes['checkEt'].State
-        selectphonemes['q'] = self.checkListPhonemes['checkQ'].State
-        selectphonemes['u'] = self.checkListPhonemes['checkU'].State
-        selectphonemes['i'] = self.checkListPhonemes['checkI'].State
-        selectphonemes['y'] = self.checkListPhonemes['checkY'].State
-        selectphonemes['o'] = selectphonemes['o_comp'] = selectphonemes['o_ouvert'] = self.checkListPhonemes['checkO'].State
+        selectphonemes['a'] = self.getState("phon_a")
+        selectphonemes['e'] = selectphonemes['e_comp'] = self.getState('phon_ez')
+        selectphonemes['e^'] = selectphonemes['e^_comp'] = self.getState('phon_et')
+        selectphonemes['q'] = self.getState('phon_e')
+        selectphonemes['u'] = self.getState('phon_ou')
+        selectphonemes['i'] = self.getState('phon_i')
+        selectphonemes['y'] = self.getState('phon_u')
+        selectphonemes['o'] = selectphonemes['o_comp'] = selectphonemes['o_ouvert'] = self.getState('phon_o_ouvert')
 
-        selectphonemes['x'] = selectphonemes['x^'] = self.checkListPhonemes['checkEu'].State
-        selectphonemes['a~'] = self.checkListPhonemes['checkAn'].State
-        selectphonemes['e~'] = selectphonemes['x~'] = self.checkListPhonemes['checkIn'].State
-        selectphonemes['o~'] = self.checkListPhonemes['checkOn'].State
-        selectphonemes['w'] = selectphonemes['wa'] = selectphonemes['w5'] = self.checkListPhonemes['checkW'].State
-        selectphonemes['j'] = self.checkListPhonemes['checkJ'].State
+        selectphonemes['x'] = selectphonemes['x^'] = self.getState('phon_eu')
+        selectphonemes['a~'] = self.getState('phon_an')
+        selectphonemes['e~'] = self.getState('phon_in')
+        selectphonemes['x~'] = self.getState('phon_un')
+        selectphonemes['o~'] = self.getState('phon_on')
+        selectphonemes['w'] = selectphonemes['wa'] = selectphonemes['w5'] = self.getState('phon_wa')
+        selectphonemes['j'] = self.getState('phon_y')
 
-        selectphonemes['n'] = self.checkListPhonemes['checkN'].State
-        selectphonemes['g~'] = self.checkListPhonemes['checkNg'].State
-        selectphonemes['n~'] = self.checkListPhonemes['checkGn'].State
+        selectphonemes['n'] = self.getState('phon_n')
+        selectphonemes['g~'] = self.getState('phon_ng')
+        selectphonemes['n~'] = self.getState('phon_gn')
 
-        selectphonemes['l'] = self.checkListPhonemes['checkL'].State
-        selectphonemes['m'] = self.checkListPhonemes['checkM'].State
-        selectphonemes['r'] = self.checkListPhonemes['checkR'].State
+        selectphonemes['l'] = self.getState('phon_l')
+        selectphonemes['m'] = self.getState('phon_m')
+        selectphonemes['r'] = self.getState('phon_r')
 
-        selectphonemes['v'] = self.checkListPhonemes['checkV'].State
-        selectphonemes['z'] = selectphonemes['z_s'] = self.checkListPhonemes['checkZ'].State
-        selectphonemes['z^'] = selectphonemes['z^_g'] = self.checkListPhonemes['checkGe'].State
+        selectphonemes['v'] = self.getState('phon_v')
+        selectphonemes['z'] = selectphonemes['z_s'] = self.getState('phon_z')
+        selectphonemes['z^'] = selectphonemes['z^_g'] = self.getState('phon_ge')
 
-        selectphonemes['f'] = selectphonemes['f_ph'] = self.checkListPhonemes['checkF'].State
-        selectphonemes['s'] = selectphonemes['s_c'] = selectphonemes['s_t'] = self.checkListPhonemes['checkS'].State
-        selectphonemes['s^'] = self.checkListPhonemes['checkCh'].State
+        selectphonemes['f'] = selectphonemes['f_ph'] = self.getState('phon_f')
+        selectphonemes['s'] = selectphonemes['s_c'] = selectphonemes['s_t'] = self.getState('phon_s')
+        selectphonemes['s^'] = self.getState('phon_ch')
 
-        selectphonemes['p'] = self.checkListPhonemes['checkP'].State
-        selectphonemes['t'] = self.checkListPhonemes['checkT'].State
-        selectphonemes['k'] = selectphonemes['k_qu'] = self.checkListPhonemes['checkK'].State
+        selectphonemes['p'] = self.getState('phon_p')
+        selectphonemes['t'] = self.getState('phon_t')
+        selectphonemes['k'] = selectphonemes['k_qu'] = self.getState('phon_k')
 
-        selectphonemes['b'] = self.checkListPhonemes['checkB'].State
-        selectphonemes['d'] = self.checkListPhonemes['checkD'].State
-        selectphonemes['g'] = selectphonemes['g_u'] = self.checkListPhonemes['checkG'].State
+        selectphonemes['b'] = self.getState('phon_b')
+        selectphonemes['d'] = self.getState('phon_d')
+        selectphonemes['g'] = selectphonemes['g_u'] = self.getState('phon_g')
 
-        selectphonemes['ks'] = self.checkListPhonemes['checkKS'].State
-        selectphonemes['gz'] = self.checkListPhonemes['checkGZ'].State
+        selectphonemes['ks'] = self.getState('phon_ks')
+        selectphonemes['gz'] = self.getState('phon_gz')
 
-        selectphonemes['#'] = selectphonemes['q_caduc'] = self.checkListPhonemes['checkH'].State
-
-        nbcouleurs = self.fieldCoul.getValue()
-        nbespaces = self.fieldEsp.getValue()
-        tempFilename = self.fieldTemp.getText()
+        selectphonemes['#'] = selectphonemes['q_caduc'] = self.getState('phon_muet')
 
         settings.setValue('__selection_phonemes__', selectphonemes)
-        settings.setValue('__alternate__', int(nbcouleurs))
-        settings.setValue('__subspaces__', int(nbespaces))
-        settings.setValue('__point__', self.checkPoint.getState())
+        self.controlContainer.endExecute()
 
-        settings.setValue('__syllo__', (self.selectTyp1Syll.getSelectedItemPos(), self.selectTyp2Syll.getSelectedItemPos()))
-        settings.setValue('__template__', tempFilename)
-        settings.setValue('__locale__', self.selectLocale.getSelectedItem())
+class ConfigurationConfusionLettresActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
+        self.controlContainer = controlContainer
+        
+    def getState(self, val):
+        try:
+            return self.controlContainer.getControl('chk_'+val).State
+        except:
+            return False
+
+    def actionPerformed(self, actionEvent):
+        settings = Settings()
+
+        selectlettres = settings.get('__selection_lettres__')
+
+        selectlettres['b'] = self.getState("l_b")
+        selectlettres['d'] = self.getState('l_d')
+        selectlettres['p'] = self.getState('l_p')
+        selectlettres['q'] = self.getState('l_k')
+        selectlettres['m'] = self.getState('l_m')
+        selectlettres['n'] = self.getState('l_n')
+        selectlettres['r'] = self.getState('l_r')
+        selectlettres['t'] = self.getState('l_t')
+        selectlettres['f'] = self.getState('l_f')
+        selectlettres['u'] = self.getState('l_u')
+
+        settings.setValue('__selection_lettres__', selectlettres)
+        self.controlContainer.endExecute()
+
+class EditStyleActionListener(unohelper.Base, XActionListener):
+    def __init__(self, ctx, document, stylname):
+        self.ctx = ctx
+        self.document = document
+        self.stylname = stylname
+        
+    def actionPerformed(self, actionEvent):
+        dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
+        prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        prop1.Name = 'Param'
+        prop1.Value = self.stylname
+        prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        prop2.Name = 'Family'
+        prop2.Value = 1
+        dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+        prop2,))
+
+class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
+        self.controlContainer = controlContainer
+        
+
+    def actionPerformed(self, actionEvent):
+        global l_styles_phon
+        
+        settings = Settings()
+
+        try:
+            nbcouleurs = self.controlContainer.getControl('fieldCoul').getValue()
+            settings.setValue('__alternate__', int(nbcouleurs))
+        except:
+            pass
+        
+        item1 = self.controlContainer.getControl('listTyp1Syll').getSelectedItemPos()
+        item2 = self.controlContainer.getControl('listTyp2Syll').getSelectedItemPos()
+        settings.setValue('__syllo__', (item1, item2))
 
         self.controlContainer.endExecute()
 
-class MySetActionListener(unohelper.Base, XActionListener):
-    def __init__(self, controlContainer, checkListPhonemes):
+class ConfigurationStyleAlternActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        self.checkListPhonemes = checkListPhonemes
+        
 
     def actionPerformed(self, actionEvent):
-        listPhonemes = ['checkA', 'checkE', 'checkEt', 'checkQ', 'checkI',
-                        'checkU', 'checkY', 'checkO', 'checkEu',
-                        'checkAn', 'checkIn', 'checkOn', 'checkW',
-                        'checkJ', 'checkN', 'checkNg', 'checkGn', 'checkB', 'checkD', 'checkG',
-                        'checkL', 'checkM', 'checkR', 'checkV', 'checkZ', 'checkGe',
-                        'checkF', 'checkS', 'checkCh', 'checkP', 'checkT', 'checkK',
-                        'checkKS','checkGZ', 'checkH']
-        for phon in listPhonemes:
-            self.checkListPhonemes[phon].State = 1
+        global l_styles_phon
+        
+        settings = Settings()
 
-class MyUnsetActionListener(unohelper.Base, XActionListener):
-    def __init__(self, controlContainer, checkListPhonemes):
+        nbcouleurs = settings.get('__alternate__')
+        nbcouleurs = self.controlContainer.getControl('fieldCoul').getValue()
+        settings.setValue('__alternate__', int(nbcouleurs))
+        
+        self.controlContainer.endExecute()
+
+class MyActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        self.checkListPhonemes = checkListPhonemes
 
     def actionPerformed(self, actionEvent):
-        listPhonemes = ['checkA', 'checkE', 'checkEt', 'checkQ', 'checkI',
-                        'checkU', 'checkY', 'checkO', 'checkEu',
-                        'checkAn', 'checkIn', 'checkOn', 'checkW',
-                        'checkJ', 'checkN', 'checkNg', 'checkGn', 'checkB', 'checkD', 'checkG',
-                        'checkL', 'checkM', 'checkR', 'checkV', 'checkZ', 'checkGe',
-                        'checkF', 'checkS', 'checkCh', 'checkP', 'checkT', 'checkK',
-                        'checkKS','checkGZ', 'checkH']
-        for phon in listPhonemes:
-            self.checkListPhonemes[phon].State = 0
+        settings = Settings()
+        settings.setValue('__detection_phonemes__', self.controlContainer.getControl('chk_checkSimple').getState())
+        settings.setValue('__point__', self.controlContainer.getControl('chk_checkPoint').getState())
+        settings.setValue('__template__', self.controlContainer.getControl('fieldTemp').getText())
+        settings.setValue('__locale__', self.controlContainer.getControl('listLocale').getSelectedItem())
+
+        self.controlContainer.endExecute()
 
 class TemplateActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer, fieldTemp, xContext):
@@ -208,34 +272,98 @@ def createCheckBox(dialogModel, px, py, name, index, label, etat, w=58):
     checkBP = dialogModel.createInstance("com.sun.star.awt.UnoControlCheckBoxModel")
     checkBP.PositionX = px
     checkBP.PositionY = py
-    checkBP.Width  = w
+    checkBP.Width  = 10
     checkBP.Height = 10
-    checkBP.Name = name
+    checkBP.Name = "chk_"+name
     checkBP.TabIndex = index
     checkBP.State = etat
-    checkBP.Label = label
+    checkBP.Label = ""
     dialogModel.insertByName(checkBP.Name, checkBP)
 
-    return checkBP
+    # créer le label titre
+    labelBP = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelBP.PositionX = px+14
+    labelBP.PositionY = py+2
+    labelBP.Width  = w
+    labelBP.Height = 10
+    labelBP.Name = name
+    labelBP.TabIndex = 1
+    labelBP.Label = label
+    dialogModel.insertByName(labelBP.Name, labelBP)
 
 ######################################################################################
-# Création d'une checkbox (pour 1 phonème) dans la boite de dialogue
+# Création d'un libellé
 ######################################################################################
-def createNumericField(dialogModel, px, py, name, index, val, w=20):
+def createLabel(dialogModel, px, py, name, index, label, w=58):
+    labelBP = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelBP.PositionX = px
+    labelBP.PositionY = py
+    labelBP.Width  = w
+    labelBP.Height = 10
+    labelBP.Name = name
+    labelBP.TabIndex = index
+    labelBP.Label = label
+    dialogModel.insertByName(labelBP.Name, labelBP)
+    return labelBP
+
+######################################################################################
+# Création d'un bouton
+######################################################################################
+def createButton(dialogModel, px, py, name, label, w=30):
+    button = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
+    button.PositionX = px
+    button.PositionY = py
+    button.Width  = w
+    button.Height = 14
+    button.Name = name
+    button.Label = label
+    dialogModel.insertByName(button.Name, button)
+
+######################################################################################
+# Création d'une ligne de séparation
+######################################################################################
+def createSeparator(dialogModel, px, py, name, w=30):
+    sep = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedLineModel")
+    sep.PositionX = px
+    sep.PositionY = py
+    sep.Width  = w
+    sep.Height  = 5
+    sep.Name = name
+    dialogModel.insertByName(sep.Name, sep)
+
+######################################################################################
+# Création d'une zone de saisie de type champ numérique
+######################################################################################
+def createNumericField(dialogModel, px, py, name, index, val, w=30):
     checkNF = dialogModel.createInstance("com.sun.star.awt.UnoControlNumericFieldModel")
     checkNF.PositionX = px
     checkNF.PositionY = py
     checkNF.Width  = w
-    checkNF.Height = 10
+    checkNF.Height = 15
     checkNF.Name = name
     checkNF.TabIndex = index
     checkNF.Value = val
     checkNF.ValueMin = 2
-    checkNF.ValueMax = 10
+    checkNF.ValueMax = 4
     checkNF.ValueStep = 1
     checkNF.Spin = True
     checkNF.DecimalAccuracy = 0
-    return checkNF
+    dialogModel.insertByName(checkNF.Name, checkNF)
+
+######################################################################################
+# Création d'un lien vers une URL (aide)
+######################################################################################
+def createLink(dialogModel, px, py, url, w=10):
+    checkNF = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedHyperlinkModel")
+    checkNF.PositionX = px
+    checkNF.PositionY = py
+    checkNF.Width  = w
+    checkNF.Height = 15
+    checkNF.Name = url+str(int(random.random()*1000))
+    checkNF.Label = "?"
+    checkNF.URL = url
+    checkNF.TextColor = 0x00000ff
+    dialogModel.insertByName(checkNF.Name, checkNF)
 
 ######################################################################################
 # Création d'une boite de dialogue pour sélectionner les phonèmes à visualiser
@@ -267,22 +395,13 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     # get the service manager
     smgr = xContext.ServiceManager
 
-    # read the already selected phonemes in the .lirecouleur file
-    selectphonemes = settings.get('__selection_phonemes__')
-
-    # lecture de la période d'alternance de lignes
-    nbcouleurs = settings.get('__alternate__')
-
-    # lecture du nombre d'espaces entre mots
-    nbespaces = settings.get('__subspaces__')
-
     # lecture pour savoir s'il faut mettre un point sous les lettres muettes
     selectpoint = settings.get('__point__')
 
-    # lecture pour savoir comment il faut afficher les syllabes
-    selectsyllo = settings.get('__syllo__')
+    # décodage ds phonèmes niveau débutant lecteur ou standard
+    selectsimple = settings.get('__detection_phonemes__')
 
-    # lecture pour savoir  dans le fichier .lirecouleur
+    # lecture du mode de décodage (dépend de la localisation)
     select_locale = settings.get('__locale__')
 
     # lecture de la période d'alternance de lignes
@@ -291,119 +410,32 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     # create the dialog model and set the properties
     dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
 
-    dialogModel.PositionX = 100
-    dialogModel.PositionY = 50
-    dialogModel.Width = 180
-    dialogModel.Height = 284
-    dialogModel.Title = _("Configuration LireCouleur")
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 110
+    dialogModel.Title = _("Configuration générale LireCouleur")
     
-    # créer le label titre
-    labelTitre = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
-    labelTitre.PositionX = 10
-    labelTitre.PositionY = 2
-    labelTitre.Width  = 130
-    labelTitre.Height = 12
-    labelTitre.Name = "labelTitre"
-    labelTitre.TabIndex = 1
-    labelTitre.Label = _(u("Cocher les phonèmes à mettre en évidence"))
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
 
-    # créer les checkboxes des phonèmes
-    i = 2
-    checkA = createCheckBox(dialogModel, 10, 30, "checkA", i, u('[~a] ta'), selectphonemes['a'])
-    i += 1
-    checkQ = createCheckBox(dialogModel, 10, 40, "checkQ", i, u('[~e] le'), selectphonemes['q'])
-    i += 1
-    checkI = createCheckBox(dialogModel, 10, 50, "checkI", i, u('[~i] il'), selectphonemes['i'])
-    i += 1
-    checkY = createCheckBox(dialogModel, 10, 60, "checkY", i, u('[~y] tu'), selectphonemes['y'])
-    i += 1
-
-    checkU = createCheckBox(dialogModel, 70, 30, "checkU", i, u('[~u] fou'), selectphonemes['u'])
-    i += 1
-    checkE = createCheckBox(dialogModel, 70, 40, "checkE", i, u('[~é] né'), selectphonemes['e'])
-    i += 1
-    checkO = createCheckBox(dialogModel, 70, 50, "checkO", i, u('[~o] mot'), selectphonemes['o'])
-    i += 1
-    checkEt = createCheckBox(dialogModel, 70, 60, "checkEt", i, u('[~è] sel'), selectphonemes['e^'])
-    i += 1
-    checkAn = createCheckBox(dialogModel, 70, 70, "checkAn", i, u('[~an] grand'), selectphonemes['a~'])
-    i += 1
-
-    checkOn = createCheckBox(dialogModel, 130, 30, "checkOn", i, u('[~on] son'), selectphonemes['o~'])
-    i += 1
-    checkEu = createCheckBox(dialogModel, 130, 40, "checkEu", i, u('[~x] feu'), selectphonemes['x'])
-    i += 1
-    checkIn = createCheckBox(dialogModel, 130, 50, "checkIn", i, u('[~in] fin'), selectphonemes['e~'])
-    i += 1
-    checkW = createCheckBox(dialogModel, 130, 60, "checkW", i, u('[~w] noix'), selectphonemes['w'])
-    i += 1
-    checkJ = createCheckBox(dialogModel, 130, 70, "checkJ", i, u('[~j] fille'), selectphonemes['j'])
-    i += 1
-
-    checkNg = createCheckBox(dialogModel, 10, 75, "checkNg", i, u('[~ng] parking'), selectphonemes['g~'])
-    i += 1
-    checkGn = createCheckBox(dialogModel, 10, 85, "checkGn", i, u('[~gn] ligne'), selectphonemes['n~'])
-    i += 1
-
-    checkH = createCheckBox(dialogModel, 70, 85, "checkH", i, u('[#] lettres muettes, e caduc'), selectphonemes['#'], 88)
-    i += 1
-
-    checkR = createCheckBox(dialogModel, 130, 95, "checkR", i, u('[~r] rat'), selectphonemes['r'])
-    i += 1
-    checkL = createCheckBox(dialogModel, 10, 105, "checkL", i, u('[~l] ville'), selectphonemes['l'])
-    i += 1
-    checkM = createCheckBox(dialogModel, 70, 105, "checkM", i, u('[~m] mami'), selectphonemes['m'])
-    i += 1
-    checkN = createCheckBox(dialogModel, 130, 105, "checkN", i, u('[~n] âne'), selectphonemes['n'])
-    i += 1
-
-    checkV = createCheckBox(dialogModel, 10, 115, "checkV", i, u('[~v] vélo'), selectphonemes['v'])
-    i += 1
-    checkZ = createCheckBox(dialogModel, 70, 115, "checkZ", i, u('[~z] zoo'), selectphonemes['z'])
-    i += 1
-    checkGe = createCheckBox(dialogModel, 130, 115, "checkGe", i, u('[~ge] jupe'), selectphonemes['z^'])
-    i += 1
-
-    checkF = createCheckBox(dialogModel, 10, 125, "checkF", i, u('[~f] effacer'), selectphonemes['f'])
-    i += 1
-    checkS = createCheckBox(dialogModel, 70, 125, "checkS", i, u('[~s] scie'), selectphonemes['s'])
-    i += 1
-    checkCh = createCheckBox(dialogModel, 130, 125, "checkCh", i, u('[c~h] chat'), selectphonemes['s^'])
-    i += 1
-
-    checkP = createCheckBox(dialogModel, 10, 135, "checkP", i, u('[~p] papa'), selectphonemes['p'])
-    i += 1
-    checkT = createCheckBox(dialogModel, 70, 135, "checkT", i, u('[~t] tortue'), selectphonemes['t'])
-    i += 1
-    checkK = createCheckBox(dialogModel, 130, 135, "checkK", i, u('[~k] coq'), selectphonemes['k'])
-    i += 1
-
-    checkB = createCheckBox(dialogModel, 10, 145, "checkB", i, u('[~b] bébé'), selectphonemes['b'])
-    i += 1
-    checkD = createCheckBox(dialogModel, 70, 145, "checkD", i, u('[~d] dindon'), selectphonemes['d'])
-    i += 1
-    checkG = createCheckBox(dialogModel, 130, 145, "checkG", i, u('[~g] gare'), selectphonemes['g'])
-    i += 1
-
-    checkKS = createCheckBox(dialogModel, 70, 155, "checkKS", i, u('[ks] ksi'), selectphonemes['ks'])
-    i += 1
-    checkGZ = createCheckBox(dialogModel, 130, 155, "checkGZ", i, u('[gz] exact'), selectphonemes['gz'])
-    i += 1
+    checkSimple = createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
+                    _(u("Détection des phonèmes niveau débutant lecteur")), selectsimple, dialogModel.Width-10)
 
     labelListLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelListLocale.PositionX = 10
-    labelListLocale.PositionY = checkKS.PositionY+checkKS.Height+2
+    labelListLocale.PositionY = 27
     labelListLocale.Width  = 50
-    labelListLocale.Height = checkKS.Height
+    labelListLocale.Height = 12
     labelListLocale.Name = "labelListLocale"
     labelListLocale.TabIndex = 1
-    labelListLocale.Label = "Configuration : "
+    labelListLocale.Label = "Localisation : "
+    dialogModel.insertByName(labelListLocale.Name, labelListLocale)
 
     listLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
     listLocale.PositionX = labelListLocale.PositionX+labelListLocale.Width
     listLocale.PositionY = labelListLocale.PositionY
     listLocale.Width  = 50
-    listLocale.Height  = checkKS.Height
+    listLocale.Height  = 12
     listLocale.Name = "listLocale"
     listLocale.TabIndex = 1
     listLocale.Dropdown = True
@@ -413,142 +445,20 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
         listLocale.SelectedItems = (listLocale.StringItemList.index(select_locale),)
     else:
         listLocale.SelectedItems = (0,)
+    dialogModel.insertByName(listLocale.Name, listLocale)
 
-    checkListPhonemes = {'checkA':None, 'checkE':None, 'checkEt':None, 'checkQ':None, 'checkI':None,
-                        'checkU':None, 'checkY':None, 'checkO':None, 'checkEu':None,
-                        'checkAn':None, 'checkIn':None, 'checkOn':None, 'checkW':None,
-                        'checkJ':None, 'checkCh':None, 'checkN':None, 'checkNg':None, 'checkGn':None,
-                        'checkL':None, 'checkM':None, 'checkR':None,
-                        'checkV':None, 'checkZ':None, 'checkGe':None,
-                        'checkF':None, 'checkS':None, 'checkCh':None,
-                        'checkP':None, 'checkT':None, 'checkK':None,
-                        'checkB':None, 'checkD':None, 'checkG':None,
-                        'checkKS':None, 'checkGZ':None, 'checkH':None}
-
-    # create the button model and set the properties
-    buttonModel = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
-
-    buttonModel.PositionX = 65
-    buttonModel.Width = 50
-    buttonModel.Height = 14
-    buttonModel.PositionY  = dialogModel.Height-buttonModel.Height-2
-    buttonModel.Name = "myButtonName"
-    buttonModel.TabIndex = 0
-    buttonModel.Label = _(u("Valider"))
-
-    # create the button model and set the properties
-    setAllModel = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
-    setAllModel.PositionX = 25
-    setAllModel.PositionY  = 12
-    setAllModel.Width = 60
-    setAllModel.Height = 14
-    setAllModel.Name = "setAllButtonName"
-    setAllModel.TabIndex = 0
-    setAllModel.Label = _(u("Tout sélectionner"))
-
-    unsetAllModel = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
-    unsetAllModel.PositionX = 87
-    unsetAllModel.PositionY  = 12
-    unsetAllModel.Width = 60
-    unsetAllModel.Height = 14
-    unsetAllModel.Name = "unsetAllButtonName"
-    unsetAllModel.TabIndex = 0
-    unsetAllModel.Label = _(u("Tout désélectionner"))
-
-    sep1 = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedLineModel")
-    sep1.PositionX = 2
-    sep1.PositionY = listLocale.PositionY+listLocale.Height+2
-    sep1.Width  = dialogModel.Width - 4
-    sep1.Height  = 5
-    sep1.Name = "sep1"
-    sep1.TabIndex = 1
-
-    labelCoul = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
-    labelCoul.PositionX = 10
-    labelCoul.PositionY = sep1.PositionY+sep1.Height+2
-    labelCoul.Width  = 145
-    labelCoul.Height = 12
-    labelCoul.Name = "labelCoul"
-    labelCoul.TabIndex = 1
-    labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes) :"))
-    fieldCoul = createNumericField(dialogModel, labelCoul.PositionX+labelCoul.Width, labelCoul.PositionY, "fieldCoul", 0, nbcouleurs)
-
-    labelEsp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
-    labelEsp.PositionX = 10
-    labelEsp.PositionY = fieldCoul.PositionY+fieldCoul.Height
-    labelEsp.Width  = 105
-    labelEsp.Height = 12
-    labelEsp.Name = "labelEsp"
-    labelEsp.TabIndex = 1
-    labelEsp.Label = _(u("Nombre d'espaces entre deux mots :"))
-    fieldEsp = createNumericField(dialogModel, labelEsp.PositionX+labelEsp.Width, labelEsp.PositionY, "fieldEsp", 0, nbespaces)
-
-    sep2 = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedLineModel")
-    sep2.PositionX = sep1.PositionX
-    sep2.PositionY = labelEsp.PositionY+labelEsp.Height
-    sep2.Width  = sep1.Width
-    sep2.Height  = sep1.Height
-    sep2.Name = "sep2"
-    sep2.TabIndex = 1
-
-    checkPoint = createCheckBox(dialogModel, 10, sep2.PositionY+sep2.Height, "checkPoint", 0,
+    checkPoint = createCheckBox(dialogModel, 10, 43, "checkPoint", 0,
                     _(u("Placer des symboles sous certains sons")), selectpoint, dialogModel.Width-10)
-
-    labelRadio = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
-    labelRadio.PositionX = 10
-    labelRadio.PositionY = checkPoint.PositionY+checkPoint.Height+2
-    labelRadio.Width  = dialogModel.Width-100-12
-    labelRadio.Height = 10
-    labelRadio.Name = "labelRadio"
-    labelRadio.TabIndex = 1
-    labelRadio.Label = _(u("Souligner les syllabes"))
-
-    listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
-    listTyp1Syll.PositionX = labelRadio.PositionX+labelRadio.Width
-    listTyp1Syll.PositionY = labelRadio.PositionY-2
-    listTyp1Syll.Width  = 50
-    listTyp1Syll.Height  = 12
-    listTyp1Syll.Name = "listTyp1Syll"
-    listTyp1Syll.TabIndex = 1
-    listTyp1Syll.Dropdown = True
-    listTyp1Syll.MultiSelection = False
-    listTyp1Syll.StringItemList = ("LireCouleur", "standard", )
-    if selectsyllo[0] in [0, 1]:
-        listTyp1Syll.SelectedItems = (selectsyllo[0],)
-    else:
-        listTyp1Syll.SelectedItems = (0,)
-
-    listTyp2Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
-    listTyp2Syll.PositionX = listTyp1Syll.PositionX+listTyp1Syll.Width
-    listTyp2Syll.PositionY = listTyp1Syll.PositionY
-    listTyp2Syll.Width  = 50
-    listTyp2Syll.Height  = listTyp1Syll.Height
-    listTyp2Syll.Name = "listTyp2Syll"
-    listTyp2Syll.TabIndex = 1
-    listTyp2Syll.Dropdown = True
-    listTyp2Syll.MultiSelection = False
-    listTyp2Syll.StringItemList = ( _(u("écrites")), _(u("orales")) )
-    if selectsyllo[1] in [0, 1]:
-        listTyp2Syll.SelectedItems = (selectsyllo[1],)
-    else:
-        listTyp2Syll.SelectedItems = (0,)
-
-    sep3 = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedLineModel")
-    sep3.PositionX = sep1.PositionX
-    sep3.PositionY = labelRadio.PositionY+labelRadio.Height+2
-    sep3.Width  = sep1.Width
-    sep3.Height  = sep1.Height
-    sep3.Name = "sep3"
-    sep3.TabIndex = 1
 
     labelTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelTemp.PositionX = 10
-    labelTemp.PositionY = sep3.PositionY+sep3.Height
+    labelTemp.PositionY = 60
     labelTemp.Width  = dialogModel.Width-12
     labelTemp.Height = 10
     labelTemp.Name = "labelTemp"
     labelTemp.TabIndex = 1
     labelTemp.Label = _(u("Nom du fichier modèle :"))
+    dialogModel.insertByName(labelTemp.Name, labelTemp)
 
     fieldTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
     fieldTemp.PositionX = 10
@@ -557,6 +467,7 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     fieldTemp.Height = 14
     fieldTemp.Name = "fieldTemp"
     fieldTemp.TabIndex = 0
+    dialogModel.insertByName(fieldTemp.Name, fieldTemp)
 
     buttTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
     buttTemp.PositionX = fieldTemp.PositionX+fieldTemp.Width+2
@@ -566,55 +477,992 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     buttTemp.Name = "buttTemp"
     buttTemp.TabIndex = 0
     buttTemp.Label = "..."
+    dialogModel.insertByName(buttTemp.Name, buttTemp)
 
-    # insert the control models into the dialog model
-    dialogModel.insertByName("setAllButtonName", setAllModel)
-    dialogModel.insertByName("unsetAllButtonName", unsetAllModel)
-    dialogModel.insertByName("myButtonName", buttonModel)
-    dialogModel.insertByName("labelTitre", labelTitre)
-
-    dialogModel.insertByName("labelCoul", labelCoul)
-    dialogModel.insertByName("fieldCoul", fieldCoul)
-
-    dialogModel.insertByName("labelEsp", labelEsp)
-    dialogModel.insertByName("fieldEsp", fieldEsp)
-
-    dialogModel.insertByName("sep1", sep1)
-    dialogModel.insertByName("sep2", sep2)
-    dialogModel.insertByName("sep3", sep3)
-
-    dialogModel.insertByName(labelListLocale.Name, labelListLocale)
-    dialogModel.insertByName(listLocale.Name, listLocale)
-
-    dialogModel.insertByName("labelTemp", labelTemp)
-    dialogModel.insertByName("fieldTemp", fieldTemp)
-    dialogModel.insertByName("buttTemp", buttTemp)
-
-    dialogModel.insertByName(labelRadio.Name, labelRadio)
-    dialogModel.insertByName(listTyp1Syll.Name, listTyp1Syll)
-    dialogModel.insertByName(listTyp2Syll.Name, listTyp2Syll)
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
     controlContainer.setModel(dialogModel);
 
     # add the action listener
-    for k in checkListPhonemes:
-        checkListPhonemes[k] = controlContainer.getControl(k)
-    controlContainer.getControl("myButtonName").addActionListener(MyActionListener(controlContainer, checkListPhonemes,
-                                controlContainer.getControl("fieldCoul"),
-                                controlContainer.getControl("fieldEsp"),
-                                controlContainer.getControl("checkPoint"),
-                                controlContainer.getControl(listTyp1Syll.Name),
-                                controlContainer.getControl(listTyp2Syll.Name),
-                                controlContainer.getControl(listLocale.Name),
-                                controlContainer.getControl("fieldTemp")))
-    controlContainer.getControl("setAllButtonName").addActionListener(MySetActionListener(controlContainer, checkListPhonemes))
-    controlContainer.getControl("unsetAllButtonName").addActionListener(MyUnsetActionListener(controlContainer, checkListPhonemes))
+    controlContainer.getControl("okButtonName").addActionListener(MyActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
     controlContainer.getControl("buttTemp").addActionListener(TemplateActionListener(controlContainer, controlContainer.getControl("fieldTemp"), xContext))
 
     if len(tempFileName) > 0:
         controlContainer.getControl("fieldTemp").setText(tempFileName)
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Ouverture de la boite de configuration d'un style de caractères
+######################################################################################
+class EditStyleMouseListener(unohelper.Base, XMouseListener):
+    def __init__(self, xContext, xDocument, nstyle):
+        self.ctx = xContext
+        self.document = xDocument
+        self.stylname = nstyle
+
+    def mouseEntered(self, ev): pass
+    def mouseExited(self, ev): pass
+    def mousePressed(self, ev):
+        if ev.Buttons == 1 and ev.ClickCount == 2:
+            dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
+            prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            prop1.Name = 'Param'
+            prop1.Value = self.stylname
+            prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            prop2.Name = 'Family'
+            prop2.Value = 1
+            dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+            prop2,))
+
+    def mouseReleased(self, ev): pass
+
+######################################################################################
+# Création d'une boite de dialogue pour sélectionner les phonèmes à visualiser
+######################################################################################
+class ConfigurationPhonemes(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_phonemes__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_phonemes( args=None ):
+    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
+    __configuration_phonemes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_phonemes__(xDocument, xContext):
+    global l_styles_phon
+    
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
+    import array
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # read the already selected phonemes in the .lirecouleur file
+    selectphonemes = settings.get('__selection_phonemes__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 230
+    dialogModel.Title = _("Configuration : phonèmes")
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#phonemes")
+
+    createLabel(dialogModel, 10, 10, "lbl_1", 1, _(u("Choisir les phonèmes ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
+
+    # créer les checkboxes des phonèmes
+    esp_y = 12 ; esp_x = 70
+    i = 2 ; x = 10 ; y = 25
+    createCheckBox(dialogModel, x, y, "phon_a", i, u('[~a] ta'), selectphonemes['a'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_e", i, u('[~e] le'), selectphonemes['q'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_i", i, u('[~i] il'), selectphonemes['i'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_u", i, u('[~y] tu'), selectphonemes['y'])
+    i += 1 ; y += esp_y
+
+    x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "phon_ou", i, u('[~u] fou'), selectphonemes['u'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_ez", i, u('[~é] né'), selectphonemes['e'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_o_ouvert", i, u('[~o] mot'), selectphonemes['o'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_et", i, u('[~è] sel'), selectphonemes['e^'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_an", i, u('[~an] grand'), selectphonemes['a~'])
+    i += 1 ; y += esp_y
+
+    x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "phon_on", i, u('[~on] son'), selectphonemes['o~'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_eu", i, u('[~x] feu'), selectphonemes['x'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_in", i, u('[~in] fin'), selectphonemes['e~'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_un", i, u('[~un] un'), selectphonemes['e~'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_wa", i, u('[~w] noix'), selectphonemes['w'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_y", i, u('[~j] fille'), selectphonemes['j'])
+    i += 1 ; y += esp_y
+
+    x = 10
+    createCheckBox(dialogModel, x, y, "phon_ng", i, u('[~ng] parking'), selectphonemes['g~'])
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_gn", i, u('[~gn] ligne'), selectphonemes['n~'])
+    i += 1
+
+    x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_muet", i, u('[#] lettres muettes, e caduc'), selectphonemes['#'], 100)
+    i += 1
+
+    y += esp_y ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_r", i, u('[~r] rat'), selectphonemes['r'])
+    i += 1 ; x = 10 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_l", i, u('[~l] ville'), selectphonemes['l'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_m", i, u('[~m] mami'), selectphonemes['m'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_n", i, u('[~n] âne'), selectphonemes['n'])
+
+    i += 1 ; x = 10 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_v", i, u('[~v] vélo'), selectphonemes['v'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_z", i, u('[~z] zoo'), selectphonemes['z'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_ge", i, u('[~ge] jupe'), selectphonemes['z^'])
+
+    i += 1 ; x = 10 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_f", i, u('[~f] effacer'), selectphonemes['f'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_s", i, u('[~s] scie'), selectphonemes['s'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_ch", i, u('[c~h] chat'), selectphonemes['s^'])
+
+    i += 1 ; x = 10 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_p", i, u('[~p] papa'), selectphonemes['p'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_t", i, u('[~t] tortue'), selectphonemes['t'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_k", i, u('[~k] coq'), selectphonemes['k'])
+
+    i += 1 ; x = 10 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_b", i, u('[~b] bébé'), selectphonemes['b'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_d", i, u('[~d] dindon'), selectphonemes['d'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_g", i, u('[~g] gare'), selectphonemes['g'])
+
+    i += 1 ; x = 10+esp_x ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_ks", i, u('[ks] ksi'), selectphonemes['ks'])
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "phon_gz", i, u('[gz] exact'), selectphonemes['gz'])
+    i += 1 ; x += esp_x
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    # add the action listener
+    for k in l_styles_phon:
+        lblCtrl = controlContainer.getControl(k)
+        if not lblCtrl is None:
+            lblCtrl.addMouseListener(EditStyleMouseListener(xContext, xDocument, k))
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationPhonemesActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de coloriage des syllabes par alternance de couleurs
+######################################################################################
+class ConfigurationStyleSyllDys(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_sylldys__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_sylldys( args=None ):
+    """Ouvrir une fenêtre de dialogue pour éditer les styles de syllabes alternées."""
+    __configuration_sylldys__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_sylldys__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour éditer les styles de syllabes alternées."""
+
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # lecture de la période d'alternance de lignes, de syllabes, de sons ou de mots
+    nbcouleurs = settings.get('__alternate__')
+
+    # lecture pour savoir comment il faut afficher les syllabes
+    selectsyllo = settings.get('__syllo__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 140
+    dialogModel.Title = _("Configuration : syllabes en couleur")
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#sylldys")
+
+    # créer les checkboxes des phonèmes
+    labelCoul = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelCoul.PositionX = 10
+    labelCoul.PositionY = 10
+    labelCoul.Width  = dialogModel.Width-12
+    labelCoul.Height = 16
+    labelCoul.Name = "labelCoul"
+    labelCoul.TabIndex = 1
+    labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
+    fieldCoul = createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
+    dialogModel.insertByName(labelCoul.Name, labelCoul)
+
+    labelRadio = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelRadio.PositionX = 10
+    labelRadio.PositionY = labelCoul.PositionY+35
+    labelRadio.Width  = dialogModel.Width-12
+    labelRadio.Height = 10
+    labelRadio.Name = "labelRadio"
+    labelRadio.TabIndex = 1
+    labelRadio.Label = _(u("Souligner les syllabes :"))
+    dialogModel.insertByName(labelRadio.Name, labelRadio)
+
+    listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
+    listTyp1Syll.Width  = 50
+    listTyp1Syll.Height  = 12
+    listTyp1Syll.PositionX = dialogModel.Width/2-listTyp1Syll.Width
+    listTyp1Syll.PositionY = labelRadio.PositionY+12
+    listTyp1Syll.Name = "listTyp1Syll"
+    listTyp1Syll.TabIndex = 1
+    listTyp1Syll.Dropdown = True
+    listTyp1Syll.MultiSelection = False
+    listTyp1Syll.StringItemList = ("LireCouleur", "standard", )
+    listTyp1Syll.SelectedItems = (selectsyllo[0]%2,)
+    dialogModel.insertByName(listTyp1Syll.Name, listTyp1Syll)
+
+    listTyp2Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
+    listTyp2Syll.Width  = listTyp1Syll.Width
+    listTyp2Syll.Height  = listTyp1Syll.Height
+    listTyp2Syll.PositionX = listTyp1Syll.PositionX+listTyp1Syll.Width+2
+    listTyp2Syll.PositionY = listTyp1Syll.PositionY
+    listTyp2Syll.Name = "listTyp2Syll"
+    listTyp2Syll.TabIndex = 1
+    listTyp2Syll.Dropdown = True
+    listTyp2Syll.MultiSelection = False
+    listTyp2Syll.StringItemList = ( _(u("écrites")), _(u("orales")) )
+    listTyp2Syll.SelectedItems = (selectsyllo[1]%2,)
+    dialogModel.insertByName(listTyp2Syll.Name, listTyp2Syll)
+
+    createLabel(dialogModel, 10, listTyp2Syll.PositionY+25, "labelStyles", 1, _(u("Editer les styles :")))
+    createButton(dialogModel, 30, listTyp2Syll.PositionY+37, "syll_dys_1", "style 1")
+    createButton(dialogModel, 70, listTyp2Syll.PositionY+37, "syll_dys_2", "style 2")
+    createButton(dialogModel, 110, listTyp2Syll.PositionY+37, "syll_dys_3", "style 3")
+    createButton(dialogModel, 150, listTyp2Syll.PositionY+37, "syll_dys_4", "style 4")
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("syll_dys_1").addActionListener(EditStyleActionListener(xContext, xDocument, "syll_dys_1"))
+    controlContainer.getControl("syll_dys_2").addActionListener(EditStyleActionListener(xContext, xDocument, "syll_dys_2"))
+    controlContainer.getControl("syll_dys_3").addActionListener(EditStyleActionListener(xContext, xDocument, "syll_dys_3"))
+    controlContainer.getControl("syll_dys_4").addActionListener(EditStyleActionListener(xContext, xDocument, "syll_dys_4"))
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationStyleSyllDysActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de soulignage des syllabes
+######################################################################################
+class ConfigurationStyleSyllabes(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_syllabes__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_syllabes( args=None ):
+    """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
+    __configuration_syllabes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_syllabes__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
+
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # lecture pour savoir comment il faut afficher les syllabes
+    selectsyllo = settings.get('__syllo__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 70
+    dialogModel.Title = _("Configuration : souligner les syllabes")
+
+    labelRadio = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelRadio.PositionX = 10
+    labelRadio.PositionY = 10
+    labelRadio.Width  = dialogModel.Width-12
+    labelRadio.Height = 10
+    labelRadio.Name = "labelRadio"
+    labelRadio.TabIndex = 1
+    labelRadio.Label = _(u("Souligner les syllabes :"))
+    dialogModel.insertByName(labelRadio.Name, labelRadio)
+
+    listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
+    listTyp1Syll.Width  = 50
+    listTyp1Syll.Height  = 12
+    listTyp1Syll.PositionX = dialogModel.Width/2-listTyp1Syll.Width
+    listTyp1Syll.PositionY = labelRadio.PositionY+12
+    listTyp1Syll.Name = "listTyp1Syll"
+    listTyp1Syll.TabIndex = 1
+    listTyp1Syll.Dropdown = True
+    listTyp1Syll.MultiSelection = False
+    listTyp1Syll.StringItemList = ("LireCouleur", "standard", )
+    if selectsyllo[0] in [0, 1]:
+        listTyp1Syll.SelectedItems = (selectsyllo[0],)
+    else:
+        listTyp1Syll.SelectedItems = (0,)
+    dialogModel.insertByName(listTyp1Syll.Name, listTyp1Syll)
+
+    listTyp2Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
+    listTyp2Syll.Width  = listTyp1Syll.Width
+    listTyp2Syll.Height  = listTyp1Syll.Height
+    listTyp2Syll.PositionX = listTyp1Syll.PositionX+listTyp1Syll.Width+2
+    listTyp2Syll.PositionY = listTyp1Syll.PositionY
+    listTyp2Syll.Name = "listTyp2Syll"
+    listTyp2Syll.TabIndex = 1
+    listTyp2Syll.Dropdown = True
+    listTyp2Syll.MultiSelection = False
+    listTyp2Syll.StringItemList = ( _(u("écrites")), _(u("orales")) )
+    if selectsyllo[1] in [0, 1]:
+        listTyp2Syll.SelectedItems = (selectsyllo[1],)
+    else:
+        listTyp2Syll.SelectedItems = (0,)
+    dialogModel.insertByName(listTyp2Syll.Name, listTyp2Syll)
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationStyleSyllDysActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de coloriage des lignes par alternance de couleurs
+######################################################################################
+class ConfigurationStyleLignesAlternees(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_lignes__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_lignes( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
+    __configuration_lignes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_lignes__(xDocument, xContext):
+    __configuration_alternance__(xDocument, xContext, "lignes", "altern_ligne_", "surligner1")
+
+######################################################################################
+# Configuration de la fonction de mise en évidence des phrases
+######################################################################################
+class ConfigurationStylePhrase(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence des phrases."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_alternance__(desktop.getCurrentComponent(), self.ctx, "phrases", "altern_ligne_", "surligner1")
+
+######################################################################################
+# Configuration de la fonction de mise en évidence des liaisons
+######################################################################################
+class ConfigurationStyleLiaisons(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence des liaisons."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "liaison")
+
+######################################################################################
+# Configuration de la fonction de mise en évidence des liaisons
+######################################################################################
+class ConfigurationStyleLiaisonsForcees(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour forcer le marquage comme liaison."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "liaison")
+
+######################################################################################
+# Configuration de la fonction de coloriage des mots par alternance de couleurs
+######################################################################################
+class ConfigurationStyleCouleurMots(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de mots alternés."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_couleur_mots__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_couleur_mots( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de mots alternés."""
+    __configuration_couleur_mots__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_couleur_mots__(xDocument, xContext):
+    __configuration_alternance__(xDocument, xContext, "mots", "mot_dys_", "mot_alternes")
+
+######################################################################################
+# Configuration de la fonction de séparation des mots
+######################################################################################
+class ConfigurationStyleSepareMots(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer la fonction de séparation des mots."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "espace")
+
+######################################################################################
+# Configuration de la fonction de coloriage des phonèmes par alternance de couleurs
+######################################################################################
+class ConfigurationStylePhonemesAlternes(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de phonèmes alternés."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_alterne_phonemes__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_alterne_phonemes( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de phonèmes alternés."""
+    __configuration_alterne_phonemes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+def __configuration_alterne_phonemes__(xDocument, xContext):
+    __configuration_alternance__(xDocument, xContext, "phonèmes", "altern_phon_", "phonemes_alternes")
+
+######################################################################################
+# Boite de configuration générique pour les fonctions à alternance de couleurs
+######################################################################################
+def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # lecture de la période d'alternance de lignes, de syllabes, de sons ou de mots
+    nbcouleurs = settings.get('__alternate__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 100
+    dialogModel.Title = _("Configuration : alternance de "+titre)
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#"+url)
+
+    # créer les checkboxes des phonèmes
+    labelCoul = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelCoul.PositionX = 10
+    labelCoul.PositionY = 10
+    labelCoul.Width  = dialogModel.Width-12
+    labelCoul.Height = 16
+    labelCoul.Name = "labelCoul"
+    labelCoul.TabIndex = 1
+    labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
+    fieldCoul = createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
+    dialogModel.insertByName(labelCoul.Name, labelCoul)
+
+    createLabel(dialogModel, 10, labelCoul.PositionY+30, "labelStyles", 1, _(u("Editer les styles :")))
+    createButton(dialogModel, 30, labelCoul.PositionY+42, "style_1", "style 1")
+    createButton(dialogModel, 70, labelCoul.PositionY+42, "style_2", "style 2")
+    createButton(dialogModel, 110, labelCoul.PositionY+42, "style_3", "style 3")
+    createButton(dialogModel, 150, labelCoul.PositionY+42, "style_4", "style 4")
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("style_1").addActionListener(EditStyleActionListener(xContext, xDocument, sb+"1"))
+    controlContainer.getControl("style_2").addActionListener(EditStyleActionListener(xContext, xDocument, sb+"2"))
+    controlContainer.getControl("style_3").addActionListener(EditStyleActionListener(xContext, xDocument, sb+"3"))
+    controlContainer.getControl("style_4").addActionListener(EditStyleActionListener(xContext, xDocument, sb+"4"))
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationStyleAlternActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de coloriage des consonnes et des voyelles
+######################################################################################
+class ConfigurationConsonneVoyelle(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des consonnes et des voyelles."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_consonne_voyelle__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_consonne_voyelle( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des consonnes et des voyelles."""
+    __configuration_consonne_voyelle__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+######################################################################################
+# Boite de configuration générique pour la fonction "graphèmes complexes"
+######################################################################################
+def __configuration_consonne_voyelle__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 70
+    dialogModel.Title = _("Configuration : consonnes et voyelles")
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#consonne_voyelle")
+
+    createLabel(dialogModel, 10, 10, "labelStyles", 1, _(u("Editer les styles de caractères :")), 100)
+    createButton(dialogModel, 30, 22, "phon_voyelle", "voyelles", 60)
+    createButton(dialogModel, 120, 22, "phon_consonne", "consonnes", 60)
+
+    # create the button model and set the properties
+    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", _(u("Ok")), 40)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("phon_voyelle").addActionListener(EditStyleActionListener(xContext, xDocument, "phon_voyelle"))
+    controlContainer.getControl("phon_consonne").addActionListener(EditStyleActionListener(xContext, xDocument, "phon_consonne"))
+
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    controlContainer.getControl("okButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de coloriage des graphèmes complexes
+######################################################################################
+class ConfigurationStyleGraphemesComplexes(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_graphemes_complexes__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_graphemes_complexes( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
+    __configuration_graphemes_complexes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+######################################################################################
+# Boite de configuration générique pour la fonction "graphèmes complexes"
+######################################################################################
+def __configuration_graphemes_complexes__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 70
+    dialogModel.Title = _("Configuration : graphèmes complexes")
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#graphemes_complexes")
+
+    createLabel(dialogModel, 10, 10, "labelStyles", 1, _(u("Editer les styles de caractères :")), 100)
+    createButton(dialogModel, 20, 22, "phon_voyelle_comp", "voyelles complexes", 80)
+    createButton(dialogModel, 110, 22, "phon_consonne_comp", "consonnes complexes", 80)
+
+    # create the button model and set the properties
+    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", _(u("Ok")), 40)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("phon_voyelle_comp").addActionListener(EditStyleActionListener(xContext, xDocument, "phon_voyelle_comp"))
+    controlContainer.getControl("phon_consonne_comp").addActionListener(EditStyleActionListener(xContext, xDocument, "phon_consonne_comp"))
+
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    controlContainer.getControl("okButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de coloriage des lettres
+######################################################################################
+class ConfigurationConfusionLettres(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de lettres."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_confusion_lettres__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_confusion_lettres( args=None ):
+    """Ouvrir une fenêtre de dialogue pour configurer les styles des lettres."""
+    __configuration_confusion_lettres__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+######################################################################################
+# Boite de configuration générique pour la fonction "confusion lettres"
+######################################################################################
+def __configuration_confusion_lettres__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour configurer les styles de lettre."""
+    
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
+    import array
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # read the already selected letters
+    selectlettres = settings.get('__selection_lettres__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 220
+    dialogModel.Height = 90
+    dialogModel.Title = _("Configuration : confusions lettres")
+
+    createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#confusion_lettres")
+
+    createLabel(dialogModel, 10, 10, "lbl_1", 1, _(u("Choisir les lettres ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
+
+    # créer les checkboxes des phonèmes
+    esp_y = 12 ; esp_x = 50
+    i = 2 ; x = 20 ; y = 25
+    createCheckBox(dialogModel, x, y, "l_b", i, 'b', selectlettres['b'], 30)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "l_d", i, 'd', selectlettres['d'], 30)
+    i += 1 ; x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "l_p", i, 'p', selectlettres['p'], 30)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "l_k", i, 'q', selectlettres['q'], 30)
+    i += 1 ; x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "l_m", i, 'm', selectlettres['m'], 30)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "l_n", i, 'n', selectlettres['n'], 30)
+    i += 1 ; x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "l_r", i, 'r', selectlettres['r'], 30)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "l_t", i, 't', selectlettres['t'], 30)
+    i += 1 ; x =20 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "l_f", i, 'f', selectlettres['f'], 30)
+    i += 1 ; x += esp_x
+    createCheckBox(dialogModel, x, y, "l_u", i, 'u', selectlettres['u'], 30)
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    # add the action listener
+    controlContainer.getControl("l_b").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_b'))
+    controlContainer.getControl("l_d").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_d'))
+    controlContainer.getControl("l_p").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_p'))
+    controlContainer.getControl("l_k").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_k'))
+    controlContainer.getControl("l_m").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_m'))
+    controlContainer.getControl("l_n").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_n'))
+    controlContainer.getControl("l_r").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_r'))
+    controlContainer.getControl("l_t").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_t'))
+    controlContainer.getControl("l_f").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_f'))
+    controlContainer.getControl("l_u").addMouseListener(EditStyleMouseListener(xContext, xDocument, 'phon_y'))
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationConfusionLettresActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
+
+    # create a peer
+    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
+
+    controlContainer.setVisible(False);
+    controlContainer.createPeer(toolkit, None);
+
+    # execute it
+    controlContainer.execute()
+
+    # dispose the dialog
+    controlContainer.dispose()
+
+######################################################################################
+# Configuration de la fonction de marquage des lettres muettes
+######################################################################################
+class ConfigurationStyleLMuettes(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour configurer le marquage des lettres muettes."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "phon_muet")
+
+######################################################################################
+# Ouverture de la boite de dialogue de configuration d'un style de caractère
+######################################################################################
+def __configuration_style_caractere__(xDocument, xContext, nstyle):
+    __arret_dynsylldys__(xDocument)
+    dispatcher = xContext.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', xContext)
+    prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+    prop1.Name = 'Param'
+    prop1.Value = nstyle
+    prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+    prop2.Name = 'Family'
+    prop2.Value = 1
+    dispatcher.executeDispatch(xDocument.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+    prop2,))
+
+######################################################################################
+# Configuration de la fonction d'espacement des mots
+######################################################################################
+class ConfigurationEspace(unohelper.Base, XJobExecutor):
+    """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __configuration_espace__(desktop.getCurrentComponent(), self.ctx)
+
+def configuration_espace( args=None ):
+    """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
+    __configuration_espace__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
+
+######################################################################################
+# Boite de configuration générique pour les fonctions à alternance de couleurs
+######################################################################################
+def __configuration_espace__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
+    
+    # récupération des infos de configuration
+    settings = Settings()
+
+    # i18n
+    i18n()
+
+    # get the service manager
+    smgr = xContext.ServiceManager
+
+    # lecture de la période d'alternance de lignes, de syllabes, de sons ou de mots
+    nbespaces = settings.get('__subspaces__')
+
+    # create the dialog model and set the properties
+    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
+
+    dialogModel.PositionX = 200
+    dialogModel.PositionY = 100
+    dialogModel.Width = 210
+    dialogModel.Height = 70
+    dialogModel.Title = _("Configuration : espacement des mots")
+
+    # créer le champ de saisie du nombre d'espaces
+    labelEsp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
+    labelEsp.PositionX = 10
+    labelEsp.PositionY = 10
+    labelEsp.Width  = dialogModel.Width-12
+    labelEsp.Height = 16
+    labelEsp.Name = "labelEsp"
+    labelEsp.TabIndex = 1
+    labelEsp.Label = _(u("Nombre d'espaces entre chaque mot :"))
+    fieldEsp = createNumericField(dialogModel, dialogModel.Width/2-30, labelEsp.PositionY+12, "fieldEsp", 0, nbespaces)
+    dialogModel.insertByName(labelEsp.Name, labelEsp)
+
+    # create the button model and set the properties
+    createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+
+    # create the dialog control and set the model
+    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
+    controlContainer.setModel(dialogModel);
+
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationStyleAlternActionListener(controlContainer))
+    controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
 
     # create a peer
     toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
@@ -890,185 +1738,6 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     # dispose the dialog
     controlContainer.dispose()
 
-"""
-    Traitement de la validation du style à éditer
-"""
-class SelectStyleActionListener(unohelper.Base, XMouseListener):
-    """Gestionnaire d'événement : double-clic sur un élément de l'arbre des styles"""
-    def __init__(self, ctx, document):
-        self.ctx = ctx
-        self.document = document
-
-    def mouseEntered(self, aEvent): pass
-    def mouseExited(self, aEvent): pass
-    def mousePressed(self, aEvent):
-        try:
-            noeud = aEvent.Source.getNodeForLocation(aEvent.X, aEvent.Y)
-            if not noeud is None:
-                phonstyle = noeud.DataValue
-                if not phonstyle is None and aEvent.ClickCount == 2 and aEvent.Buttons == 1:
-                    dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
-                    prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
-                    prop1.Name = 'Param'
-                    prop1.Value = phonstyle
-                    prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
-                    prop2.Name = 'Family'
-                    prop2.Value = 1
-                    dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
-                    prop2,))
-        except Exception as e:
-            print(("Failed to process Mouse Event: %s" % e))
-    def mouseReleased(self, aEvent): pass
-
-######################################################################################
-# Création d'une boite de dialogue pour sélectionner les phonèmes à visualiser
-######################################################################################
-class GestionnaireStyles(unohelper.Base, XJobExecutor, XMouseListener):
-    """Ouvrir une fenêtre de dialogue pour éditer les styles."""
-    def __init__(self, ctx):
-        self.ctx = ctx
-    def trigger(self, args):
-        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __gestionnaire_styles_dialog__(desktop.getCurrentComponent(), self.ctx)
-
-def gestionnaire_styles_dialog( args=None ):
-    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
-    __gestionnaire_styles_dialog__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
-
-def __gestionnaire_styles_dialog__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
-    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
-    import array
-
-    # i18n
-    i18n()
-
-    # get the service manager
-    smgr = xContext.ServiceManager
-
-    # Importer les styles de coloriage de texte
-    importStylesLireCouleur(xDocument)
-
-    # create the dialog model and set the properties
-    dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
-
-    dialogModel.PositionX = 100
-    dialogModel.PositionY = 50
-    dialogModel.Width = 150
-    dialogModel.Height = 200
-    dialogModel.Title = _(u("Edition des styles"))
-
-    # create the dialog control and set the model
-    controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
-    controlContainer.setModel(dialogModel)
-
-    # create a peer
-    toolkit = smgr.createInstanceWithContext("com.sun.star.awt.ExtToolkit", xContext)
-
-    controlContainer.setVisible(False);
-    controlContainer.createPeer(toolkit, None);
-
-    treeModel = dialogModel.createInstance("com.sun.star.awt.tree.TreeControlModel")
-    treeModel.Name = 'treeModel'
-    treeModel.PositionX = 0
-    treeModel.PositionY = 0
-    treeModel.Width = 150
-    treeModel.Height = 200
-    dialogModel.insertByName(treeModel.Name, treeModel)
-    
-    mutableTreeDataModel = smgr.createInstanceWithContext("com.sun.star.awt.tree.MutableTreeDataModel", xContext)
-    rootNode = mutableTreeDataModel.createNode("Styles LireCouleur", True)
-    mutableTreeDataModel.setRoot(rootNode)
-
-    # styles phonèmes
-    noeudPhonemes = mutableTreeDataModel.createNode("Phonèmes", True)
-    rootNode.appendChild(noeudPhonemes)
-    
-    lphon_v = {'phon_a': u('[a] ta'), 'phon_e':u('[e] le'), 'phon_i':u('[i] il'), 'phon_u':u('[y] tu'),
-    'phon_ou':u('[u] fou'), 'phon_ez':u('[é] né'), 'phon_o_ouvert':u('[o] mot'), 'phon_et':u('[è] sel'),
-    'phon_an':u('[an] grand'), 'phon_on':u('[on] son'), 'phon_eu':u('[x] feu'), 'phon_in':u('[in] fin'),
-    'phon_un':u('[un] un'), 'phon_muet':u('[#] lettres muettes, e caduc')}
-    lphon_c = {'phon_r':u('[r] rat'), 'phon_l':u('[l] ville'),
-    'phon_m':u('[m] mami'), 'phon_n':u('[n] âne'), 'phon_v':u('[v] vélo'), 'phon_z':u('[z] zoo'),
-    'phon_ge':u('[ge] jupe'), 'phon_f':u('[f] effacer'), 'phon_s':u('[s] scie'), 'phon_ch':u('[ch] chat'),
-    'phon_p':u('[p] papa'), 'phon_t':u('[t] tortue'), 'phon_k':u('[k] coq'), 'phon_b':u('[b] bébé'),
-    'phon_d':u('[d] dindon'), 'phon_g':u('[g] gare'), 'phon_ks':u('[ks] ksi'), 'phon_gz':u('[gz] exact')}
-    lphon_s = {'phon_w':u('[w]'), 'phon_wa':u('[wa] noix'), 'phon_w5':u('[w5] coin'),
-    'phon_y':u('[j] fille'), 'phon_ng':u('[ng] parking'), 'phon_gn':u('[gn] ligne')}
-    lphon_x = {'phon_voyelle_comp':u('voyelle complexe'), 'phon_consonne_comp':u('consonne complexe')}
-    noeudcat = mutableTreeDataModel.createNode("Voyelles", True)
-    noeudPhonemes.appendChild(noeudcat)
-    for ph in lphon_v:
-        noeud = mutableTreeDataModel.createNode(lphon_v[ph], False)
-        noeud.DataValue = ph
-        noeudcat.appendChild(noeud)
-    noeudcat = mutableTreeDataModel.createNode("Consonnes", True)
-    noeudPhonemes.appendChild(noeudcat)
-    for ph in lphon_c:
-        noeud = mutableTreeDataModel.createNode(lphon_c[ph], False)
-        noeud.DataValue = ph
-        noeudcat.appendChild(noeud)
-    noeudcat = mutableTreeDataModel.createNode("Semi-consonnes", True)
-    noeudPhonemes.appendChild(noeudcat)
-    for ph in lphon_s:
-        noeud = mutableTreeDataModel.createNode(lphon_s[ph], False)
-        noeud.DataValue = ph
-        noeudcat.appendChild(noeud)
-    noeudcat = mutableTreeDataModel.createNode("Complexes", True)
-    noeudPhonemes.appendChild(noeudcat)
-    for ph in lphon_x:
-        noeud = mutableTreeDataModel.createNode(lphon_x[ph], False)
-        noeud.DataValue = ph
-        noeudcat.appendChild(noeud)
-
-    # styles syllabes
-    noeudSyllabes = mutableTreeDataModel.createNode("Syllabes", True)
-    rootNode.appendChild(noeudSyllabes)
-    for i in range(4):
-        noeud = mutableTreeDataModel.createNode('syllabe '+str(i+1), False)
-        noeud.DataValue = 'syll_dys_'+str(i+1)
-        noeudSyllabes.appendChild(noeud)
-    
-    # styles mots
-    noeudMots = mutableTreeDataModel.createNode("Mots", True)
-    rootNode.appendChild(noeudMots)
-    for i in range(4):
-        noeud = mutableTreeDataModel.createNode('mot '+str(i+1), False)
-        noeud.DataValue = 'mot_dys_'+str(i+1)
-        noeudMots.appendChild(noeud)
-    noeud = mutableTreeDataModel.createNode('liaison', False)
-    noeud.DataValue = 'liaison'
-    noeudMots.appendChild(noeud)
-
-    # styles lettres
-    lphon_x = {'lettre_b':'b', 'lettre_d':'d', 'lettre_p':'p', 'lettre_q':'q',
-                'Majuscule':'majuscule', 'Ponctuation':'ponctuation'}
-    noeudLettres = mutableTreeDataModel.createNode("Lettres", True)
-    rootNode.appendChild(noeudLettres)
-    for ph in lphon_x:
-        noeud = mutableTreeDataModel.createNode(lphon_x[ph], False)
-        noeud.DataValue = ph
-        noeudLettres.appendChild(noeud)
-    
-    # styles lignes
-    noeudLignes = mutableTreeDataModel.createNode("Lignes", False)
-    rootNode.appendChild(noeudLignes)
-    for i in range(4):
-        noeud = mutableTreeDataModel.createNode('ligne '+str(i+1), False)
-        noeud.DataValue = 'altern_ligne_'+str(i+1)
-        noeudLignes.appendChild(noeud)
-
-    treeModel.DataModel = mutableTreeDataModel
-    treeCtrl = controlContainer.getControl(treeModel.Name)
-    treeCtrl.addMouseListener(SelectStyleActionListener(xContext, xDocument))
-
-    # execute it
-    controlContainer.execute()
-
-    # dispose the dialog
-    controlContainer.dispose()
-
 ###################################################################################
 # Élimine tout style de caractère
 ###################################################################################
@@ -1125,10 +1794,12 @@ class StyleSepareMots(unohelper.Base, XJobExecutor):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_separe_mots__(desktop.getCurrentComponent())
 
 def lirecouleur_separe_mots( args=None ):
     """Sépare les mots de la sélection en coloriant les espaces"""
+    __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_separe_mots__(XSCRIPTCONTEXT.getDocument())
 
 
@@ -1352,10 +2023,12 @@ class StyleLiaisons(unohelper.Base, XJobExecutor):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_liaisons__(desktop.getCurrentComponent())
 
 def lirecouleur_liaisons( args=None ):
     """Mise en évidence des liaisons"""
+    __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_liaisons__(XSCRIPTCONTEXT.getDocument())
 
 class StyleLiaisonsForcees(unohelper.Base, XJobExecutor):
@@ -1364,27 +2037,29 @@ class StyleLiaisonsForcees(unohelper.Base, XJobExecutor):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_liaisons__(desktop.getCurrentComponent(), forcer=True)
 
 def lirecouleur_liaisons_forcees( args=None ):
     """Mise en évidence des liaisons"""
+    __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_liaisons__(XSCRIPTCONTEXT.getDocument(), forcer=True)
 
 
 ###################################################################################
-# Colorie les lettres b, d, p, q pour éviter des confusions.
+# Colorie les lettres sélectionnées pour éviter des confusions.
 ###################################################################################
-class ConfusionBDPQ(unohelper.Base, XJobExecutor):
-    """Colorie les lettre B, D, P, Q pour éviter les confusions"""
+class ConfusionLettres(unohelper.Base, XJobExecutor):
+    """Colorie les lettres sélectionnées pour éviter les confusions"""
     def __init__(self, ctx):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __lirecouleur_bdpq__(desktop.getCurrentComponent())
+        __lirecouleur_confusion_lettres__(desktop.getCurrentComponent())
 
-def lirecouleur_bdpq( args=None ):
-    """Colorie les lettres B, D, P, Q pour éviter les confusions"""
-    __lirecouleur_bdpq__(XSCRIPTCONTEXT.getDocument())
+def lirecouleur_confusion_lettres( args=None ):
+    """Colorie les lettres sélectionnées pour éviter les confusions"""
+    __lirecouleur_confusion_lettres__(XSCRIPTCONTEXT.getDocument())
 
 
 ###################################################################################
@@ -1449,6 +2124,41 @@ class NewLireCouleurDocument(unohelper.Base, XJobExecutor):
 def new_lirecouleur_document(args=None):
     __new_lirecouleur_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
 
+###################################################################################
+# Lit le passage courant sous le curseur
+###################################################################################
+class LireCouleurModeleDocument(unohelper.Base, XJobExecutor):
+    """Enregistrer le document courant comme modèle LireCouleur"""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_modele_document__(desktop.getCurrentComponent(), self.ctx)
+
+def lirecouleur_modele_document(args=None):
+    __lirecouleur_modele_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
+    
+def __lirecouleur_modele_document__(xDocument, xContext):
+    __arret_dynsylldys__(xDocument)
+
+    # récupération du nom du fichier courant
+    curUrl = xDocument.getURL()
+    
+    # recherche d'un nouveau nom de fichier
+    i = 1
+    url = os.sep.join([getLirecouleurURL(), "template", "lirecouleur_"+str(i)+".odt"])
+    while os.path.isfile(uno.fileUrlToSystemPath(url)):
+        i += 1
+        url = os.sep.join([getLirecouleurURL(), "template", "lirecouleur_"+str(i)+".odt"])
+
+    # configuration du fichier modèle et enregistrement
+    settings = Settings()
+    settings.setValue('__template__', url)
+    xDocument.storeAsURL(url, ())
+    
+    # fermer le fichier courant et réouvrir le fichier d'origine
+    __new_lirecouleur_document__(xDocument, xContext)
+    xDocument.close(True)
 
 ###################################################################################
 # Lit le passage courant sous le curseur
@@ -1618,11 +2328,14 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
 ###################################################################################
 g_exportedScripts = lirecouleur_defaut, lirecouleur_espace, lirecouleur_phonemes, lirecouleur_syllabes, \
 lirecouleur_sylldys, lirecouleur_l_muettes, gestionnaire_config_dialog, lirecouleur_liaisons, \
-lirecouleur_liaisons_forcees, lirecouleur_bdpq, lirecouleur_suppr_syllabes, lirecouleur_lignes, \
+lirecouleur_liaisons_forcees, lirecouleur_confusion_lettres, lirecouleur_suppr_syllabes, lirecouleur_lignes, \
 lirecouleur_phrase, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_graphemes_complexes, \
 new_lirecouleur_document, gestionnaire_dictionnaire_dialog, lirecouleur_espace_lignes, lirecouleur_consonne_voyelle, \
 lirecouleur_large, lirecouleur_extra_large, lirecouleur_noir, lirecouleur_separe_mots, \
-lirecouleur_couleur_mots, gestionnaire_styles_dialog, lirecouleur_alterne_phonemes,
+lirecouleur_couleur_mots, lirecouleur_alterne_phonemes, \
+configuration_phonemes, configuration_sylldys, configuration_lignes, configuration_couleur_mots, \
+configuration_alterne_phonemes, configuration_graphemes_complexes, configuration_consonne_voyelle, \
+configuration_confusion_lettres, configuration_syllabes, configuration_espace, lirecouleur_modele_document,
 
 # --- faked component, dummy to allow registration with unopkg, no functionality expected
 g_ImplementationHelper = unohelper.ImplementationHelper()
@@ -1664,7 +2377,7 @@ g_ImplementationHelper.addImplementation( \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
-    ConfusionBDPQ,'org.lirecouleur.ConfusionBDPQ', \
+    ConfusionLettres,'org.lirecouleur.ConfusionLettres', \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
@@ -1708,10 +2421,6 @@ g_ImplementationHelper.addImplementation( \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
-    GestionnaireStyles,'org.lirecouleur.GestionnaireStyles', \
-    ('com.sun.star.task.Job',))
-
-g_ImplementationHelper.addImplementation( \
     StylePara,'org.lirecouleur.StylePara', \
     ('com.sun.star.task.Job',))
 
@@ -1735,3 +2444,70 @@ g_ImplementationHelper.addImplementation( \
     StylePhonemesAlternes,'org.lirecouleur.StylePhonemesAlternes', \
     ('com.sun.star.task.Job',))
 
+g_ImplementationHelper.addImplementation( \
+    ConfigurationConsonneVoyelle,'org.lirecouleur.ConfigurationConsonneVoyelle', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationConfusionLettres,'org.lirecouleur.ConfigurationConfusionLettres', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleLMuettes,'org.lirecouleur.ConfigurationStyleLMuettes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationPhonemes,'org.lirecouleur.ConfigurationPhonemes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStylePhonemesAlternes,'org.lirecouleur.ConfigurationStylePhonemesAlternes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleGraphemesComplexes,'org.lirecouleur.ConfigurationStyleGraphemesComplexes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleSyllDys,'org.lirecouleur.ConfigurationStyleSyllDys', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleSyllabes,'org.lirecouleur.ConfigurationStyleSyllabes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleLMuettes,'org.lirecouleur.ConfigurationStyleLMuettes', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationEspace,'org.lirecouleur.ConfigurationEspace', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleCouleurMots,'org.lirecouleur.ConfigurationStyleCouleurMots', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleSepareMots,'org.lirecouleur.ConfigurationStyleSepareMots', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleLignesAlternees,'org.lirecouleur.ConfigurationStyleLignesAlternees', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStylePhrase,'org.lirecouleur.ConfigurationStylePhrase', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleLiaisons,'org.lirecouleur.ConfigurationStyleLiaisons', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    ConfigurationStyleLiaisonsForcees,'org.lirecouleur.ConfigurationStyleLiaisonsForcees', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    LireCouleurModeleDocument,'org.lirecouleur.LireCouleurModeleDocument', \
+    ('com.sun.star.task.Job',))

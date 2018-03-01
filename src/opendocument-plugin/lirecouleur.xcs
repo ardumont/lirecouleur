@@ -91,9 +91,9 @@
                     <desc>StyleGraphemesComplexes</desc>
                 </info>
             </prop>
-            <prop oor:name="ConfusionBDPQ" oor:type="xs:string">
+            <prop oor:name="ConfusionLettres" oor:type="xs:string">
                 <info>
-                    <desc>ConfusionBDPQ</desc>
+                    <desc>ConfusionLettres</desc>
                 </info>
             </prop>
             <prop oor:name="StyleLiaisons" oor:type="xs:string">
@@ -151,9 +151,19 @@
                     <desc>Phonèmes sélectionnés pour l'affichage</desc>
                 </info>
             </prop>
+            <prop oor:name="__selection_lettres__" oor:type="xs:string">
+                <info>
+                    <desc>Lettres sélectionnées pour l'affichage</desc>
+                </info>
+            </prop>
             <prop oor:name="__template__" oor:type="xs:string">
                 <info>
                     <desc>Modèle de document à utiliser</desc>
+                </info>
+            </prop>
+            <prop oor:name="__detection_phonemes__" oor:type="xs:int">
+                <info>
+                    <desc>Indique si le décodage des phonèmes est niveau débutant lecteur ou standard</desc>
                 </info>
             </prop>
             <prop oor:name="__point__" oor:type="xs:int">

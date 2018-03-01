@@ -9,7 +9,7 @@
             <value>32</value>
         </prop>
         <prop oor:name="__fonctions_possibles__">
-            <value>StyleDefaut:StyleNoir:StylePhonemes:StyleLMuettes:StyleGraphemesComplexes:StylePhonMuet:SupprimerDecos:ConsonneVoyelle:StyleSyllDys:StyleSyllabes:SupprimerSyllabes:StyleCouleurMots:StyleSepareMots:ConfusionBDPQ:StyleLiaisons:StylePhrase:StyleEspace:StylePara:StyleLignesAlternees:StyleLarge:StyleExtraLarge:NewLireCouleurDocument:StylePhonemesAlternes</value>
+            <value>NewLireCouleurDocument:StyleDefaut:StyleNoir:ConsonneVoyelle:ConfusionLettres:StylePhonemesAlternes:StylePhonemes:StyleGraphemesComplexes:StyleLMuettes:SupprimerDecos:StylePhonMuet:StyleSyllDys:StyleSyllabes:SupprimerSyllabes:StyleCouleurMots:StyleSepareMots:StyleLignesAlternees:StylePhrase:StyleLiaisons:StyleEspace:StylePara:StyleLarge:StyleExtraLarge</value>
         </prop>
         <prop oor:name="StyleDefaut">
             <value>normal.png:Style standard:1</value>
@@ -45,13 +45,13 @@
             <value>new.png:Nouveau document LireCouleur:0</value>
         </prop>
         <prop oor:name="StylePhrase">
-            <value>phrase.png:Marquer début et fin de phrase:0</value>
+            <value>phrase.png:Surligner les phrases:0</value>
         </prop>
         <prop oor:name="StyleGraphemesComplexes">
             <value>phon_comp.png:Graphèmes complexes:0</value>
         </prop>
-        <prop oor:name="ConfusionBDPQ">
-            <value>bdpq.png:Confusions b, d, p, q:0</value>
+        <prop oor:name="ConfusionLettres">
+            <value>bdpq.png:Confusions lettres:0</value>
         </prop>
         <prop oor:name="StyleLiaisons">
             <value>liaisons.png:Marquer liaisons:1</value>
@@ -83,8 +83,14 @@
         <prop oor:name="__selection_phonemes__">
             <value>n:0;f_ph:0;x~:1;w_x:1;w_a~:1;y:1;v:0;j_o~:1;t:0;j_e_comp:1;w_e:1;u:1;j_e^:1;w:1;j_x^:1;j_x:1;#:1;j_e~:1;e^:1;x^:1;j_u:1;e_comp:1;s_t:0;z^_g:0;e:1;z_s:0;o_ouvert:1;w_a:1;j_o:1;g~:0;o_comp:1;s^:0;o~:1;b:0;w_e^_comp:1;ks:0;l:0;j_e:1;k:0;x:1;o:1;q:1;gz:0;a:1;k_qu:0;wa:1;n~:0;j:1;s:0;p:0;g:0;e^_comp:1;w_e~:1;w_u:1;w_o:1;g_u:0;w_o~:1;d:0;w_e^:1;w_x^:1;f:0;s_c:0;j_e^_comp:1;j_i:1;w_i:1;w_e_comp:1;w5:1;q_caduc:1;m:0;j_a~:1;verb_3p:1;j_a:1;i:1;e~:1;r:0;a~:1;z^:0;z:0</value>
         </prop>
+        <prop oor:name="__selection_lettres__">
+            <value>a:0;b:1;c:0;d:1;e:0;f:1;g:0;h:0;i:0;j:0;k:0;l:0;m:1;n:1;o:0;p:1;q:1;r:1;s:0;t:1;u:0;v:0;w:0;x:0;y:0;z:0</value>
+        </prop>
         <prop oor:name="__template__">
             <value></value>
+        </prop>
+        <prop oor:name="__detection_phonemes__">
+            <value>0</value>
         </prop>
         <prop oor:name="__point__">
             <value>0</value>

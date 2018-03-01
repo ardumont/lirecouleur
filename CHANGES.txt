@@ -1,3 +1,30 @@
+------------------------- 4.6.0 ------------------------- 
+Corrections :
+* envers : le "r" n'était pas correctement décodé
+
+Modifications :
+* passage du menu LireCouleur en menu principal avec un sous-menu pour les fonctions de configuration
+* une boite de configuration par fonction pour simplifier. Cela permet en particulier d'éditer tous les styles de caractères LireCouleur
+* extension de la fonction de marquage des lettres b, d, p, q à une fonction de marquage de toutes les lettres qui peuvent être facilement confondues.
+
+Ajout :
+* nouvelle fonction d'enregistrement du document courant comme modèle de document LireCouleur
+
+------------------------- 4.1.0 ------------------------- 
+Corrections :
+* importation des styles de caractères si cela n'est pas déjà fait à l'appel de la boite de dialogue d'édition des styles
+* ajout de la possibilité de superposer des fonctions (ex. : coloriage de syllabe + graphèmes complexes)
+* ajout d'une fonction d'alternance de typographies sur les phonèmes
+
+------------------------- 4.0.0 ------------------------- 
+Modification :
+* la barre de menu a été remplacée par un panneau de boutons dans le volet de droite de l'application
+* rationalisation de l'architecture des fichiers
+
+Ajouts :
+* nouvelle boite de dialogue pour permettre l'édition simple des styles de caractères
+* nouvelle fonction de surlignage alterné des mots
+
 ------------------------- 3.6.1 à 3.6.3 ----------------
 Correction :
 * correction de bugs divers

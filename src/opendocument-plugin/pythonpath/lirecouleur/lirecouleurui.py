@@ -52,7 +52,7 @@ import re
 from .utils import (Settings, create_uno_service, create_uno_struct)
 from .lirecouleur import *
 
-__version__ = "4.1.0"
+__version__ = "4.6.0"
 
 # create LANG environment variable
 import locale
@@ -469,37 +469,43 @@ __style_phon_complexes__ = {
 style_phon_altern = {
         '1' : {'CharStyleName':'altern_phon_1'},
         '2' : {'CharStyleName':'altern_phon_2'},
-        '3' : {'CharStyleName':'altern_phon_3'}
+        '3' : {'CharStyleName':'altern_phon_3'},
+        '4' : {'CharStyleName':'altern_phon_4'}
         }
 
 __style_phon_altern__ = {
         '1' : {'CharColor':0x000000ff},
         '2' : {'CharColor':0x00ff0000},
-        '3' : {'CharColor':0x0000ff00}
+        '3' : {'CharColor':0x0000ff00},
+        '4' : {'CharColor':0x00ff00ff}
         }
 
 style_syll_dys = {
         '1': {'CharStyleName':'syll_dys_1'},
         '2': {'CharStyleName':'syll_dys_2'},
-        '3': {'CharStyleName':'syll_dys_3'}
+        '3': {'CharStyleName':'syll_dys_3'},
+        '4': {'CharStyleName':'syll_dys_4'}
         }
 
 __style_syll_dys__ = {
         '1': {'CharColor':0x000000ff},
         '2': {'CharColor':0x00ff0000},
-        '3': {'CharColor':0x0000ff00}
+        '3': {'CharColor':0x0000ff00},
+        '4': {'CharColor':0x00ff00ff}
         }
 
 style_mot_dys = {
         '1': {'CharStyleName':'mot_dys_1'},
         '2': {'CharStyleName':'mot_dys_2'},
-        '3': {'CharStyleName':'mot_dys_3'}
+        '3': {'CharStyleName':'mot_dys_3'},
+        '4': {'CharStyleName':'mot_dys_4'}
         }
 
 __style_mot_dys__ = {
         '1': {'CharColor':0x000000ff},
         '2': {'CharColor':0x00ff0000},
-        '3': {'CharColor':0x0000ff00}
+        '3': {'CharColor':0x0000ff00},
+        '4': {'CharColor':0x00ff00ff}
         }
 
 style_yod = {
@@ -1341,52 +1347,6 @@ def colorier_defaut(paragraphe, cursor, choix):
     del cursor2
 
 ###################################################################################
-# Change le style des majuscules de début de phrase et de la ponctuation de fin de phrase
-###################################################################################
-def colorier_phrase(texte, cursor, style):
-    # caractères de ponctuation qui marquent une fin de phrase
-    ponct_fin_phrase = u('.!?…')
-
-    # placer le curseur au début de la zone de traitement
-    cursor.collapseToStart()
-
-    # suppressions et remplacements de caractères perturbateurs
-    utexte = u(texte) # codage unicode
-    paragraphe = nettoyeur_caracteres(utexte).replace('-', ' ')
-
-    # code le coloriage du paragraphe
-    curs = cursor
-    i = 0
-    while i < len(paragraphe):
-        j = i
-        # parcours jusqu'à la prochaine majuscule ou une marque de ponctuation de fin de phrase
-        while (i < len(paragraphe)) and (not (paragraphe[i].isupper() or (ponct_fin_phrase.find(paragraphe[i]) >= 0))):
-            i += 1
-        curs = deplacerADroite(paragraphe[j:i], curs)
-
-        if paragraphe[i].isupper():
-            j = i
-            # on a trouvé une majuscule
-            while (i < len(paragraphe)) and (not paragraphe[i].isspace()):
-                i += 1
-            if paragraphe[j:i].istitle():
-                # Mot qui commence par une majuscule
-                curs = formaterTexte(paragraphe[j], curs, styles_phonemes[style]['Majuscule'])
-                j += 1
-                i = j
-
-            # parcours jusqu'à une marque de ponctuation de fin de phrase
-            while (i < len(paragraphe)) and (ponct_fin_phrase.find(paragraphe[i]) < 0):
-                i += 1
-            curs = deplacerADroite(paragraphe[j:i], curs)
-
-        if paragraphe[i] in ponct_fin_phrase:
-            j = i
-            while (i < len(paragraphe)) and (paragraphe[i] in ponct_fin_phrase):
-                i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['Ponctuation'])
-
-###################################################################################
 # Conversion d'un paragraphe en mettant ses phonèmes en couleur
 ###################################################################################
 def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
@@ -1399,6 +1359,9 @@ def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
     # récupération de l'information sur le marquage des lettres muettes par des points
     point_lmuette = settings.get('__point__')
 
+    # savoir si on détecte les phonèmes standard ou pour des débutants lecteurs
+    detection_phonemes_debutant = settings.get('__detection_phonemes__')
+
     # récup du masque des phonèmes à afficher
     selecteurphonemes = settings.get('__selection_phonemes__')
 
@@ -1408,7 +1371,7 @@ def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
         paragraphe = nettoyeur_caracteres(curMot.getString())
 
         # traite le paragraphe en phonèmes
-        pp = generer_paragraphe_phonemes(paragraphe)
+        pp = generer_paragraphe_phonemes(paragraphe, detection_phonemes_debutant)
 
         # code le coloriage du paragraphe
         curs = curMot
@@ -1539,6 +1502,9 @@ def colorier_syllabes_style(xDocument, paragraphe, cursor, style, nb_altern):
     settings = Settings()
     choix_syllo = settings.get('__syllo__')
 
+    # savoir si on détecte les phonèmes standard ou pour des débutants lecteurs
+    detection_phonemes_debutant = settings.get('__detection_phonemes__')
+
     # placer le curseur au début de la zone de traitement
     cursor.collapseToStart()
 
@@ -1546,7 +1512,7 @@ def colorier_syllabes_style(xDocument, paragraphe, cursor, style, nb_altern):
     paragraphe = nettoyeur_caracteres(paragraphe)
 
     # traite le paragraphe en phonèmes
-    pp = generer_paragraphe_phonemes(paragraphe)
+    pp = generer_paragraphe_phonemes(paragraphe, detection_phonemes_debutant)
 
     # recompose les syllabes
     ps = generer_paragraphe_syllabes(pp, choix_syllo)
@@ -1571,17 +1537,22 @@ def colorier_syllabes_style(xDocument, paragraphe, cursor, style, nb_altern):
     del pp
 
 ###################################################################################
-# Colorie les lettres B, D, P, Q pour éviter les confusions
+# Colorie les lettres sélectionnées pour éviter les confusions
 ###################################################################################
-def colorier_bdpq(paragraphe, cursor, style):
+def colorier_confusion_lettres(paragraphe, cursor, style):
     # placer le curseur au début de la zone de traitement
     cursor.collapseToStart()
 
     # suppression des \r qui engendrent des décalages de codage sous W*
     paragraphe = paragraphe.replace('\r', '')
 
-    # code le coloriage du paragraphe
-    ensemble_confus = ['b','d','p','q']
+    # lecture du nombre d'espaces pour remplacer un espace standard
+    settings = Settings()
+    sel_lettres = settings.get('__selection_lettres__')
+
+    # code le coloriage des lettres
+    ensemble_confus = [k for k in sel_lettres.keys() if sel_lettres[k]]
+    phons_lettres = dict([[lettre,generer_paragraphe_phonemes(lettre)[0][0][0]] for lettre in ensemble_confus])
     curs = cursor
     i = 0
     while i < len(paragraphe):
@@ -1589,7 +1560,7 @@ def colorier_bdpq(paragraphe, cursor, style):
         if paragraphe[i] in ensemble_confus:
             while (i < len(paragraphe)) and (paragraphe[i] == paragraphe[j]):
                 i += 1
-            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style]['lettre_'+paragraphe[j]])
+            curs = formaterTexte(paragraphe[j:i], curs, styles_phonemes[style][phons_lettres[paragraphe[j]]])
         else:
             while (i < len(paragraphe)) and not(paragraphe[i] in ensemble_confus):
                 i += 1
@@ -1960,7 +1931,7 @@ def __lirecouleur_phonemes__(xDocument):
     try:
         for xtr in xTextRange:
             theString = xtr.getString()
-            if superpose:
+            if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
                 del xtrTemp
@@ -1989,7 +1960,7 @@ def __lirecouleur_alterne_phonemes__(xDocument):
     try:
         for xtr in xTextRange:
             theString = xtr.getString()
-            if superpose:
+            if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
                 del xtrTemp
@@ -2017,7 +1988,7 @@ def __lirecouleur_graphemes_complexes__(xDocument):
     try:
         for xtr in xTextRange:
             theString = xtr.getString()
-            if superpose:
+            if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
                 del xtrTemp
@@ -2049,7 +2020,7 @@ def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
 
         for xtr in xTextRange:
             theString = xtr.getString()
-            if superpose:
+            if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
                 del xtrTemp
@@ -2089,16 +2060,8 @@ def __lirecouleur_l_muettes__(xDocument):
         if xTextRange == None:
             return False
 
-        # récup de l'option de superposition de fonction
-        settings = Settings()
-        superpose = settings.get('__superpose__')
-
         for xtr in xTextRange:
             theString = xtr.getString()
-            if superpose:
-                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
-                colorier_defaut(theString, xtrTemp, 'noir')
-                del xtrTemp
             colorier_lettres_muettes(xDocument, theString, xtr, 'perso')
 
         del xTextRange
@@ -2160,17 +2123,44 @@ def __lirecouleur_suppr_decos__(xDocument):
 def __lirecouleur_phrase__(xDocument):
     __arret_dynsylldys__(xDocument)
 
-    """Marque les majuscules de début de phrase et les points de fin de phrase."""
-    try:
-        xTextRange = getXTextRange(xDocument, fonction='phrase', mode=2)
-        if xTextRange == None:
-            return False
-        for xtr in xTextRange:
-            theString = xtr.getString()
-            colorier_phrase(theString, xtr, 'perso')
-        del xTextRange
-    except:
-        return False
+    #the writer controller impl supports the css.view.XSelectionSupplier interface
+    xSelectionSupplier = xDocument.getCurrentController()
+    xIndexAccess = xSelectionSupplier.getSelection()
+    xTextRange = xIndexAccess.getByIndex(0)
+    if xTextRange is None or len(xTextRange.getString()) == 0:
+        xTextRange = getXTextRange(xDocument, fonction='texte', mode=0)[0]
+
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
+
+    # récup de la période d'alternance des couleurs
+    settings = Settings()
+    nb_altern = settings.get('__alternate__')
+
+    xText = xTextRange.getText()
+    xCursLi = xText.createTextCursorByRange(xTextRange)
+    xCursLi.gotoRange(xTextRange, False)
+    xCursLi.collapseToStart()
+    xCursLi.gotoStartOfSentence(False)
+    stylignes = [dict([['CharStyleName',styles_lignes+str(i+1)]]) for i in range(nb_altern)]
+    nligne = 0
+
+    while xText.compareRegionEnds(xCursLi, xTextRange) >= 0:
+       # ligne par ligne
+        if not xCursLi.gotoStartOfSentence(False):
+            del xCursLi
+            return True
+        if not xCursLi.gotoEndOfSentence(True):
+            del xCursLi
+            return True
+        setStyle(stylignes[nligne], xCursLi)
+        nligne = (nligne + 1) % nb_altern
+
+        # retour au début de ligne et passage à la phrase suivante
+        if not xCursLi.gotoNextSentence(False):
+            del xCursLi
+            return True
+
     return True
 
 ###################################################################################
@@ -2198,12 +2188,12 @@ def __lirecouleur_liaisons__(xDocument, forcer=False):
     return True
 
 ###################################################################################
-# Colorie les lettres b, d, p, q pour éviter des confusions.
+# Colorie les lettres sélectionnées pour éviter des confusions.
 ###################################################################################
-def __lirecouleur_bdpq__(xDocument):
+def __lirecouleur_confusion_lettres__(xDocument):
     __arret_dynsylldys__(xDocument)
 
-    """Colorie les lettres B, D, P, Q pour éviter les confusions"""
+    """Colorie les lettres sélectionnées pour éviter les confusions"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
         if xTextRange == None:
@@ -2211,7 +2201,7 @@ def __lirecouleur_bdpq__(xDocument):
         for xtr in xTextRange:
             theString = xtr.getString()
 
-            colorier_bdpq(theString, xtr, 'perso')
+            colorier_confusion_lettres(theString, xtr, 'perso')
         del xTextRange
     except:
         return False

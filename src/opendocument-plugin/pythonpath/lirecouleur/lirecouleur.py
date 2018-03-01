@@ -708,7 +708,7 @@ def regle_er(mot, pos_mot):
     exceptions_final_er = ['amer', 'cher', 'hier', 'mer', 'coroner', 'charter', 'cracker',
     'chester', 'doppler', 'cascher', 'bulldozer', 'cancer', 'carter', 'geyser', 'cocker', 'pullover',
     'alter', 'aster', 'fer', 'ver', 'diver', 'perver', 'enfer', 'traver', 'univer', 'cuiller', 'container', 'cutter',
-    u('révolver'), 'super', 'master']
+    u('révolver'), 'super', 'master', 'enver']
     if m_sing in exceptions_final_er:
         logging.info(u("func regle_er : ")+mot+u(" -- le mot n'est pas une exception comme 'amer' ou 'cher'"))
         return True
@@ -917,7 +917,7 @@ autom = {
     'e' : [['conj_v_ier','uient','ien','ien_2','een','except_en_1','except_en_2','_ent','clef','hier','adv_emment_fin',
             'ment','imparfait','verbe_3_pluriel','au',
             'avoir','monsieur','jeudi','jeu_','eur','eu','eu_accent_circ','in','eil','y','iy','ennemi','enn_debut_mot','dessus_dessous',
-            'et','cet','t_final','eclm_final','est','drz_final','n','adv_emment_a','femme','lemme','em_gene','nm','tclesmesdes',
+            'et','cet','t_final','eclm_final','est','es','drz_final','n','adv_emment_a','femme','lemme','em_gene','nm','tclesmesdes',
             'que_isole','que_gue_final','jtcnslemede','jean','ge','eoi','ex','ef','reqquechose','2consonnes','abbaye','e_muet','e_caduc','e_deb'],
             {'_ent':[regle_mots_ent,'a~',2], ## quelques mots (adverbes ou noms) terminés par ent
             'adv_emment_fin':[{'-':r"emm",'+':r"nt"},'a~',2], ## adverbe avec 'emment' => se termine par le son [a~]
@@ -954,6 +954,7 @@ autom = {
             'eu':[{'+':r"u"},'x',2],
             'eu_accent_circ':[{'+':u(r"û")},'x^',2],
             'est':[{'-':r"^",'+':r"st$"},'e^_comp',3],
+            'es':[{'-':r"^",'+':r"s$"},'e^_comp',2],
             'et':[{'-':r"^",'+':r"t$"},'e_comp',2],
             'eil':[{'+':r"il"},'e^_comp',1],
             'y':[{'+':u(r"y[aeiouéèêààäôâ]")},'e^_comp',1],
@@ -1008,7 +1009,7 @@ autom = {
     'h' : [[],
             {'*':[{},'#',1]}],
     'i' : [['ing','n','m','nm','prec_2cons','lldeb','vill','mill','tranquille',
-            'ill','@ill','@il','ll','ui','ient_1','ient_2','ie','i_voyelle'],
+            'ill','@ill','@il','ll','ui','ient_1','ient_2','ie'],
             {'ing':[{'-':u(r"[bcçdfghjklmnpqrstvwxz]"),'+':r"ng$"},'i',1],
             'n':[{'+':u(r"n[bcçdfghjklmpqrstvwxz]")},'e~',2],
             'm':[{'+':u(r"m[bcçdfghjklnpqrstvwxz]")},'e~',2],
@@ -1026,7 +1027,6 @@ autom = {
             'ient_1':[regle_ient,'i',1], ## règle spécifique pour différencier les verbes du premier groupe 3ème pers pluriel
             'ient_2':[{'+':r"ent(s)?$"},'j',1], ## si la règle précédente ne fonctionne pas
             'ie':[{'+':r"e(s)?$"},'i',1], ## mots terminés par -ie(s|nt)
-            'i_voyelle':[{'+':u(r"[aäâeéèêëoôöuù]")},'j',1], ## i suivi d'une voyelle donne [j]
             '*':[{},'i',1]}],
     u('ï') : [['thai', 'aie'],
             {'thai':[{'-':r"t(h?)a"},'j',1], ## taï, thaï et dérivés
@@ -1312,7 +1312,7 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
 ###################################################################################
 # Décodage d'un mot sous la forme d'une suite de phonèmes
 ###################################################################################
-def extraire_phonemes(mot, para=None, p_para=0):
+def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
     p_mot = 0
     codage = []
     if para is None:
@@ -1340,7 +1340,7 @@ def extraire_phonemes(mot, para=None, p_para=0):
                             codage.append((phoneme[0],lsmot[0]))
                     else:
                         # non : on le décode à partir des lettres
-                        phoneme = extraire_phonemes(phon)
+                        phoneme = extraire_phonemes(phon, None, 0, detection_phonemes_debutant)
                         if len(phoneme[0][0]) > 0:
                             codage.append((phoneme[0][0],lsmot[0]))
                         else:
@@ -1408,14 +1408,15 @@ def extraire_phonemes(mot, para=None, p_para=0):
 
     logging.info('--------------------'+str(codage)+'--------------------')
 
-    # post traitement pour associer yod + [an, in, en, on, a, é, etc.]
-    codage = post_traitement_yod(codage)
-
-    # post traitement pour différencier les o ouverts et les o fermés
-    codage = post_traitement_o_ouvert_ferme(codage)
-
     # post traitement pour différencier les eu ouverts et les eu fermés
     codage = post_traitement_e_ouvert_ferme(codage)
+
+    if not detection_phonemes_debutant:
+        # post traitement pour associer yod + [an, in, en, on, a, é, etc.]
+        codage = post_traitement_yod(codage)
+
+        # post traitement pour différencier les o ouverts et les o fermés
+        codage = post_traitement_o_ouvert_ferme(codage)
 
     return codage
 
@@ -1439,13 +1440,13 @@ def post_traitement_yod(pp):
         return pp
 
     phonemes = [x[0] for x in pp]
-    if not 'j' in phonemes:
+    if not 'i' in phonemes:
         # pas de 'yod' dans le mot
         return pp
 
-    # recherche de tous les indices de phonèmes avec 'j'
+    # recherche de tous les indices de phonèmes avec 'i'
     nb_ph = len(pp)-1
-    i_j = all_indices('j', phonemes[:nb_ph+1])
+    i_j = all_indices('i', phonemes[:nb_ph+1])
 
     for i_ph in i_j:
         if i_ph >= nb_ph:
@@ -1807,7 +1808,7 @@ def generer_masque_paragraphe_phonemes(pp, l_phon):
 ###################################################################################
 # Générateur d'un paragraphe de texte sous la forme de phonèmes
 ###################################################################################
-def generer_paragraphe_phonemes(texte):
+def generer_paragraphe_phonemes(texte, detection_phonemes_debutant=0):
     """ Transformation d'un paragraphe en une liste de phonèmes """
 
     ##
@@ -1831,7 +1832,7 @@ def generer_paragraphe_phonemes(texte):
         p_texte = pp_texte
 
         # décodage du mot en phonèmes
-        phonemes = extraire_phonemes(umot, texte, p_texte)
+        phonemes = extraire_phonemes(umot, texte, p_texte, detection_phonemes_debutant)
         pp.append(phonemes)
         p_texte += len(umot)
 
@@ -1926,6 +1927,10 @@ if __name__ == "__main__":
     else:
         for i in range(len(sys.argv)-1):
             message_test = u(sys.argv[i+1])
+            print (u('test chaine de phonemes debutant lecteur : ')+message_test)
+            pp = generer_paragraphe_phonemes(message_test, 1)
+            print (message_test + ': '+ str(pp))
+            print ('\n')
             print (u('test chaine de phonemes : ')+message_test)
             pp = generer_paragraphe_phonemes(message_test)
             print (message_test + ': '+ str(pp))

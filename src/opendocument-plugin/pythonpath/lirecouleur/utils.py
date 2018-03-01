@@ -225,24 +225,34 @@ class Settings(object):
         self.TaillIco = self.getPropertyValue(cua, "__taille_icones__")
         self.Fonctions = {}
         for fct in self.FPossibles:
-            self.Fonctions[fct] = self.getPropertyValue(cua, fct).split(':')
-            self.Fonctions[fct][2] = eval(self.Fonctions[fct][2])
+            prop = self.getPropertyValue(cua, fct)
+            if not prop is None:
+                self.Fonctions[fct] = prop.split(':')
+                self.Fonctions[fct][2] = eval(self.Fonctions[fct][2])
         
-        selphon = [ph.split(':') for ph in self.getPropertyValue(cua, "__selection_phonemes__").split(';')]
-        self.SelectionPhonemes = dict([[ph[0], eval(ph[1])] for ph in selphon])
-        # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle'
-        for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u']:
-            try:
-                self.SelectionPhonemes['j_'+phon] = self.SelectionPhonemes[phon]
-                self.SelectionPhonemes['w_'+phon] = self.SelectionPhonemes[phon]
-            except:
-                pass
+        prop = self.getPropertyValue(cua, "__selection_phonemes__")
+        if not prop is None:
+            selphon = [ph.split(':') for ph in prop.split(';')]
+            self.SelectionPhonemes = dict([[ph[0], eval(ph[1])] for ph in selphon])
+            # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle'
+            for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u']:
+                try:
+                    self.SelectionPhonemes['j_'+phon] = self.SelectionPhonemes[phon]
+                    self.SelectionPhonemes['w_'+phon] = self.SelectionPhonemes[phon]
+                except:
+                    pass
+        prop = self.getPropertyValue(cua, "__selection_lettres__")
+        if not prop is None:
+            selphon = [ph.split(':') for ph in prop.split(';')]
+            self.SelectionLettres = dict([[ph[0], eval(ph[1])] for ph in selphon])
         self.Template = self.getPropertyValue(cua, "__template__")
+        self.Simple = self.getPropertyValue(cua, "__detection_phonemes__")
         self.Point = self.getPropertyValue(cua, "__point__")
         choix_syllo = self.getPropertyValue(cua, "__syllo__")
         if not isinstance(choix_syllo, TYPE_ENTIER):
-            choix_syllo = ConstLireCouleur.SYLLABES_LC+10*ConstLireCouleur.SYLLABES_ECRITES
-        self.Syllo = (choix_syllo%10, choix_syllo/10)
+            self.Syllo = (ConstLireCouleur.SYLLABES_LC, ConstLireCouleur.SYLLABES_ECRITES)
+        else:
+            self.Syllo = (choix_syllo%2, int(choix_syllo/10)%2)
         self.Superpose = self.getPropertyValue(cua, "__superpose__")
         self.Alternate = self.getPropertyValue(cua, "__alternate__")
         self.Locale = self.getPropertyValue(cua, "__locale__")
@@ -259,10 +269,14 @@ class Settings(object):
             return self.TaillIco
         if name == "__selection_phonemes__":
             return self.SelectionPhonemes
+        if name == "__selection_lettres__":
+            return self.SelectionLettres
         if name == "__template__":
             return self.Template
         if name == "__point__":
             return self.Point
+        if name == "__detection_phonemes__":
+            return self.Simple
         if name == "__superpose__":
             return self.Superpose
         if name == "__syllo__":
@@ -293,12 +307,18 @@ class Settings(object):
             elif name == "__selection_phonemes__":
                 self.SelectionPhonemes = value
                 cua.setPropertyValues(("__selection_phonemes__",), (';'.join([ph+':'+str(value[ph]) for ph in value.keys()]),))
+            elif name == "__selection_lettres__":
+                self.SelectionLettres = value
+                cua.setPropertyValues(("__selection_lettres__",), (';'.join([ph+':'+str(value[ph]) for ph in value.keys()]),))
             elif name == "__template__":
                 self.Template = value
                 cua.setPropertyValues(("__template__",), (value,))
             elif name == "__point__":
                 self.Point = value
                 cua.setPropertyValues(("__point__",), (value,))
+            elif name == "__detection_phonemes__":
+                self.Simple = value
+                cua.setPropertyValues(("__detection_phonemes__",), (value,))
             elif name == "__syllo__":
                 self.Syllo = value
                 cua.setPropertyValues(("__syllo__",), (value[1]*10+value[0],))

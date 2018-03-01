@@ -31,7 +31,7 @@ from .utils import (create_control, create_container, create_controls,
     get_backgroundcolor, get_resource, get_config_access, 
     get_config_value, create_uno_struct, create_uno_service, Settings)
     
-from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_bdpq__,
+from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_confusion_lettres__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
         __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
@@ -171,7 +171,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         btn_model = create_uno_service('com.sun.star.awt.UnoControlButtonModel')
         btn_model.setPropertyValues( ('Label',), ("+",) )
         self.plusbtn.setModel(btn_model)
-        self.plusbtn.setPosSize(LR_MARGIN+16+BUTTON_SEP, posMaxY, 16, 32, PS_POSSIZE)
+        self.plusbtn.setPosSize(LR_MARGIN+16+BUTTON_SEP, posMaxY, 32, 32, PS_POSSIZE)
         self.container.addControl("plus_lcbar", self.plusbtn)
         self.plusbtn.setActionCommand("plus_lcbar")
         self.plusbtn.addActionListener(self)
@@ -180,7 +180,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         btn_model = create_uno_service('com.sun.star.awt.UnoControlButtonModel')
         btn_model.setPropertyValues( ('Label',), ("-",) )
         self.moinsbtn.setModel(btn_model)
-        self.moinsbtn.setPosSize(LR_MARGIN+64+2*BUTTON_SEP+16, posMaxY, 16, 32, PS_POSSIZE)
+        self.moinsbtn.setPosSize(LR_MARGIN+64+2*BUTTON_SEP+32, posMaxY, 32, 32, PS_POSSIZE)
         self.container.addControl("moins_lcbar", self.moinsbtn)
         self.moinsbtn.setActionCommand("moins_lcbar")
         self.moinsbtn.addActionListener(self)
@@ -217,9 +217,9 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         ps = self.edbtn.getPosSize()
         posMaxY = HEIGHT-TB_MARGIN-ps.Height
         self.edbtn.setPosSize(LR_MARGIN, posMaxY, ps.Width, ps.Height, PS_POSSIZE)
-        self.plusbtn.setPosSize(LR_MARGIN+ps.Width+BUTTON_SEP, posMaxY, 16, 32, PS_POSSIZE)
+        self.plusbtn.setPosSize(LR_MARGIN+ps.Width+BUTTON_SEP, posMaxY, 32, 32, PS_POSSIZE)
         ps = self.edbtn.getPosSize()
-        self.moinsbtn.setPosSize(LR_MARGIN+ps.Width+2*BUTTON_SEP+16, posMaxY, 16, 32, PS_POSSIZE)
+        self.moinsbtn.setPosSize(LR_MARGIN+ps.Width+2*BUTTON_SEP+32, posMaxY, 32, 32, PS_POSSIZE)
 
         posX = LR_MARGIN
         posY = TB_MARGIN
@@ -256,8 +256,12 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         self._update_view()
 
     # XMouseListener
-    def mouseEntered(self, ev): pass
-    def mouseExited(self, ev): pass
+    def mouseEntered(self, ev):
+        btn_model = ev.Source.Model
+        btn_model.setPropertyValues( ('BackgroundColor',), (0xffffff,) )
+    def mouseExited(self, ev):
+        btn_model = ev.Source.Model
+        btn_model.setPropertyValues( ('BackgroundColor',), (get_backgroundcolor(self.parent),) )
     def mousePressed(self, ev):
         if ev.Buttons == MB_LEFT and ev.ClickCount == 1:
             img = ev.Source.Model.ImageURL
@@ -270,8 +274,8 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
                     __lirecouleur_phonemes__(xDocument)
                 elif cmd == 'StyleNoir':
                     __lirecouleur_noir__(xDocument)
-                elif cmd == 'ConfusionBDPQ':
-                    __lirecouleur_bdpq__(xDocument)
+                elif cmd == 'ConfusionLettres':
+                    __lirecouleur_confusion_lettres__(xDocument)
                 elif cmd == 'ConsonneVoyelle':
                     __lirecouleur_consonne_voyelle__(xDocument)
                 elif cmd == 'StyleCouleurMots':

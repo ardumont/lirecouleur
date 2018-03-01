@@ -4,339 +4,550 @@
  oor:name="Addons" oor:package="org.openoffice.Office">
 	<node oor:name="AddonUI">
 
-		<node oor:name="OfficeMenuBarMerging">
-			<node oor:name="lirecouleur_m1" oor:op="replace">
-				<node oor:name="S1" oor:op="replace">
-					<prop oor:name="MergePoint">
-						<value>.uno:FormatMenu\.uno:FontDialog</value>
-					</prop>
-					<prop oor:name="MergeCommand">
-						<value>AddBefore</value>
-					</prop>
-					<prop oor:name="MergeFallback">
-						<value>AddPath</value>
-					</prop>
-					<node oor:name="MenuItems">
-						<node oor:name="M1" oor:op="replace">
-							<prop oor:name="Title" oor:type="xs:string">
-								<value>LireCouleur</value>
-							</prop>
-							<prop oor:name="Context" oor:type="xs:string">
-								<value>com.sun.star.text.TextDocument</value>
-							</prop>
-							<node oor:name="Submenu">
-								<node oor:name="N000" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Nouveau document LireCouleur</value>
-										<value xml:lang="en">New LireCouleur document</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.NewLireCouleurDocument</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N001" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Configuration LireCouleur</value>
-										<value xml:lang="en">Configure LireCouleur</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.GestionnaireConfiguration</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N002" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Configuration des styles</value>
-										<value xml:lang="en">Configure character styles</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.GestionnaireStyles</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N003" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Dictionnaire LireCouleur</value>
-										<value xml:lang="en">LireCouleur Dictionary</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.GestionnaireDictionnaire</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N004" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N005" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Style standard</value>
-										<value xml:lang="en">Default style</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleDefaut</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N006" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Style noir</value>
-										<value xml:lang="en">Black style</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleNoir</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N007" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Espacer les mots</value>
-										<value xml:lang="en">Space out words</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleEspace</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N008" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Colorer les mots</value>
-										<value xml:lang="en">Colourize out words</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleCouleurMots</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N009" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Séparer les mots</value>
-										<value xml:lang="en">Separate words</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleSepareMots</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N010" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N011" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Phonèmes</value>
-										<value xml:lang="en">Phonemes</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StylePhonemes</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N012" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Graphèmes complexes</value>
-										<value xml:lang="en">Complex graphemes</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleGraphemesComplexes</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N013" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Lettres muettes</value>
-										<value xml:lang="en">Show silent letters</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleLMuettes</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N014" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Consonnes / voyelles</value>
-										<value xml:lang="en">Consonant / vowel</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.ConsonneVoyelle</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N015" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N016" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Syllabes colorées</value>
-										<value xml:lang="en">Colored syllables</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleSyllDys</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N017" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Syllabes soulignées</value>
-										<value xml:lang="en">Set arcs under syllables</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleSyllabes</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N018" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Enlever les arcs sous les syllabes</value>
-										<value xml:lang="en">Remove arcs under the syllables</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.SupprimerSyllabes</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N019" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Enlever les symboles sous certains sons</value>
-										<value xml:lang="en">Remove symbols unde some phonems</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.SupprimerDecos</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N020" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Forcer le marquage comme phonème muet</value>
-										<value xml:lang="en">Set as silent phoneme</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StylePhonMuet</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N021" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N022" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Confusions b,d,p,q</value>
-										<value xml:lang="en">b,d,p,q confusion</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.ConfusionBDPQ</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N023" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N024" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Liaisons obligatoires</value>
-										<value xml:lang="en">Main liaisons</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleLiaisons</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N025" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Imposer liaisons</value>
-										<value xml:lang="en">Force liaisons</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleLiaisonsForcees</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N026" oor:op="replace">
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>private:separator</value>
-									</prop>
-								</node>
-								<node oor:name="N027" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Surligner les lignes</value>
-										<value xml:lang="en">Highlight lines</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StyleLignesAlternees</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-								<node oor:name="N028" oor:op="replace">
-									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Marquage des phrases (majuscule et ponctuation)</value>
-										<value xml:lang="en">Highlight sentences</value>
-									</prop>
-									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StylePhrase</value>
-									</prop>
-									<prop oor:name="Target" oor:type="xs:string">
-										<value>_self</value>
-									</prop>
-								</node>
-							</node>
-						</node>
-					</node>
-				</node>
-			</node>
-		</node>
+		<node oor:name="OfficeMenuBar">
+            <node oor:name="lire.libre.lirecouleur" oor:op="replace">
+                <prop oor:name="Title" oor:type="xs:string">
+                    <value>LireCouleur</value>
+                </prop>
+                <prop oor:name="Context" oor:type="xs:string">
+                    <value>com.sun.star.text.TextDocument</value>
+                </prop>
+                <node oor:name="Submenu">
+                    <node oor:name="lire.libre.lirecouleur.menu01" oor:op="replace"> <!-- menu généraux -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Nouveau document LireCouleur</value>
+                            <value xml:lang="en">New LireCouleur document</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.NewLireCouleurDocument</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu02" oor:op="replace"> <!-- menu généraux -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Enregistrer comme modèle LireCouleur</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.LireCouleurModeleDocument</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu03" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Style standard</value>
+                            <value xml:lang="en">Default style</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleDefaut</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu04" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Style noir</value>
+                            <value xml:lang="en">Black style</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleNoir</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu05" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>                    
+                    <node oor:name="lire.libre.lirecouleur.menu06" oor:op="replace"> <!-- configuration -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Configurations</value>
+                        </prop>
+                        <prop oor:name="Context" oor:type="xs:string">
+                            <value>com.sun.star.text.TextDocument</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>xxx</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                        <node oor:name="Submenu">
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu01" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value xml:lang="fr">Configuration LireCouleur</value>
+                                    <value xml:lang="en">Configure LireCouleur</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.GestionnaireConfiguration</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu02" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Consonnes / voyelles</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationConsonneVoyelle</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu03" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Confusions lettres</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationConfusionLettres</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu04" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu05" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Phonèmes alternés</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStylePhonemesAlternes</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu06" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Phonèmes</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationPhonemes</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu07" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Graphèmes complexes</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleGraphemesComplexes</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu08" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Lettres muettes</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleLMuettes</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu09" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu10" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Syllabes colorées</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleSyllDys</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu11" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Syllabes soulignées</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleSyllabes</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu12" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu13" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Espacer les mots</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationEspace</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu14" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Colorer les mots</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleCouleurMots</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu15" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Séparer les mots</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleSepareMots</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu16" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu17" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Surligner les lignes</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleLignesAlternees</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu18" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Marquer les phrases</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStylePhrase</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu19" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu20" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Liaisons obligatoires</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleLiaisons</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu21" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value>Marquer comme liaison</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.ConfigurationStyleLiaisonsForcees</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu22" oor:op="replace">
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>private:separator</value>
+                                </prop>
+                            </node>                    
+                            <node oor:name="lire.libre.lirecouleur.menu05.menu23" oor:op="replace">
+                                <prop oor:name="Title" oor:type="xs:string">
+                                    <value xml:lang="fr">Dictionnaire LireCouleur</value>
+                                    <value xml:lang="en">LireCouleur Dictionary</value>
+                                </prop>
+                                <prop oor:name="URL" oor:type="xs:string">
+                                    <value>service:org.lirecouleur.GestionnaireDictionnaire</value>
+                                </prop>
+                                <prop oor:name="Target" oor:type="xs:string">
+                                    <value>_self</value>
+                                </prop>
+                            </node>
+                        </node>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu07" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>                    
+                    <node oor:name="lire.libre.lirecouleur.menu08" oor:op="replace"> <!-- lettres -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Consonnes / voyelles</value>
+                            <value xml:lang="en">Consonant / vowel</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.ConsonneVoyelle</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu09" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Confusions lettres</value>
+                            <value xml:lang="en">Letters confusion</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.ConfusionLettres</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu10" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu11" oor:op="replace"> <!-- phonèmes -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Phonèmes alternés</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StylePhonemesAlternes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu12" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Phonèmes</value>
+                            <value xml:lang="en">Phonemes</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StylePhonemes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu13" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Graphèmes complexes</value>
+                            <value xml:lang="en">Complex graphemes</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleGraphemesComplexes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu14" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Lettres muettes</value>
+                            <value xml:lang="en">Show silent letters</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleLMuettes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu15" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Enlever les symboles sous certains sons</value>
+                            <value xml:lang="en">Remove symbols unde some phonems</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.SupprimerDecos</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu16" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Marquer comme phonème muet</value>
+                            <value xml:lang="en">Set as silent phoneme</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StylePhonMuet</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu17" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu18" oor:op="replace"> <!-- syllabes -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Syllabes colorées</value>
+                            <value xml:lang="en">Colored syllables</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleSyllDys</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu19" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Syllabes soulignées</value>
+                            <value xml:lang="en">Set arcs under syllables</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleSyllabes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu20" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Enlever les arcs sous les syllabes</value>
+                            <value xml:lang="en">Remove arcs under the syllables</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.SupprimerSyllabes</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu21" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu22" oor:op="replace"> <!-- mots -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Espacer les mots</value>
+                            <value xml:lang="en">Space out words</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleEspace</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu23" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Colorer les mots</value>
+                            <value xml:lang="en">Colourize out words</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleCouleurMots</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu24" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Séparer les mots</value>
+                            <value xml:lang="en">Separate words</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleSepareMots</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu25" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu26" oor:op="replace"> <!-- lignes et phrases -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Surligner les lignes</value>
+                            <value xml:lang="en">Highlight lines</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleLignesAlternees</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu27" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Surligner les phrases</value>
+                            <value xml:lang="en">Highlight sentences</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StylePhrase</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu28" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu29" oor:op="replace"> <!-- liaisons -->
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Liaisons obligatoires</value>
+                            <value xml:lang="en">Main liaisons</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleLiaisons</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="lire.libre.lirecouleur.menu30" oor:op="replace">
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value xml:lang="fr">Marquer comme liaison</value>
+                            <value xml:lang="en">Force liaisons</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.lirecouleur.StyleLiaisonsForcees</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                </node>
+            </node>
+        </node>
 
 		<node oor:name="Images">
 			<node oor:name="org.lirecouleur.img1" oor:op="replace">
@@ -523,7 +734,7 @@
 			</node>
 			<node oor:name="org.lirecouleur.img15" oor:op="replace">
 				<prop oor:name="URL" oor:type="xs:string">
-					<value>service:org.lirecouleur.ConfusionBDPQ</value>
+					<value>service:org.lirecouleur.ConfusionLettres</value>
 				</prop>
 				<node oor:name="UserDefinedImages">
 					<prop oor:name="ImageSmallURL" oor:type="xs:string">
@@ -674,6 +885,19 @@
 					</prop>
 					<prop oor:name="ImageBigURL" oor:type="xs:string">
 						<value>%origin%/images/config_styles_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="org.lirecouleur.img27" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.lirecouleur.StylePhonemesAlternes</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL" oor:type="xs:string">
+						<value>%origin%/images/alternphon_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL" oor:type="xs:string">
+						<value>%origin%/images/alternphon_26.png</value>
 					</prop>
 				</node>
 			</node>
