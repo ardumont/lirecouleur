@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE manifest:manifest PUBLIC "-//OpenOffice.org//DTD Manifest 1.0//EN" "Manifest.dtd">
+<manifest:manifest xmlns:manifest="http://openoffice.org/2001/manifest">
+    <manifest:file-entry manifest:media-type="application/vnd.sun.star.uno-component;type=Python" 
+        manifest:full-path="lirecouleurooo.py" />
+    <manifest:file-entry manifest:media-type="application/vnd.sun.star.uno-component;type=Python" 
+        manifest:full-path="lcfactory.py" />
+    <manifest:file-entry manifest:full-path="Factories.xcu"
+        manifest:media-type="application/vnd.sun.star.configuration-data"/>
+    <manifest:file-entry manifest:media-type="application/vnd.sun.star.configuration-data" 
+        manifest:full-path="AddonUI.xcu" />
+    <manifest:file-entry manifest:full-path="WriterWindowState.xcu"
+        manifest:media-type="application/vnd.sun.star.configuration-data"/>
+    <manifest:file-entry manifest:full-path="lirecouleur.xcs"
+        manifest:media-type="application/vnd.sun.star.configuration-schema"/>
+    <manifest:file-entry manifest:full-path="lirecouleur.xcu"
+        manifest:media-type="application/vnd.sun.star.configuration-data"/>
+</manifest:manifest>

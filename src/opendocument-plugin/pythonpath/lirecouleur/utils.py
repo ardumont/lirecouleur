@@ -197,29 +197,38 @@ from com.sun.star.awt.MenuItemStyle import CHECKABLE as MIS_CHECKABLE
 class Settings(object):
     """ Load and set configuration values. """
     def __init__(self, ctx=None):
-        self._loaded = False
-        self.ctx = ctx
-        if self.ctx is None:
-            self.ctx = uno.getComponentContext()
+        try:
+            self._loaded = False
+            self.ctx = ctx
+            if self.ctx is None:
+                self.ctx = uno.getComponentContext()
+        except:
+            pass
     
     def configure(self, names, values):
         cua = get_config_access(self.ctx, CONFIG_NODE, True)
         try:
             cua.setPropertyValues(names, values)            
             cua.commitChanges()
-        except Exception as e:
-            print('Exception 5:',e)
+        except:
+            pass
+    
+    def getPropertyValue(self, cua, name):
+        try:
+            return cua.getPropertyValue(name)
+        except:
+            pass
     
     def _load(self):
         cua = get_config_access(self.ctx, CONFIG_NODE)
-        self.FPossibles = cua.getPropertyValue("__fonctions_possibles__").split(':')
-        self.TaillIco = cua.getPropertyValue("__taille_icones__")
+        self.FPossibles = self.getPropertyValue(cua, "__fonctions_possibles__").split(':')
+        self.TaillIco = self.getPropertyValue(cua, "__taille_icones__")
         self.Fonctions = {}
         for fct in self.FPossibles:
-            self.Fonctions[fct] = cua.getPropertyValue(fct).split(':')
+            self.Fonctions[fct] = self.getPropertyValue(cua, fct).split(':')
             self.Fonctions[fct][2] = eval(self.Fonctions[fct][2])
         
-        selphon = [ph.split(':') for ph in cua.getPropertyValue("__selection_phonemes__").split(';')]
+        selphon = [ph.split(':') for ph in self.getPropertyValue(cua, "__selection_phonemes__").split(';')]
         self.SelectionPhonemes = dict([[ph[0], eval(ph[1])] for ph in selphon])
         # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle'
         for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u']:
@@ -228,15 +237,16 @@ class Settings(object):
                 self.SelectionPhonemes['w_'+phon] = self.SelectionPhonemes[phon]
             except:
                 pass
-        self.Template = cua.getPropertyValue("__template__")
-        self.Point = cua.getPropertyValue("__point__")
-        choix_syllo = cua.getPropertyValue("__syllo__")
+        self.Template = self.getPropertyValue(cua, "__template__")
+        self.Point = self.getPropertyValue(cua, "__point__")
+        choix_syllo = self.getPropertyValue(cua, "__syllo__")
         if not isinstance(choix_syllo, TYPE_ENTIER):
             choix_syllo = ConstLireCouleur.SYLLABES_LC+10*ConstLireCouleur.SYLLABES_ECRITES
         self.Syllo = (choix_syllo%10, choix_syllo/10)
-        self.Alternate = cua.getPropertyValue("__alternate__")
-        self.Locale = cua.getPropertyValue("__locale__")
-        self.SubSpaces = cua.getPropertyValue("__subspaces__")
+        self.Superpose = self.getPropertyValue(cua, "__superpose__")
+        self.Alternate = self.getPropertyValue(cua, "__alternate__")
+        self.Locale = self.getPropertyValue(cua, "__locale__")
+        self.SubSpaces = self.getPropertyValue(cua, "__subspaces__")
         self._loaded = True
     
     def get(self, name):
@@ -253,6 +263,8 @@ class Settings(object):
             return self.Template
         if name == "__point__":
             return self.Point
+        if name == "__superpose__":
+            return self.Superpose
         if name == "__syllo__":
             return self.Syllo
         if name == "__alternate__":
@@ -264,7 +276,8 @@ class Settings(object):
         try:
             return self.Fonctions[name]
         except:
-            return None
+            return ""
+        return ""
 
     def setValue(self, name, value):
         """ set specified value. """
@@ -289,6 +302,9 @@ class Settings(object):
             elif name == "__syllo__":
                 self.Syllo = value
                 cua.setPropertyValues(("__syllo__",), (value[1]*10+value[0],))
+            elif name == "__superpose__":
+                self.Superpose = value
+                cua.setPropertyValues(("__superpose__",), (value,))
             elif name == "__alternate__":
                 self.Alternate = value
                 cua.setPropertyValues(("__alternate__",), (value,))
@@ -304,4 +320,4 @@ class Settings(object):
 
             cua.commitChanges()
         except Exception as e:
-            print('Exception 5:',e, name, value)
+            pass

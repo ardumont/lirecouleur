@@ -34,9 +34,9 @@ from .utils import (create_control, create_container, create_controls,
 from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_bdpq__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
-        __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_phonemes_complexes__,
+        __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
         __lirecouleur_phrase__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
-        __lirecouleur_syllabes__,__new_lirecouleur_document__)
+        __lirecouleur_syllabes__,__new_lirecouleur_document__,__lirecouleur_alterne_phonemes__)
 
 class lirecouleurModel(unohelper.Base, XUIElement, XToolPanel, XComponent):
     """ LireCouleur model. """
@@ -296,8 +296,8 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
                     __lirecouleur_lignes__(xDocument)
                 elif cmd == 'StylePhonMuet':
                     __lirecouleur_phon_muet__(xDocument)
-                elif cmd == 'StylePhonemesComplexes':
-                    __lirecouleur_phonemes_complexes__(xDocument)
+                elif cmd == 'StyleGraphemesComplexes':
+                    __lirecouleur_graphemes_complexes__(xDocument)
                 elif cmd == 'StylePhrase':
                     __lirecouleur_phrase__(xDocument)
                 elif cmd == 'StyleSepareMots':
@@ -312,6 +312,8 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
                     __lirecouleur_syllabes__(xDocument, 'dys')
                 elif cmd == 'NewLireCouleurDocument':
                     __new_lirecouleur_document__(xDocument, self.ctx)
+                elif cmd == 'StylePhonemesAlternes':
+                    __lirecouleur_alterne_phonemes__(xDocument)
             except:
                 pass
 

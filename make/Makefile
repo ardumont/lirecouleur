@@ -1,21 +1,29 @@
 all : lirecouleur.oxt tests web
 
 clean :
-	rm -r images locale pythonpath template lirecouleur.dic lirecouleurooo.py AddonUI.xcu description.xml lirecouleur.oxt ../tests/lirecouleur.* ../src/firefox-plugin/data/lirecouleur.js
+	rm -r images locale pythonpath template lirecouleur.dic lirecouleurooo.py AddonUI.xcu description.xml lirecouleur.oxt
+	rm -r Factories.xcu lirecouleur.xcu WriterWindowState.xcu lirecouleur.xcs lcfactory.py icon.png
+	rm ../tests/lirecouleur.* 
+	rm -r ../src/firefox-plugin/data/lirecouleur.js
 
-core : Descriptions/descr-fr.txt Legal/license-fr.txt META-INF/manifest.xml WindowState/tbWriter.xcu ../src/opendocument-plugin/lirecouleurooo.py ../src/opendocument-plugin/pythonpath/lirecouleur.py
+core : ../src/opendocument-plugin
 	cp -r ../src/opendocument-plugin/* .
 
-lirecouleur.oxt : core standard_oxt/AddonUI.xcu standard_oxt/description.xml
-	cp standard_oxt/* .
-	zip -r $@ WindowState locale template pythonpath Legal META-INF Descriptions images
+lirecouleur.oxt : core
+	zip -r $@ locale template pythonpath Legal META-INF Descriptions images
+	zip $@ lcfactory.py
 	zip $@ lirecouleurooo.py
 	zip $@ description.xml
+	zip $@ lirecouleur.xcs
+	zip $@ lirecouleur.xcu
 	zip $@ lirecouleur.dic
 	zip $@ AddonUI.xcu
+	zip $@ WriterWindowState.xcu
+	zip $@ Factories.xcu
+	zip $@ icon.png
 
-tests : ../src/opendocument-plugin/pythonpath/lirecouleur.py ../src/opendocument-plugin/lirecouleur.dic ../tests/tests_lirecouleur.py
-	cp ../src/opendocument-plugin/pythonpath/lirecouleur.py ../tests/
+tests : ../src/opendocument-plugin/pythonpath/lirecouleur/lirecouleur.py ../src/opendocument-plugin/lirecouleur.dic ../tests/tests_lirecouleur.py
+	cp ../src/opendocument-plugin/pythonpath/lirecouleur/lirecouleur.py ../tests/
 	cp ../src/opendocument-plugin/lirecouleur.dic ../tests/
 	python ../tests/tests_lirecouleur.py
 

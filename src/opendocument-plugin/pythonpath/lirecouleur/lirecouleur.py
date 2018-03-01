@@ -917,7 +917,7 @@ autom = {
     'e' : [['conj_v_ier','uient','ien','ien_2','een','except_en_1','except_en_2','_ent','clef','hier','adv_emment_fin',
             'ment','imparfait','verbe_3_pluriel','au',
             'avoir','monsieur','jeudi','jeu_','eur','eu','eu_accent_circ','in','eil','y','iy','ennemi','enn_debut_mot','dessus_dessous',
-            'et','cet','t_final','eclm_final','est','es','drz_final','n','adv_emment_a','femme','lemme','em_gene','nm','tclesmesdes',
+            'et','cet','t_final','eclm_final','est','drz_final','n','adv_emment_a','femme','lemme','em_gene','nm','tclesmesdes',
             'que_isole','que_gue_final','jtcnslemede','jean','ge','eoi','ex','ef','reqquechose','2consonnes','abbaye','e_muet','e_caduc','e_deb'],
             {'_ent':[regle_mots_ent,'a~',2], ## quelques mots (adverbes ou noms) terminés par ent
             'adv_emment_fin':[{'-':r"emm",'+':r"nt"},'a~',2], ## adverbe avec 'emment' => se termine par le son [a~]
@@ -954,7 +954,6 @@ autom = {
             'eu':[{'+':r"u"},'x',2],
             'eu_accent_circ':[{'+':u(r"û")},'x^',2],
             'est':[{'-':r"^",'+':r"st$"},'e^_comp',3],
-            'es':[{'-':r"^",'+':r"s$"},'e^_comp',2],
             'et':[{'-':r"^",'+':r"t$"},'e_comp',2],
             'eil':[{'+':r"il"},'e^_comp',1],
             'y':[{'+':u(r"y[aeiouéèêààäôâ]")},'e^_comp',1],

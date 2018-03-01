@@ -52,7 +52,7 @@ import re
 from .utils import (Settings, create_uno_service, create_uno_struct)
 from .lirecouleur import *
 
-__version__ = "4.0.0"
+__version__ = "4.1.0"
 
 # create LANG environment variable
 import locale
@@ -466,6 +466,18 @@ __style_phon_complexes__ = {
         'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
         }
 
+style_phon_altern = {
+        '1' : {'CharStyleName':'altern_phon_1'},
+        '2' : {'CharStyleName':'altern_phon_2'},
+        '3' : {'CharStyleName':'altern_phon_3'}
+        }
+
+__style_phon_altern__ = {
+        '1' : {'CharColor':0x000000ff},
+        '2' : {'CharColor':0x00ff0000},
+        '3' : {'CharColor':0x0000ff00}
+        }
+
 style_syll_dys = {
         '1': {'CharStyleName':'syll_dys_1'},
         '2': {'CharStyleName':'syll_dys_2'},
@@ -568,7 +580,8 @@ style_semi = {
 ######################################################################################
 styles_phonemes = {
         'perso' : style_phon_perso,
-        'complexes' : style_phon_complexes
+        'complexes' : style_phon_complexes,
+        'alterne' : style_phon_altern
         }
 
 styles_syllabes = {
@@ -720,6 +733,7 @@ def importStylesLireCouleur(xModel):
         createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
         createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
         createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
+        createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
         createCharacterStyles(xModel, style_yod, __style_yod__)
         createCharacterStyles(xModel, style_wau, __style_wau__)
 
@@ -915,7 +929,7 @@ def formaterTexte(texte, ooocursor, choix_styl):
 ###################################################################################
 # Transcode les phonèmes en couleurs selon le style choisi
 ###################################################################################
-def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, decos_phonomes=False):
+def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, decos_phonemes=False):
     stylphon = ''
     nb_phon = len(phonemes)
     i_phon = range(nb_phon)
@@ -955,7 +969,7 @@ def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, de
                     if stylphon in styles_phonemes[style]:
                         # appliquer le style demandé
                         cur = formaterTexte(txt_phon, cur, styles_phonemes[style][stylphon])
-                        if decos_phonomes and xDocument.supportsService("com.sun.star.text.TextDocument"):
+                        if decos_phonemes and xDocument.supportsService("com.sun.star.text.TextDocument"):
                             cur.goLeft(len(txt_phon), False)
                             if stylphon == '#':
                                 cur = marquePoint(xDocument, txt_phon, cur)
@@ -963,7 +977,7 @@ def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, de
                                 cur = marqueImage(xDocument, stylphon, txt_phon, cur)
                     else:
                         # style non défini : appliquer le style par défaut
-                        cur = formaterTexte(txt_phon, cur, 'defaut')
+                        cur = formaterTexte(txt_phon, cur, 'noir')
 
     return cur
 
@@ -1289,7 +1303,7 @@ def getXTextRange(xDocument, fonction='mot', mode=0):
 ###################################################################################
 # Remet un paragraphe dans son style d'origine en espaçant les mots
 ###################################################################################
-def colorier_defaut(paragraphe, cursor, style, choix):
+def colorier_defaut(paragraphe, cursor, choix):
     # placer le curseur au début de la zone de traitement
     cursor.collapseToStart()
     cursor2 = cursor.getText().createTextCursorByRange(cursor)
@@ -1375,7 +1389,7 @@ def colorier_phrase(texte, cursor, style):
 ###################################################################################
 # Conversion d'un paragraphe en mettant ses phonèmes en couleur
 ###################################################################################
-def colorier_phonemes_style(xDocument, paragraphe, cursor, style):
+def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
     # chargement du dictionnaire de décodage
     loadLCDict(getLirecouleurDictionary())
 
@@ -1399,13 +1413,27 @@ def colorier_phonemes_style(xDocument, paragraphe, cursor, style):
         # code le coloriage du paragraphe
         curs = curMot
         curs.collapseToStart()
-        for umot in pp:
-            if isinstance(umot, list):
-                # recodage du mot en couleurs
-                curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_lmuette)
-            else:
-                # passage de la portion de texte non traitée (ponctuation, espaces...)
-                curs = deplacerADroite(umot, curs)
+        if style == 'alterne':
+            for umot in pp:
+                if isinstance(umot, list):
+                    # recodage du mot en couleurs
+                    iphon = 0
+                    for i in range(len(umot)):
+                        phon = umot[i]
+                        if len(phon) > 0:
+                            curs = formaterTexte(phon[1], curs, style_phon_altern[str(iphon+1)])
+                            iphon = (iphon + 1)%nb_altern
+                else:
+                    # passage de la portion de texte non traitée (ponctuation, espaces...)
+                    curs = deplacerADroite(umot, curs)
+        else:
+            for umot in pp:
+                if isinstance(umot, list):
+                    # recodage du mot en couleurs
+                    curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_lmuette)
+                else:
+                    # passage de la portion de texte non traitée (ponctuation, espaces...)
+                    curs = deplacerADroite(umot, curs)
 
         # ménage
         del pp
@@ -1673,7 +1701,7 @@ def __lirecouleur_defaut__(xDocument, choix='defaut'):
         for xtr in xTextRange:
             theString = xtr.getString()
 
-            colorier_defaut(theString, xtr, 'perso', choix)
+            colorier_defaut(theString, xtr, choix)
         del xTextRange
     except:
         return False
@@ -1925,12 +1953,17 @@ def __lirecouleur_phonemes__(xDocument):
     if xTextRange == None:
         return False
 
+    # récup de l'option de superposition de fonction
+    settings = Settings()
+    superpose = settings.get('__superpose__')
+
     try:
         for xtr in xTextRange:
             theString = xtr.getString()
-            xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
-            colorier_defaut(theString, xtrTemp, 'perso', 'defaut')
-            del xtrTemp
+            if superpose:
+                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
+                colorier_defaut(theString, xtrTemp, 'noir')
+                del xtrTemp
             colorier_phonemes_style(xDocument, theString, xtr, 'perso')
         del xTextRange
     except:
@@ -1938,21 +1971,56 @@ def __lirecouleur_phonemes__(xDocument):
     return True
 
 ###################################################################################
-# Marque les phonèmes sous forme de couleurs en fonction des styles du document
+# Colorie les phonèmes avec une alternance de typographie
 ###################################################################################
-def __lirecouleur_phonemes_complexes__(xDocument):
+def __lirecouleur_alterne_phonemes__(xDocument):
     __arret_dynsylldys__(xDocument)
 
-    """Colorie les phonèmes complexes"""
-
+    """Colorie les phonèmes avec une alternance de typographie"""
     xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
     if xTextRange == None:
         return False
 
+    # récup de la période d'alternance des styles et de l'option de superposition de fonction
+    settings = Settings()
+    nb_altern = settings.get('__alternate__')
+    superpose = settings.get('__superpose__')
+
     try:
         for xtr in xTextRange:
             theString = xtr.getString()
+            if superpose:
+                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
+                colorier_defaut(theString, xtrTemp, 'noir')
+                del xtrTemp
+            colorier_phonemes_style(xDocument, theString, xtr, 'alterne', nb_altern)
+        del xTextRange
+    except:
+        return False
+    return True
 
+###################################################################################
+# Marque les graphèmes complexes en fonction des styles du document
+###################################################################################
+def __lirecouleur_graphemes_complexes__(xDocument):
+    __arret_dynsylldys__(xDocument)
+
+    """Colorie les graphèmes complexes"""
+    xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
+    if xTextRange == None:
+        return False
+
+    # récup de l'option de superposition de fonction
+    settings = Settings()
+    superpose = settings.get('__superpose__')
+
+    try:
+        for xtr in xTextRange:
+            theString = xtr.getString()
+            if superpose:
+                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
+                colorier_defaut(theString, xtrTemp, 'noir')
+                del xtrTemp
             colorier_phonemes_style(xDocument, theString, xtr, 'complexes')
         del xTextRange
     except:
@@ -1974,12 +2042,17 @@ def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
         # Importer les styles de coloriage de texte
         importStylesLireCouleur(xDocument)
 
-        # récup de la période d'alternance des couleurs
+        # récup de la période d'alternance des couleurs et de l'option de superposition de fonction
         settings = Settings()
         nb_altern = settings.get('__alternate__')
+        superpose = settings.get('__superpose__')
 
         for xtr in xTextRange:
             theString = xtr.getString()
+            if superpose:
+                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
+                colorier_defaut(theString, xtrTemp, 'noir')
+                del xtrTemp
             colorier_syllabes_style(xDocument, theString, xtr, style, nb_altern)
         del xTextRange
     except:
@@ -2016,8 +2089,16 @@ def __lirecouleur_l_muettes__(xDocument):
         if xTextRange == None:
             return False
 
+        # récup de l'option de superposition de fonction
+        settings = Settings()
+        superpose = settings.get('__superpose__')
+
         for xtr in xTextRange:
             theString = xtr.getString()
+            if superpose:
+                xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
+                colorier_defaut(theString, xtrTemp, 'noir')
+                del xtrTemp
             colorier_lettres_muettes(xDocument, theString, xtr, 'perso')
 
         del xTextRange

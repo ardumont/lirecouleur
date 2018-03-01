@@ -56,10 +56,10 @@ from lirecouleur.utils import (Settings, create_uno_service, create_uno_struct)
 from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_bdpq__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
-        __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_phonemes_complexes__,
+        __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
         __lirecouleur_phrase__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
         __lirecouleur_syllabes__,__arret_dynsylldys__,__new_lirecouleur_document__,getLirecouleurDirectory,
-        getLirecouleurDictionary,__lirecouleur_dynsylldys__, importStylesLireCouleur)
+        getLirecouleurDictionary,__lirecouleur_dynsylldys__,__lirecouleur_alterne_phonemes__,importStylesLireCouleur)
 
 ######################################################################################
 # Gestionnaire d'événement de la boite de dialogue
@@ -944,14 +944,11 @@ def __gestionnaire_styles_dialog__(xDocument, xContext):
     # i18n
     i18n()
 
-    try:
-        # Importer les styles de coloriage de texte
-        importStylesLireCouleur(xDocument)
-    except:
-        pass
-
     # get the service manager
     smgr = xContext.ServiceManager
+
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
 
     # create the dialog model and set the properties
     dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", xContext)
@@ -1218,17 +1215,17 @@ def lirecouleur_phonemes( args=None ):
 ###################################################################################
 # Marque les phonèmes sous forme de couleurs en fonction des styles du document
 ###################################################################################
-class StylePhonemesComplexes(unohelper.Base, XJobExecutor):
-    """Colorie les phonèmes complexes"""
+class StyleGraphemesComplexes(unohelper.Base, XJobExecutor):
+    """Colorie les graphèmes complexes"""
     def __init__(self, ctx):
         self.ctx = ctx
     def trigger(self, args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
-        __lirecouleur_phonemes_complexes__(desktop.getCurrentComponent())
+        __lirecouleur_graphemes_complexes__(desktop.getCurrentComponent())
 
-def lirecouleur_phonemes_complexes( args=None ):
-    """Colorie les phonèmes complexes"""
-    __lirecouleur_phonemes_complexes__(XSCRIPTCONTEXT.getDocument())
+def lirecouleur_graphemes_complexes( args=None ):
+    """Colorie les graphèmes complexes"""
+    __lirecouleur_graphemes_complexes__(XSCRIPTCONTEXT.getDocument())
 
 
 ###################################################################################
@@ -1422,6 +1419,22 @@ def lirecouleur_lignes( args=None ):
     __lirecouleur_lignes__(XSCRIPTCONTEXT.getDocument())
 
 
+###################################################################################
+# Colorie les phonèmes avec une alternance de couleurs.
+###################################################################################
+class StylePhonemesAlternes(unohelper.Base, XJobExecutor):
+    """Alterne les styles pour les phonèmes du document"""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_alterne_phonemes__(desktop.getCurrentComponent())
+
+def lirecouleur_alterne_phonemes( args=None ):
+    """Alterne les styles pour les phonèmes du document -- dyslexiques"""
+    __lirecouleur_alterne_phonemes__(XSCRIPTCONTEXT.getDocument())
+
+
 """
     Création d'un nouveau document LireCouleur
 """
@@ -1606,10 +1619,10 @@ class LireCouleurHandler(unohelper.Base, XKeyHandler):
 g_exportedScripts = lirecouleur_defaut, lirecouleur_espace, lirecouleur_phonemes, lirecouleur_syllabes, \
 lirecouleur_sylldys, lirecouleur_l_muettes, gestionnaire_config_dialog, lirecouleur_liaisons, \
 lirecouleur_liaisons_forcees, lirecouleur_bdpq, lirecouleur_suppr_syllabes, lirecouleur_lignes, \
-lirecouleur_phrase, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_phonemes_complexes, \
+lirecouleur_phrase, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_graphemes_complexes, \
 new_lirecouleur_document, gestionnaire_dictionnaire_dialog, lirecouleur_espace_lignes, lirecouleur_consonne_voyelle, \
 lirecouleur_large, lirecouleur_extra_large, lirecouleur_noir, lirecouleur_separe_mots, \
-lirecouleur_couleur_mots, gestionnaire_styles_dialog,
+lirecouleur_couleur_mots, gestionnaire_styles_dialog, lirecouleur_alterne_phonemes,
 
 # --- faked component, dummy to allow registration with unopkg, no functionality expected
 g_ImplementationHelper = unohelper.ImplementationHelper()
@@ -1683,7 +1696,7 @@ g_ImplementationHelper.addImplementation( \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
-    StylePhonemesComplexes,'org.lirecouleur.StylePhonemesComplexes', \
+    StyleGraphemesComplexes,'org.lirecouleur.StyleGraphemesComplexes', \
     ('com.sun.star.task.Job',))
 
 g_ImplementationHelper.addImplementation( \
@@ -1716,5 +1729,9 @@ g_ImplementationHelper.addImplementation( \
 
 g_ImplementationHelper.addImplementation( \
     StyleCouleurMots,'org.lirecouleur.StyleCouleurMots', \
+    ('com.sun.star.task.Job',))
+
+g_ImplementationHelper.addImplementation( \
+    StylePhonemesAlternes,'org.lirecouleur.StylePhonemesAlternes', \
     ('com.sun.star.task.Job',))
 

@@ -157,11 +157,11 @@
 								</node>
 								<node oor:name="N012" oor:op="replace">
 									<prop oor:name="Title" oor:type="xs:string">
-										<value xml:lang="fr">Phonèmes complexes</value>
-										<value xml:lang="en">Complex phonemes</value>
+										<value xml:lang="fr">Graphèmes complexes</value>
+										<value xml:lang="en">Complex graphemes</value>
 									</prop>
 									<prop oor:name="URL" oor:type="xs:string">
-										<value>service:org.lirecouleur.StylePhonemesComplexes</value>
+										<value>service:org.lirecouleur.StyleGraphemesComplexes</value>
 									</prop>
 									<prop oor:name="Target" oor:type="xs:string">
 										<value>_self</value>
@@ -510,7 +510,7 @@
 			</node>
 			<node oor:name="org.lirecouleur.img14" oor:op="replace">
 				<prop oor:name="URL" oor:type="xs:string">
-					<value>service:org.lirecouleur.StylePhonemesComplexes</value>
+					<value>service:org.lirecouleur.StyleGraphemesComplexes</value>
 				</prop>
 				<node oor:name="UserDefinedImages">
 					<prop oor:name="ImageSmallURL" oor:type="xs:string">
