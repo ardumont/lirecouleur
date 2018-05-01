@@ -747,14 +747,14 @@ autom = {
             'nisole':[{'+':r"$",'-':r"^"},'n',1], ## exemple : n'a
             'apostrophe':[{'+':r"(\'|\’)"},'n',2] ## apostrophe
             }],
-    'o' : [['in','oignon','i','ouat','oui','oue','tomn','monsieur','n','m','nm','y1','y2','u','o','oe_0',
+    'o' : [['in','oignon','i','oua','oui','oue','tomn','monsieur','n','m','nm','y1','y2','u','o','oe_0',
             'oe_1','oe_2', 'oe_3','voeux','oeufs','noeud','oeu_defaut','oe_defaut'],
             {'in':[{'+':r"i[nm]([bcçdfghjklnmpqrstvwxz]|$)"},'w_e~',3],
             'oignon':[{'-':r"^",'+':r"ignon"},'o',2],
             'i':[{'+':u(r"(i|î)")},'wa',2],
             'oue':[{'-':r"^",'+':u(r"ue")},'w_e^_comp',3], # ouest, oued
             'oui':[{'-':r"^",'+':u(r"ui")},'w_i',3], # oui
-            'ouat':[{'+':u(r"uat")},'wa',3],
+            'oua':[{'+':u(r"ua([bcçdfghjklpqrstvwxz]|$)")},'wa',3],
             'u':[{'+':u(r"[uwûù]")},'u',2], ## son [u] : clou, clown
             'tomn':[{'-':r"t",'+':r"mn"},'o',1], ## regle spécifique pour 'automne' et ses dérivés
             'monsieur':[{'-':r"m",'+':r"nsieur"},'q',2],

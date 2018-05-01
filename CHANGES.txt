@@ -1,3 +1,8 @@
+------------------------- 4.7 ------------------------- 
+Corrections :
+* homogénéisation du décodage pour les "w" -- correction de la règle 'ouat'
+
+
 ------------------------- 4.6.2 ------------------------- 
 Corrections :
 * boite de dialogue mal gérée sur les alternances de couleurs (phonèmes, sylabes, mots, lignes)
