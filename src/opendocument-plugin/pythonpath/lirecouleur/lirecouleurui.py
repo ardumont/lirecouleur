@@ -27,32 +27,16 @@
 ###################################################################################
 
 import uno
-import unohelper
-import traceback
-import sys
-import os
 import gettext
-from gettext import gettext as _
-from com.sun.star.awt import (XWindowListener, XActionListener, XMouseListener)
-
-from com.sun.star.awt import XKeyHandler
-from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-from com.sun.star.awt import Rectangle
-from com.sun.star.awt.KeyModifier import MOD2
-from com.sun.star.awt.Key import LEFT as keyLeft
-from com.sun.star.awt.Key import RIGHT as keyRight
-
-try:
-    # nécessaire pour Python 3
-    from functools import reduce
-except:
-    pass
-import string
+import os
+import sys
 import re
-from .utils import (Settings, create_uno_service, create_uno_struct)
-from .lirecouleur import *
 
-__version__ = "4.6.0"
+from .utils import (Settings, create_uno_service, create_uno_struct)
+from .lirecouleur import (generer_paragraphe_phonemes, pretraitement_texte, nettoyeur_caracteres, loadLCDict, u,
+                          teste_liaison, generer_paragraphe_syllabes)
+
+__version__ = "4.6"
 
 # create LANG environment variable
 import locale
@@ -60,8 +44,6 @@ if os.getenv('LANG') is None:
     lang, enc = locale.getdefaultlocale()
     os.environ['LANG'] = lang
 #os.environ['LANGUAGE'] = os.environ['LANG']
-
-__memoKeys__ = {}
 
 #########################################################################################################
 #########################################################################################################
@@ -92,9 +74,15 @@ def getLirecouleurTemplateURL():
     if os.path.isfile(tempname):
         return uno.systemPathToFileUrl(tempname)
     
-    url = os.sep.join([getLirecouleurURL(), "template", "lirecouleur.ott"])
-    if os.path.isfile(uno.fileUrlToSystemPath(url)):
-        return url
+    url = getLirecouleurURL()
+    if not url is None:
+        url = os.sep.join([url, "template", "lirecouleur.ott"])
+        if os.path.isfile(uno.fileUrlToSystemPath(url)):
+            return url
+    for chem in sys.path:
+        url = os.sep.join([chem, "template", "lirecouleur.ott"])
+        if os.path.isfile(url):
+            return uno.systemPathToFileUrl(url)
     return ""
 
 def getLirecouleurDictionary():
@@ -149,21 +137,28 @@ def getLirecouleurURL():
     try:
         # just for debugging outside the extension scope
         filename = uno.fileUrlToSystemPath(__file__)
-        return uno.sytemPathToFileUrl(os.path.dirname(os.path.abspath(filename)))
+        return uno.systemPathToFileUrl(os.path.dirname(os.path.abspath(filename)))
     except:
         pass
 
-    xPathSettingsService = create_uno_service('com.sun.star.util.PathSettings')
-    xUserPath = xPathSettingsService.getPropertyValue('UserConfig').split(os.sep)[:-1]
-    xUserPath.extend(['Scripts', 'python'])
-    return os.sep.join(xUserPath)
+    try:
+        xPathSettingsService = create_uno_service('com.sun.star.util.PathSettings')
+        xUserPath = xPathSettingsService.getPropertyValue('UserConfig').split(os.sep)[:-1]
+        xUserPath.extend(['Scripts', 'python'])
+        return os.sep.join(xUserPath)
+    except:
+        pass
+    return None
 
 """
     Get the name of the directory of LireCouleur
 """
 def getLirecouleurDirectory():
     """Get the name of the directory of LireCouleur"""
-    return uno.fileUrlToSystemPath(getLirecouleurURL())
+    try:
+        return uno.fileUrlToSystemPath(getLirecouleurURL())
+    except:
+        return ""
 
 """
 
@@ -310,16 +305,6 @@ style_phon_complexes = {
         'voyelle':{'CharStyleName':'phon_voyelle'},
         'ponctuation':{'CharStyleName':'ponctuation'},
         'defaut':{'CharStyleName':__style_par_defaut__}
-        }
-
-style_syll_souligne = {
-        '1': {'CharUnderline':3,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000},
-        '2': {'CharUnderline':1,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000}
-        }
-
-__style_syll_souligne__ = {
-        '1': {'CharUnderline':3,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000},
-        '2': {'CharUnderline':1,'CharUnderlineHasColor':True,'CharUnderlineColor':0X0000000}
         }
 
 __style_phon_perso__ = {
@@ -571,7 +556,6 @@ styles_phonemes = {
         }
 
 styles_syllabes = {
-        'souligne' : style_syll_souligne,
         'dys' : style_syll_dys
         }
 
@@ -671,26 +655,6 @@ def makePoint(nX, nY):
     return oPoint
 
 ######################################################################################
-# Lecture d'un style de présentation dans le fichier .lirecouleur
-######################################################################################
-def handleStyle(styleName):
-    """Lecture d'un style de présentation dans le fichier .lirecouleur"""
-    if not(styleName in globals()):
-        globals()[styleName] = {}
-
-    # read the application data file content
-    adata = readAppData()
-    if not styleName in adata:
-        return False
-
-    # transfer the configuration data in the resulting dict
-    for phonid in adata[styleName]:
-        globals()[styleName][phonid] = adata[styleName][phonid]
-    del adata
-
-    return True
-
-######################################################################################
 # Récupération éventuelle des styles de caractères
 ######################################################################################
 __memDocument__ = None
@@ -707,31 +671,21 @@ def importStylesLireCouleur(xModel):
         """
         ''' chemin d'accès au fichier qui contient les styles à utiliser '''
         url = getLirecouleurTemplateURL()
-        try:
-            ppp = create_uno_struct("com.sun.star.beans.PropertyValue")
-            ppp.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
-            ppp.Value = False
-            res = xModel.getStyleFamilies().loadStylesFromURL(url, (ppp,))
-        except:
-            pass
-        createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
-        createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
-        createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
-        createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
-        createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
-        createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
-        createCharacterStyles(xModel, style_yod, __style_yod__)
-        createCharacterStyles(xModel, style_wau, __style_wau__)
-
-        if not handleStyle("style_syll_souligne"):
-            try:
-                ''' En désespoir de cause, on fait une copie du style de sauvegarde '''
-                globals()["styles_syllabes"]["souligne"] = globals()["__style_syll_souligne__"]
-                saveAppData("style_syll_souligne", globals()["__style_syll_souligne__"])
-            except:
-                pass
+        ppp = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
+        ppp.Value = False
+        xModel.getStyleFamilies().loadStylesFromURL(url, (ppp,))
     except:
         pass
+        
+    createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
+    createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
+    createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
+    createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
+    createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
+    createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
+    createCharacterStyles(xModel, style_yod, __style_yod__)
+    createCharacterStyles(xModel, style_wau, __style_wau__)
 
 ######################################################################################
 # Place un point sous une lettre muette
@@ -744,7 +698,7 @@ def marquePoint(xDocument, txt_phon, cursor):
     from com.sun.star.text.VertOrientation import CHAR_BOTTOM
 
     xText = cursor.getText()
-    oWindow = xDocument.getCurrentController().getFrame().getContainerWindow()
+    __oWindow = xDocument.getCurrentController().getFrame().getContainerWindow()
 
     xViewCursorSupplier = xDocument.getCurrentController()
     xTextViewCursor = xViewCursorSupplier.getViewCursor()
@@ -992,7 +946,6 @@ def code_syllabes(xDocument, syllabes, isyl, style, cursor, nb_altern=3):
                 #return deplacerADroite(syllabes[0], cursor), nisyl
 
             xText = cursor.getText()
-            oWindow = xDocument.getCurrentController().getFrame().getContainerWindow()
             mot = pretraitement_texte(''.join(syllabes).lower())
 
             xViewCursorSupplier = xDocument.getCurrentController()
@@ -1157,13 +1110,12 @@ def getXTextRange(xDocument, fonction='mot', mode=0):
         return getXCellTextRange(xDocument, xIndexAccess)
 
     xTextRanges = []
-    count = 0
+    xTextRange = None
     try:
-        count = xIndexAccess.getCount()
+        xTextRange = xIndexAccess.getByIndex(0)
     except:
         return None
 
-    xTextRange = xIndexAccess.getByIndex(0)
     theString = xTextRange.getString()
     xText = xTextRange.getText() ## get the XText interface
 
@@ -1422,7 +1374,7 @@ def colorier_lettres_muettes(xDocument, paragraphe, cursor, style):
 ###################################################################################
 # Marque les liaisons dans un paragraphe
 ###################################################################################
-def colorier_liaisons(texte, cursor, style, forcer=False):
+def colorier_liaisons(__texte, cursor, style, forcer=False):
     # segmente le texte en portions mots / non mots
     pp = segmenteParagraphe(cursor)
     
@@ -1586,7 +1538,7 @@ def colorier_consonnes_voyelles(paragraphe, cursor, style):
 ###################################################################################
 # Suppression des arcs de marquage des syllabes pur le paragraphe sélectionné
 ###################################################################################
-def supprimer_arcs_syllabes(xDocument, texte, cursor):
+def supprimer_arcs_syllabes(xDocument, texte, __cursor):
     if xDocument.supportsService("com.sun.star.drawing.DrawingDocument"):
         oDrawDocCtrl = xDocument.getCurrentController()
         oDrawPage = oDrawDocCtrl.getCurrentPage()
@@ -1642,8 +1594,6 @@ def supprimer_deco_sons(xDocument):
 # Élimine tout style de caractère
 ###################################################################################
 def __lirecouleur_defaut__(xDocument, choix='defaut'):
-    __arret_dynsylldys__(xDocument)
-
     """Applique le style par défaut à la sélection"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
@@ -1670,8 +1620,6 @@ def __lirecouleur_noir__(xDocument):
 # Espace les mots de la sélection en dupliquant les espaces
 ###################################################################################
 def __lirecouleur_espace__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Espace les mots de la sélection"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
@@ -1726,8 +1674,6 @@ def __lirecouleur_espace__(xDocument):
 # Espace les mots de la sélection en dupliquant les espaces
 ###################################################################################
 def __lirecouleur_separe_mots__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Sépare les mots de la sélection en coloriant les espaces"""
     xTextRange = getXTextRange(xDocument, fonction='phrase', mode=0)
     if xTextRange == None:
@@ -1771,8 +1717,6 @@ def __lirecouleur_separe_mots__(xDocument):
 # Espace les mots de la sélection en dupliquant les espaces
 ###################################################################################
 def __lirecouleur_couleur_mots__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Sépare les mots de la sélection en coloriant les espaces"""
     xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
     if xTextRange == None:
@@ -1820,8 +1764,6 @@ def __lirecouleur_couleur_mots__(xDocument):
 # Espace les lignes de la sélection
 ###################################################################################
 def __lirecouleur_espace_lignes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
         if xTextRange == None:
@@ -1840,8 +1782,6 @@ def __lirecouleur_espace_lignes__(xDocument):
 # Espace les lignes et les mots de la sélection
 ###################################################################################
 def __lirecouleur_large__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     # espacement des mots
     __lirecouleur_espace__(xDocument)
 
@@ -1872,8 +1812,6 @@ def __lirecouleur_large__(xDocument):
 # Espace les lignes de la sélection ainsi que les caractères
 ###################################################################################
 def __lirecouleur_extra_large__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     # espacement des mots
     __lirecouleur_large__(xDocument)
 
@@ -1897,8 +1835,6 @@ def __lirecouleur_extra_large__(xDocument):
 # Marque les phonèmes sous forme de couleurs en fonction des styles du document
 ###################################################################################
 def __lirecouleur_phonemes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Colorie les phonèmes en couleurs arc en ciel"""
     xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
     if xTextRange == None:
@@ -1925,8 +1861,6 @@ def __lirecouleur_phonemes__(xDocument):
 # Colorie les phonèmes avec une alternance de typographie
 ###################################################################################
 def __lirecouleur_alterne_phonemes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Colorie les phonèmes avec une alternance de typographie"""
     xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
     if xTextRange == None:
@@ -1954,8 +1888,6 @@ def __lirecouleur_alterne_phonemes__(xDocument):
 # Marque les graphèmes complexes en fonction des styles du document
 ###################################################################################
 def __lirecouleur_graphemes_complexes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Colorie les graphèmes complexes"""
     xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
     if xTextRange == None:
@@ -1982,8 +1914,6 @@ def __lirecouleur_graphemes_complexes__(xDocument):
 # Marque les syllabes en alternant les couleurs
 ###################################################################################
 def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
-    __arret_dynsylldys__(xDocument)
-
     """Mise en évidence des syllabes soulignées"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='mot', mode=1)
@@ -2014,8 +1944,6 @@ def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
 # Supprime les arcs sous les syllabes dans le texte sélectionné.
 ###################################################################################
 def __lirecouleur_suppr_syllabes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     try:
         xTextRange = getXTextRange(xDocument, fonction='mot', mode=3)
         if xTextRange == None:
@@ -2032,8 +1960,6 @@ def __lirecouleur_suppr_syllabes__(xDocument):
 # Ne marque que les lettres muettes dans le texte sélectionné.
 ###################################################################################
 def __lirecouleur_l_muettes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Met uniquement en évidence les lettres muettes"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='mot', mode=1)
@@ -2053,8 +1979,6 @@ def __lirecouleur_l_muettes__(xDocument):
 # Formatte toute la sélection comme phonème muet
 ###################################################################################
 def __lirecouleur_phon_muet__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Met uniquement en évidence les lettres muettes"""
     try:
         # Importer les styles de coloriage de texte
@@ -2089,8 +2013,6 @@ def __lirecouleur_phon_muet__(xDocument):
 # Supprime d'éventuelles décorations sous certains sons
 ###################################################################################
 def __lirecouleur_suppr_decos__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     try:
         supprimer_deco_sons(xDocument)
     except:
@@ -2101,8 +2023,6 @@ def __lirecouleur_suppr_decos__(xDocument):
 # Marque la ponctuation d'un texte
 ###################################################################################
 def __lirecouleur_ponctuation__(xDocument):
-    __arret_dynsylldys__(xDocument)
-    
     # caractères de ponctuation recherchés
     ponctuation = u('.!?…,;:«»—()[]')
 
@@ -2146,8 +2066,6 @@ def __lirecouleur_ponctuation__(xDocument):
 # Marque les liaisons dans le texte sélectionné.
 ###################################################################################
 def __lirecouleur_liaisons__(xDocument, forcer=False):
-    __arret_dynsylldys__(xDocument)
-
     """Mise en évidence des liaisons"""
     
     # Commencer par espacer les mots du texte
@@ -2170,8 +2088,6 @@ def __lirecouleur_liaisons__(xDocument, forcer=False):
 # Colorie les lettres sélectionnées pour éviter des confusions.
 ###################################################################################
 def __lirecouleur_confusion_lettres__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Colorie les lettres sélectionnées pour éviter les confusions"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
@@ -2190,8 +2106,6 @@ def __lirecouleur_confusion_lettres__(xDocument):
 # Colorie les consonnes et les voyelles.
 ###################################################################################
 def __lirecouleur_consonne_voyelle__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     """Colorie les consonnes et les voyelles"""
     try:
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
@@ -2210,8 +2124,6 @@ def __lirecouleur_consonne_voyelle__(xDocument):
 # Colorie les lignes avec une alternance de couleurs.
 ###################################################################################
 def __lirecouleur_lignes__(xDocument):
-    __arret_dynsylldys__(xDocument)
-
     #the writer controller impl supports the css.view.XSelectionSupplier interface
     xSelectionSupplier = xDocument.getCurrentController()
     xIndexAccess = xSelectionSupplier.getSelection()
@@ -2265,9 +2177,7 @@ def __lirecouleur_lignes__(xDocument):
 """
     Création d'un nouveau document LireCouleur
 """
-def __new_lirecouleur_document__(xDocument, ctx):
-    __arret_dynsylldys__(xDocument)
-
+def __new_lirecouleur_document__(__xDocument, ctx):
     url = getLirecouleurTemplateURL()
     try:
         desktop = create_uno_service('com.sun.star.frame.Desktop', ctx)
@@ -2275,62 +2185,15 @@ def __new_lirecouleur_document__(xDocument, ctx):
             ppp = create_uno_struct("com.sun.star.beans.PropertyValue")
             ppp.Name = "AsTemplate" # le fichier va servir de modèle
             ppp.Value = True
-            monDocument = desktop.loadComponentFromURL(url, "_blank", 0, (ppp,))
+            desktop.loadComponentFromURL(url, "_blank", 0, (ppp,))
         else:
-            monDocument = desktop.loadComponentFromURL(url, "_blank", 0, ())
+            desktop.loadComponentFromURL(url, "_blank", 0, ())
         return
     except:
         pass
 
     try:
-        monDocument = desktop.loadComponentFromURL('private:factory/swriter', "_blank", 0, ())
+        desktop.loadComponentFromURL('private:factory/swriter', "_blank", 0, ())
     except:
         pass
 
-###################################################################################
-# Fonctions appelées pour le coloriage dynamique des syllabes
-###################################################################################
-def __lirecouleur_dynsylldys__(xDocument):
-    """Mise en évidence des syllabes soulignées dynamiquement"""
-
-    oConfigProvider = create_uno_service('com.sun.star.configuration.ConfigurationProvider')
-    ppp = create_uno_struct("com.sun.star.beans.PropertyValue")
-    ppp.Name = "nodepath"
-    ppp.Value = "/org.openoffice.Setup/Product"
-    xConfig = oConfigProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (ppp,))
-    # le bug à corriger apparaît sur Apache OpenOffice sous Linux (pas Windows) - Mac non testé
-    applic = xConfig.getByName("ooName").lower().startswith('openoffice') and not sys.platform.startswith('win')
-
-    try:
-        global __memoKeys__
-        __arret_dynsylldys__(xDocument)
-        
-        key = xDocument.RuntimeUID
-        __memoKeys__[key] = {'doc':xDocument, 'handler':LireCouleurHandler(xDocument, applic)}
-
-        # enable/disable the key handlers
-        __memoKeys__[key]['handler'].enable(True)
-
-        # register the key handlers
-        xDocument.getCurrentController().addKeyHandler(__memoKeys__[key]['handler'])
-    except:
-        pass
-
-def __arret_dynsylldys__(xDocument):
-    """Arrêt de la mise en évidence des syllabes soulignées dynamiquement"""
-    try:
-        global __memoKeys__
-        key = xDocument.RuntimeUID
-        xDocument.getCurrentController().removeKeyHandler(__memoKeys__[key]['handler'])
-        del __memoKeys__[key]['handler']
-        __memoKeys__[key]['handler'] = None
-        __memoKeys__[key]['doc'] = None
-        
-        xTextViewCursor = xDocument.getCurrentController().getViewCursor()
-        curseur = xTextViewCursor.getText().createTextCursorByRange(xTextViewCursor)
-        curseur.gotoStartOfWord(False)
-        curseur.gotoEndOfWord(True)
-        curseur.setPropertyToDefault('CharBackColor')
-        del curseur
-    except:
-        pass

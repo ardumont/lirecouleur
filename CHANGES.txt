@@ -1,3 +1,9 @@
+------------------------- 4.6.2 ------------------------- 
+Corrections :
+* boite de dialogue mal gérée sur les alternances de couleurs (phonèmes, sylabes, mots, lignes)
+
+Nettoyage du code
+
 ------------------------- 4.6.0 ------------------------- 
 Corrections :
 * envers : le "r" n'était pas correctement décodé

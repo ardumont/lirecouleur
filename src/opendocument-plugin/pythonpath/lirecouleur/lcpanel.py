@@ -26,10 +26,9 @@ from com.sun.star.awt.MessageBoxButtons import (
     BUTTONS_OK_CANCEL as MBB_BUTTONS_OK_CANCEL, DEFAULT_BUTTON_CANCEL as MBB_DEFAULT_BUTTON_CANCEL)
 
 EXT_ID = "lire.libre.lirecouleur"
+RESOURCE_NAME = "private:resource/toolpanel/lire.libre/lirecouleur"
 
-from .utils import (create_control, create_container, create_controls, 
-    get_backgroundcolor, get_resource, get_config_access, 
-    get_config_value, create_uno_struct, create_uno_service, Settings)
+from .utils import (create_container, get_backgroundcolor, create_uno_service, Settings)
     
 from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_confusion_lettres__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
@@ -85,7 +84,7 @@ class lirecouleurModel(unohelper.Base, XUIElement, XToolPanel, XComponent):
         return UET_TOOLPANEL
     
     # XToolPanel
-    def createAccessible(self, parent):
+    def createAccessible(self, __parent):
         return self.window.getAccessibleContext()
     @property
     def Window(self):
@@ -210,7 +209,6 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         TB_MARGIN = self.TB_MARGIN
         BUTTON_SEP = self.BUTTON_SEP
         BUTTON_SZ = self.BUTTON_SZ
-        WIDTH = self.width
         HEIGHT = self.height
 
         # mie à jour des boutons d'après les fonctions sélectionnées
@@ -239,7 +237,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
             i += 1
 
     # XEventListener
-    def disposing(self, ev):
+    def disposing(self, __ev):
         self.editContainer = None
         self.container = None
         self.model = None

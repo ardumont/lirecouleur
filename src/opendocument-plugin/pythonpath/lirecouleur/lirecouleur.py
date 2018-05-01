@@ -25,14 +25,6 @@
 ###################################################################################
 
 import os
-TYPE_ENTIER = (int)
-try:
-    # nécessaire pour Python 3
-    from functools import reduce
-    TYPE_ENTIER = (int, long)
-except:
-    pass
-import string
 import re
 import logging
 import sys
@@ -69,318 +61,6 @@ class ConstLireCouleur:
 
     # prononciation différente entre l'Europe et le Canada
     MESTESSESLESDESCES = {'':'e_comp','fr':'e_comp','fr_CA':'e^_comp'}
-
-#########################################################################################################
-#########################################################################################################
-#
-#    Cette partie du code est destinée au traitement des informations de configuration de l'application
-#
-#                                    @@@@@@@@@@@@@@@@@@@@@@
-#
-#########################################################################################################
-#########################################################################################################
-
-######################################################################################
-# Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur
-######################################################################################
-def saveMaskPhonems(selectphonemes):
-    """Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur"""
-    saveAppData('__phon_selector__', selectphonemes)
-
-######################################################################################
-# Lecture du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur
-######################################################################################
-def handleMaskPhonems():
-    """Lecture du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur"""
-
-    # construction du sélecteur de phonèmes par défaut : on affiche tout
-    liste_phonemes = ['#', 'verb_3p']
-    liste_phonemes.extend(syllaphon['v'])
-    liste_phonemes.extend(syllaphon['c'])
-    liste_phonemes.extend(syllaphon['s'])
-    selectphonemes = dict([[x,1] for x in liste_phonemes])
-    for k in syllaphon['c']:
-        selectphonemes[k] = 0
-
-    for k in ['o_comp','e_comp','e^_comp','a~','e~','x~','o~','x','x^','w','wa', 'w5']:
-        selectphonemes[k] = 0
-
-    # read the file content
-    adata = readAppData()
-
-    # transfer the configuration data in the resulting dict
-    for phon in liste_phonemes:
-        try:
-            selectphonemes[phon] = adata['__phon_selector__'][phon]
-        except:
-            pass
-    
-    # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle'
-    for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u']:
-        try:
-            selectphonemes['j_'+phon] = selectphonemes[phon]
-            selectphonemes['w_'+phon] = selectphonemes[phon]
-        except:
-            pass
-
-    del liste_phonemes
-    del adata
-    return selectphonemes
-
-######################################################################################
-# Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur
-######################################################################################
-def saveMaskColors(selectcouleurs):
-    """Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur"""
-    saveAppData('__colors__', selectcouleurs)
-
-######################################################################################
-# Sauvegarde de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def saveMaskPoint(selectpoint):
-    """Sauvegarde de l'info sur le point sous les lettres muettes dans le fichier .lirecouleur"""
-    saveAppData('__point__', selectpoint)
-
-######################################################################################
-# Lecture de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def handleMaskPoint():
-    """Lecture de l'info sur le point sous les lettres muettes dans le fichier .lirecouleur"""
-
-    # par défaut on ne met pas de point
-    point_lmuette = False
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        point_lmuette = adata['__point__']
-    except:
-        pass
-
-    return point_lmuette
-
-######################################################################################
-# Sauvegarde de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def saveMaskSyllo(m_syll_1, m_syll_2):
-    """Sauvegarde de l'info sur le choix entre syllabes orales ou écrites dans le fichier .lirecouleur"""
-    saveAppData('__syllo__', m_syll_1+10*m_syll_2)
-
-######################################################################################
-# Lecture de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def handleMaskSyllo():
-    """Lecture de l'info sur le choix entre syllabes orales ou écrites dans le fichier .lirecouleur"""
-
-    # par défaut on choisit les syllabes écrites en mode LireCouleur
-    choix_syllo = ConstLireCouleur.SYLLABES_LC+10*ConstLireCouleur.SYLLABES_ECRITES
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        choix_syllo = adata['__syllo__']
-    except:
-        pass
-
-    if not isinstance(choix_syllo, TYPE_ENTIER):
-        choix_syllo = ConstLireCouleur.SYLLABES_LC+10*ConstLireCouleur.SYLLABES_ECRITES
-
-    return (choix_syllo%10, choix_syllo/10)
-
-######################################################################################
-# Lecture de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def handleMaskDynSyllDys():
-    """Lecture de l'info sur le choix d'affichage des syllabes dynamiquement ou non dans le fichier .lirecouleur"""
-
-    # par défaut : faux
-    choix_dynsylldys = False
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        choix_dynsylldys = adata['__dynsylldys__']
-    except:
-        pass
-
-    return choix_dynsylldys
-
-######################################################################################
-# Sauvegarde de l'info de marquage d'un point sous les lettres muettes
-######################################################################################
-def saveMaskDynSyllDys(selectdsd):
-    """Sauvegarde de l'info sur l'affichage dynamique de syllanes dans le fichier .lirecouleur"""
-    saveAppData('__dynsylldys__', selectdsd)
-
-######################################################################################
-# Lecture de l'info de configuration du pays
-######################################################################################
-def handleMaskCountry():
-    """Lecture de l'info de configuration du pays dans le fichier .lirecouleur"""
-
-    # par défaut on choisit 'fr'
-    choix_country = 'fr'
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        choix_country = adata['__locale__']
-    except:
-        pass
-
-    return choix_country
-
-######################################################################################
-# Sauvegarde de l'info de configuration du pays
-######################################################################################
-def saveMaskCountry(loc):
-    """Sauvegarde de l'info de configuration du pays dans le fichier .lirecouleur"""
-    saveAppData('__locale__', loc)
-
-######################################################################################
-# Sauvegarde du nom du fichier modèle
-######################################################################################
-def saveMaskTemplate(filename):
-    """Sauvegarde du nom du fichier modèle dans le fichier .lirecouleur"""
-    saveAppData('__template__', filename)
-
-######################################################################################
-# Lecture du nom du fichier modèle
-######################################################################################
-def handleMaskTemplate():
-    """Lecture du nom du fichier modèle dans le fichier .lirecouleur"""
-
-    # par défaut on ne met pas de point
-    temFilename = ""
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        temFilename = adata['__template__']
-    except:
-        pass
-
-    return temFilename
-
-######################################################################################
-# Sauvegarde du nombre de lignes sur lequel doit se faire l'alternance de couleurs
-######################################################################################
-def saveMaskAlternate(nblignes):
-    """Sauvegarde du nombre de lignes sur lequel doit se faire l'alternance de couleurs
-    dans le fichier .lirecouleur"""
-    saveAppData('__alternate__', nblignes)
-
-######################################################################################
-# Lecture du nombre de lignes sur lequel doit se faire l'alternance de couleurs
-######################################################################################
-def handleMaskAlternate():
-    """Lecture du nombre de lignes sur lequel doit se faire l'alternance de couleurs
-    dans le fichier .lirecouleur"""
-
-    # par défaut : 2 lignes
-    nblignes = 2
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        nblignes = adata['__alternate__']
-    except:
-        pass
-
-    return nblignes
-
-######################################################################################
-# Sauvegarde du nombre d'espaces de substitution pour espacer les mots
-######################################################################################
-def saveMaskSubspaces(nbespaces):
-    """Sauvegarde du nombre d'espaces de substitution pour espacer les mots dans le fichier .lirecouleur"""
-    saveAppData('__space__', nbespaces)
-
-######################################################################################
-# Lecture du nombre d'espaces de substitution pour espacer les mots
-######################################################################################
-def handleMaskSubspaces():
-    """Lecture du nombre d'espaces de substitution pour espacer les mots dans le fichier .lirecouleur"""
-
-    # par défaut : 3 espaces
-    nbespaces = 3
-
-    # read the file content
-    adata = readAppData()
-
-    # lecture dans la structure du fichier
-    try:
-        nbespaces = adata['__space__']
-    except:
-        pass
-
-    return nbespaces
-
-######################################################################################
-# Lecture du répertoire maison
-######################################################################################
-def getHomeDir():
-    """Lecture du répertoire maison"""
-    appdata = ""
-    if 'APPDATA' in os.environ:
-        appdata = os.environ.get('APPDATA')+os.sep
-    elif 'HOME' in os.environ:
-        appdata = os.environ.get('HOME')+os.sep
-    return appdata
-
-######################################################################################
-# Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur
-######################################################################################
-def readAppData():
-    """Lecture des informations dans le fichier .lirecouleur"""
-    appdata = getHomeDir()+'.lirecouleur'
-
-    # get the configuration data
-    adata = {}
-    try:
-        if os.path.isfile(appdata):
-            fappdata = open(appdata)
-            line = fappdata.read()
-            fappdata.close()
-
-            # eval gives the dict
-            adata = eval(line)
-    except:
-        pass
-    return adata
-
-######################################################################################
-# Sauvegarde du masque des phonèmes à mettre en évidence dans le fichier .lirecouleur
-######################################################################################
-def saveAppData(nappdata, dappdata):
-    """Sauvegarde des informations dans le fichier .lirecouleur"""
-    appdata = getHomeDir()+'.lirecouleur'
-
-    # first read the data
-    adata = readAppData()
-    try:
-        # then introduce the data in the dict
-        adata[nappdata] = dappdata
-
-        # and now save the whole dict
-        f = open(appdata, 'w')
-        f.write(str(adata))
-        f.close()
-    except:
-        pass
-    return
 
 ######################################################################################
 # Classe de gestion du dictionnaire de décodage
@@ -469,13 +149,10 @@ def setLCDictEntry(key, phon, syll):
         #filename = flog)
 
 ###################################################################################
-# passage éventuel en unicode (sauf pour Python 3)
+# reste du passage à Python3 pour le traitement des unicode
 ###################################################################################
 def u(txt):
-    try:
-        return unicode(txt, 'utf-8')
-    except:
-        return txt
+    return str(txt)
 
 ###################################################################################
 # Liste des mots non correctement traités :
@@ -753,7 +430,7 @@ def regle_avoir(mot, pos_mot):
 # Règle spécifique de traitement des mots qui se terminent par "us".
 # Pour un certain nombre de ces mots, le 's' final se prononce.
 ###################################################################################
-def regle_s_final(mot, pos_mot):
+def regle_s_final(mot, __pos_mot):
     mots_s_final = ['abribus','airbus','autobus','bibliobus','bus','nimbus','gibus',
     'microbus','minibus','mortibus','omnibus','oribus', u('pédibus'), 'quibus', 'rasibus',
     u('rébus'),'syllabus','trolleybus','virus','antivirus','anus','asparagus', u('médius'),
@@ -785,7 +462,7 @@ def regle_s_final(mot, pos_mot):
 ###################################################################################
 # Règle spécifique de traitement des mots qui se terminent par la lettre "t" prononcée.
 ###################################################################################
-def regle_t_final(mot, pos_mot):
+def regle_t_final(mot, __pos_mot):
     mots_t_final = ['accessit','cet','but','diktat','kumquat','prurit','affidavit','dot','rut','audit',
     'exeat','magnificat','satisfecit','azimut','exit','mat','scorbut','brut',
     'fiat','mazout','sinciput','cajeput','granit','net','internet','transat','sept',
@@ -1252,7 +929,7 @@ def pretraitement_texte(texte, substitut=' '):
     utexte = u(texte) # codage unicode
     ultexte = utexte.lower() # tout mettre en minuscules
     ultexte = re.sub(u('[\'´’]'), '@', ultexte) # remplace les apostrophes par des @
-    ultexte = re.sub(u('[^a-zA-Z0-9@àäâéèêëîïôöûùçœ]'), ' ', ultexte) # ne garde que les caractères significatifs
+    ultexte = re.sub(u('[^a-zA-Z0-9@àäâéèêëîïôöûùçœ]'), substitut, ultexte) # ne garde que les caractères significatifs
 
     return ultexte
 
@@ -1553,7 +1230,7 @@ def post_traitement_e_ouvert_ferme(pp):
         pp[i_ph] = ('x^', pp[i_ph][1])
         return pp
 
-     # le phonème est l'avant dernier du mot (syllabe fermée)
+    # le phonème est l'avant dernier du mot (syllabe fermée)
     consonnes_son_eu_ferme = ['z','z_s','t']
     if phonemes[i_ph+1] in consonnes_son_eu_ferme and phonemes[nb_ph] == 'q_caduc':
         pp[i_ph] = ('x^', pp[i_ph][1])

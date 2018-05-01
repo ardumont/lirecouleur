@@ -5,20 +5,10 @@
 import uno
 import unohelper
 
-from com.sun.star.awt.PosSize import (X as PS_X, Y as PS_Y, 
-    WIDTH as PS_WIDTH, HEIGHT as PS_HEIGHT, SIZE as PS_SIZE, POSSIZE as PS_POSSIZE)
-
-from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK_CANCEL as MBB_BUTTONS_OK_CANCEL, DEFAULT_BUTTON_CANCEL as MBB_DEFAULT_BUTTON_CANCEL
+from com.sun.star.awt.PosSize import (POSSIZE as PS_POSSIZE)
+from builtins import int
 
 CONFIG_NODE = "/lire.libre.lirecouleur/Settings"
-
-TYPE_ENTIER = (int)
-try:
-    # nécessaire pour Python 3
-    from functools import reduce
-    TYPE_ENTIER = (int, long)
-except:
-    pass
 
 """
     Constantes LireCouleur
@@ -42,7 +32,7 @@ def create_uno_struct(cTypeName):
     # Get the IDL class for the type name
     oXIdlClass = oCoreReflection.forName( cTypeName )
     # Create the struct.
-    oReturnValue, oStruct = oXIdlClass.createObject( None )
+    __, oStruct = oXIdlClass.createObject( None )
     return oStruct
 
 def create_uno_service(serviceName, ctx=None):
@@ -73,7 +63,7 @@ def create_control(ctx, control_type, x, y, width, height, names, values):
     return ctrl
 
 
-def create_container(ctx, parent, names, values, fit=True):
+def create_container(ctx, parent, names, values, __fit=True):
     """ create control container. """
     cont = create_control(ctx, "UnoControlContainer", 0, 0, 0, 0, names, values)
     cont.createPeer(parent.getToolkit(), parent)
@@ -189,8 +179,6 @@ def create_dialog(ctx, url):
         return None
 
 
-from com.sun.star.awt.MenuItemStyle import CHECKABLE as MIS_CHECKABLE
-
 """
     Load and set configuration values.
 """
@@ -249,7 +237,7 @@ class Settings(object):
         self.Simple = self.getPropertyValue(cua, "__detection_phonemes__")
         self.Point = self.getPropertyValue(cua, "__point__")
         choix_syllo = self.getPropertyValue(cua, "__syllo__")
-        if not isinstance(choix_syllo, TYPE_ENTIER):
+        if not isinstance(choix_syllo, int):
             self.Syllo = (ConstLireCouleur.SYLLABES_LC, ConstLireCouleur.SYLLABES_ECRITES)
         else:
             self.Syllo = (choix_syllo%2, int(choix_syllo/10)%2)
@@ -339,5 +327,5 @@ class Settings(object):
                 cua.setPropertyValues((self.Fonctions[name],), (value,))
 
             cua.commitChanges()
-        except Exception as e:
+        except:
             pass

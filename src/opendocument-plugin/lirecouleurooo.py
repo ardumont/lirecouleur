@@ -8,8 +8,8 @@
 # voir http://lirecouleur.arkaline.fr
 #
 # @author Marie-Pierre Brungard
-# @version 4.5.0
-# @since 2017
+# @version 4.6.2
+# @since 2018
 #
 # GNU General Public Licence (GPL) version 3
 #
@@ -28,40 +28,25 @@
 
 import uno
 import unohelper
-import traceback
-import sys
-import os
 import random
-import gettext
-from gettext import gettext as _
-from com.sun.star.awt import (XWindowListener, XActionListener, XMouseListener)
-from com.sun.star.task import XJobExecutor
-from com.sun.star.task import XJob
+import re
+import os
 
-from com.sun.star.awt import XKeyHandler
+from gettext import gettext as _
+from com.sun.star.awt import (XActionListener, XMouseListener)
+from com.sun.star.task import XJobExecutor
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
 from com.sun.star.awt import Rectangle
-from com.sun.star.awt.KeyModifier import MOD2
-from com.sun.star.awt.Key import LEFT as keyLeft
-from com.sun.star.awt.Key import RIGHT as keyRight
 
-try:
-    # nécessaire pour Python 3
-    from functools import reduce
-except:
-    pass
-import string
-import re
-from lirecouleur.lirecouleur import *
+from lirecouleur.lirecouleur import (u, getLCDictEntry, setLCDictEntry, delLCDictEntry, loadLCDict, getLCDictKeys)
 from lirecouleur.utils import (Settings, create_uno_service, create_uno_struct)
 from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_confusion_lettres__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
         __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
         __lirecouleur_ponctuation__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
-        __lirecouleur_syllabes__,__arret_dynsylldys__,__new_lirecouleur_document__,getLirecouleurDirectory,
-        getLirecouleurDictionary,__lirecouleur_dynsylldys__,__lirecouleur_alterne_phonemes__,importStylesLireCouleur,
-        getLirecouleurURL)
+        __lirecouleur_syllabes__,__new_lirecouleur_document__, getLirecouleurDictionary,__lirecouleur_alterne_phonemes__,
+        importStylesLireCouleur,getLirecouleurURL)
 
 
 l_styles_phon = ['phon_a', 'phon_e', 'phon_i', 'phon_u', 'phon_ou', 'phon_ez', 'phon_o_ouvert', 'phon_et',
@@ -77,7 +62,7 @@ class CancelActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         self.controlContainer.endExecute()
 
 class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
@@ -90,7 +75,7 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
         except:
             return False
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         global l_styles_phon
         
         settings = Settings()
@@ -156,7 +141,7 @@ class ConfigurationConfusionLettresActionListener(unohelper.Base, XActionListene
         except:
             return False
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         settings = Settings()
 
         selectlettres = settings.get('__selection_lettres__')
@@ -181,7 +166,7 @@ class EditStyleActionListener(unohelper.Base, XActionListener):
         self.document = document
         self.stylname = stylname
         
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
         prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
         prop1.Name = 'Param'
@@ -197,7 +182,7 @@ class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
         self.controlContainer = controlContainer
         
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         global l_styles_phon
         
         settings = Settings()
@@ -219,14 +204,27 @@ class ConfigurationStyleAlternActionListener(unohelper.Base, XActionListener):
         self.controlContainer = controlContainer
         
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         global l_styles_phon
         
         settings = Settings()
 
-        nbcouleurs = settings.get('__alternate__')
         nbcouleurs = self.controlContainer.getControl('fieldCoul').getValue()
         settings.setValue('__alternate__', int(nbcouleurs))
+        
+        self.controlContainer.endExecute()
+
+class ConfigurationEspaceActionListener(unohelper.Base, XActionListener):
+    def __init__(self, controlContainer):
+        self.controlContainer = controlContainer
+
+    def actionPerformed(self, __actionEvent):
+        global l_styles_phon
+        
+        settings = Settings()
+
+        nbesp = self.controlContainer.getControl('fieldEsp').getValue()
+        settings.setValue('__subspaces__', int(nbesp))
         
         self.controlContainer.endExecute()
 
@@ -234,7 +232,7 @@ class MyActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         settings = Settings()
         settings.setValue('__detection_phonemes__', self.controlContainer.getControl('chk_checkSimple').getState())
         settings.setValue('__point__', self.controlContainer.getControl('chk_checkPoint').getState())
@@ -249,7 +247,7 @@ class TemplateActionListener(unohelper.Base, XActionListener):
         self.fieldTemp = fieldTemp
         self.xContext = xContext
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         # Get the service manager
         smgr = self.xContext.ServiceManager
 
@@ -334,7 +332,7 @@ def createSeparator(dialogModel, px, py, name, w=30):
 ######################################################################################
 # Création d'une zone de saisie de type champ numérique
 ######################################################################################
-def createNumericField(dialogModel, px, py, name, index, val, w=30):
+def createNumericField(dialogModel, px, py, name, index, val, minv=2, maxv=4, w=60):
     checkNF = dialogModel.createInstance("com.sun.star.awt.UnoControlNumericFieldModel")
     checkNF.PositionX = px
     checkNF.PositionY = py
@@ -343,8 +341,8 @@ def createNumericField(dialogModel, px, py, name, index, val, w=30):
     checkNF.Name = name
     checkNF.TabIndex = index
     checkNF.Value = val
-    checkNF.ValueMin = 2
-    checkNF.ValueMax = 4
+    checkNF.ValueMin = minv
+    checkNF.ValueMax = maxv
     checkNF.ValueStep = 1
     checkNF.Spin = True
     checkNF.DecimalAccuracy = 0
@@ -372,20 +370,16 @@ class GestionnaireConfiguration(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __gestionnaire_config_dialog__(desktop.getCurrentComponent(), self.ctx)
 
-def gestionnaire_config_dialog( args=None ):
+def gestionnaire_config_dialog( __args=None ):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     __gestionnaire_config_dialog__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
-def __gestionnaire_config_dialog__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
+def __gestionnaire_config_dialog__(__xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
-    import array
-    
     # récupération des infos de configuration
     settings = Settings()
 
@@ -418,7 +412,7 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
     
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
 
-    checkSimple = createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
+    createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
                     _(u("Détection des phonèmes niveau débutant lecteur")), selectsimple, dialogModel.Width-10)
 
     labelListLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
@@ -447,7 +441,7 @@ def __gestionnaire_config_dialog__(xDocument, xContext):
         listLocale.SelectedItems = (0,)
     dialogModel.insertByName(listLocale.Name, listLocale)
 
-    checkPoint = createCheckBox(dialogModel, 10, 43, "checkPoint", 0,
+    createCheckBox(dialogModel, 10, 43, "checkPoint", 0,
                     _(u("Placer des symboles sous certains sons")), selectpoint, dialogModel.Width-10)
 
     labelTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
@@ -540,22 +534,21 @@ class ConfigurationPhonemes(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_phonemes__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_phonemes( args=None ):
+def configuration_phonemes( __args=None ):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     __configuration_phonemes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
 def __configuration_phonemes__(xDocument, xContext):
     global l_styles_phon
-    
-    __arret_dynsylldys__(xDocument)
 
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
-    import array
-    
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
+
     # récupération des infos de configuration
     settings = Settings()
 
@@ -709,18 +702,19 @@ class ConfigurationStyleSyllDys(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_sylldys__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_sylldys( args=None ):
+def configuration_sylldys( __args=None ):
     """Ouvrir une fenêtre de dialogue pour éditer les styles de syllabes alternées."""
     __configuration_sylldys__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
 def __configuration_sylldys__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour éditer les styles de syllabes alternées."""
+
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
 
     # récupération des infos de configuration
     settings = Settings()
@@ -757,7 +751,7 @@ def __configuration_sylldys__(xDocument, xContext):
     labelCoul.Name = "labelCoul"
     labelCoul.TabIndex = 1
     labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
-    fieldCoul = createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
+    createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
     dialogModel.insertByName(labelCoul.Name, labelCoul)
 
     labelRadio = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
@@ -838,17 +832,15 @@ class ConfigurationStyleSyllabes(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_syllabes__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_syllabes( args=None ):
+def configuration_syllabes( __args=None ):
     """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
     __configuration_syllabes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
-def __configuration_syllabes__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
+def __configuration_syllabes__(__xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour la fonction "souligner les syllabes" """
 
     # récupération des infos de configuration
@@ -945,11 +937,11 @@ class ConfigurationStyleLignesAlternees(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_lignes__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_lignes( args=None ):
+def configuration_lignes( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
     __configuration_lignes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -963,7 +955,7 @@ class ConfigurationStylePonctuation(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence de la ponctuation."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "ponctuation")
 
@@ -974,7 +966,7 @@ class ConfigurationStyleLiaisons(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer la fonction de mise en évidence des liaisons."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "liaison")
 
@@ -985,7 +977,7 @@ class ConfigurationStyleLiaisonsForcees(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour forcer le marquage comme liaison."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "liaison")
 
@@ -996,11 +988,11 @@ class ConfigurationStyleCouleurMots(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de mots alternés."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_couleur_mots__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_couleur_mots( args=None ):
+def configuration_couleur_mots( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de mots alternés."""
     __configuration_couleur_mots__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -1014,7 +1006,7 @@ class ConfigurationStyleSepareMots(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer la fonction de séparation des mots."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "espace")
 
@@ -1025,11 +1017,11 @@ class ConfigurationStylePhonemesAlternes(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de phonèmes alternés."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_alterne_phonemes__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_alterne_phonemes( args=None ):
+def configuration_alterne_phonemes( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de phonèmes alternés."""
     __configuration_alterne_phonemes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -1040,10 +1032,11 @@ def __configuration_alterne_phonemes__(xDocument, xContext):
 # Boite de configuration générique pour les fonctions à alternance de couleurs
 ######################################################################################
 def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
     
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
+
     # récupération des infos de configuration
     settings = Settings()
 
@@ -1076,7 +1069,7 @@ def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
     labelCoul.Name = "labelCoul"
     labelCoul.TabIndex = 1
     labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
-    fieldCoul = createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
+    createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
     dialogModel.insertByName(labelCoul.Name, labelCoul)
 
     createLabel(dialogModel, 10, labelCoul.PositionY+30, "labelStyles", 1, _(u("Editer les styles :")))
@@ -1121,11 +1114,11 @@ class ConfigurationConsonneVoyelle(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des consonnes et des voyelles."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_consonne_voyelle__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_consonne_voyelle( args=None ):
+def configuration_consonne_voyelle( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des consonnes et des voyelles."""
     __configuration_consonne_voyelle__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -1133,12 +1126,10 @@ def configuration_consonne_voyelle( args=None ):
 # Boite de configuration générique pour la fonction "graphèmes complexes"
 ######################################################################################
 def __configuration_consonne_voyelle__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
     
-    # récupération des infos de configuration
-    settings = Settings()
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
 
     # i18n
     i18n()
@@ -1193,11 +1184,11 @@ class ConfigurationStyleGraphemesComplexes(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_graphemes_complexes__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_graphemes_complexes( args=None ):
+def configuration_graphemes_complexes( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
     __configuration_graphemes_complexes__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -1205,12 +1196,10 @@ def configuration_graphemes_complexes( args=None ):
 # Boite de configuration générique pour la fonction "graphèmes complexes"
 ######################################################################################
 def __configuration_graphemes_complexes__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
     
-    # récupération des infos de configuration
-    settings = Settings()
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
 
     # i18n
     i18n()
@@ -1265,11 +1254,11 @@ class ConfigurationConfusionLettres(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lettres."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_confusion_lettres__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_confusion_lettres( args=None ):
+def configuration_confusion_lettres( __args=None ):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des lettres."""
     __configuration_confusion_lettres__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
@@ -1277,14 +1266,10 @@ def configuration_confusion_lettres( args=None ):
 # Boite de configuration générique pour la fonction "confusion lettres"
 ######################################################################################
 def __configuration_confusion_lettres__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lettre."""
-    
-    __arret_dynsylldys__(xDocument)
 
-    """Ouvrir une fenêtre de dialogue pour sélectionner les phonèmes à visualiser."""
-    import array
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
     
     # récupération des infos de configuration
     settings = Settings()
@@ -1377,7 +1362,7 @@ class ConfigurationStyleLMuettes(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour configurer le marquage des lettres muettes."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_style_caractere__(desktop.getCurrentComponent(), self.ctx, "phon_muet")
 
@@ -1385,7 +1370,9 @@ class ConfigurationStyleLMuettes(unohelper.Base, XJobExecutor):
 # Ouverture de la boite de dialogue de configuration d'un style de caractère
 ######################################################################################
 def __configuration_style_caractere__(xDocument, xContext, nstyle):
-    __arret_dynsylldys__(xDocument)
+    # Importer les styles de coloriage de texte
+    importStylesLireCouleur(xDocument)
+
     dispatcher = xContext.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', xContext)
     prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
     prop1.Name = 'Param'
@@ -1403,20 +1390,18 @@ class ConfigurationEspace(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __configuration_espace__(desktop.getCurrentComponent(), self.ctx)
 
-def configuration_espace( args=None ):
+def configuration_espace( __args=None ):
     """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
     __configuration_espace__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
 ######################################################################################
 # Boite de configuration générique pour les fonctions à alternance de couleurs
 ######################################################################################
-def __configuration_espace__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
+def __configuration_espace__(__xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
     
     # récupération des infos de configuration
@@ -1449,7 +1434,7 @@ def __configuration_espace__(xDocument, xContext):
     labelEsp.Name = "labelEsp"
     labelEsp.TabIndex = 1
     labelEsp.Label = _(u("Nombre d'espaces entre chaque mot :"))
-    fieldEsp = createNumericField(dialogModel, dialogModel.Width/2-30, labelEsp.PositionY+12, "fieldEsp", 0, nbespaces)
+    createNumericField(dialogModel, dialogModel.Width/2-30, labelEsp.PositionY+12, "fieldEsp", 0, nbespaces, 1, 10)
     dialogModel.insertByName(labelEsp.Name, labelEsp)
 
     # create the button model and set the properties
@@ -1461,7 +1446,7 @@ def __configuration_espace__(xDocument, xContext):
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
     controlContainer.setModel(dialogModel);
 
-    controlContainer.getControl("okButtonName").addActionListener(ConfigurationStyleAlternActionListener(controlContainer))
+    controlContainer.getControl("okButtonName").addActionListener(ConfigurationEspaceActionListener(controlContainer))
     controlContainer.getControl("cancelButtonName").addActionListener(CancelActionListener(controlContainer))
 
     # create a peer
@@ -1516,7 +1501,7 @@ class DictListActionListener(unohelper.Base, XActionListener):
         self.field2 = field2
         self.field3 = field3
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         key = self.listdict.getSelectedItem()
         self.field1.setText(key)
         entry = getLCDictEntry(key)
@@ -1533,7 +1518,7 @@ class DictAddActionListener(unohelper.Base, XActionListener):
         self.parent = parent
         self.toolkit = toolkit
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         # existe déjà ?
         key = self.field1.getText().strip().lower()
         phon = self.field2.getText().strip()
@@ -1569,7 +1554,7 @@ class DictRemActionListener(unohelper.Base, XActionListener):
         self.listdict = listdict
         self.listdictControl = controlContainer.getControl(listdict.Name)
 
-    def actionPerformed(self, actionEvent):
+    def actionPerformed(self, __actionEvent):
         if self.listdictControl.getSelectedItemPos() >= 0:
             delLCDictEntry(self.listdictControl.getSelectedItem())
             self.listdict.removeItem(self.listdictControl.getSelectedItemPos())
@@ -1578,17 +1563,15 @@ class GestionnaireDictionnaire(unohelper.Base, XJobExecutor):
     """Ouvrir une fenêtre de dialogue pour gérer le dictionnaire des décodages spéciaux."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __gestionnaire_dictionnaire_dialog__(desktop.getCurrentComponent(), self.ctx)
 
-def gestionnaire_dictionnaire_dialog( args=None ):
+def gestionnaire_dictionnaire_dialog( __args=None ):
     """Ouvrir une fenêtre de dialogue pour gérer le dictionnaire des décodages spéciaux."""
     __gestionnaire_dictionnaire_dialog__(XSCRIPTCONTEXT.getDocument(), XSCRIPTCONTEXT.getComponentContext())
 
 def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     """Ouvrir une fenêtre de dialogue pour gérer le dictionnaire des décodages spéciaux."""
     # i18n
     i18n()
@@ -1745,11 +1728,11 @@ class StyleDefaut(unohelper.Base, XJobExecutor):
     """Applique le style par défaut à la sélection"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_defaut__(desktop.getCurrentComponent())
 
-def lirecouleur_defaut( args=None ):
+def lirecouleur_defaut( __args=None ):
     """Applique le style par défaut à la sélection"""
     __lirecouleur_defaut__(XSCRIPTCONTEXT.getDocument())
 
@@ -1761,11 +1744,11 @@ class StyleNoir(unohelper.Base, XJobExecutor):
     """Recode le texte sélectionné en noir"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_noir__(desktop.getCurrentComponent())
 
-def lirecouleur_noir( args=None ):
+def lirecouleur_noir( __args=None ):
     """Recode le texte sélectionné en noir"""
     __lirecouleur_noir__(XSCRIPTCONTEXT.getDocument())
 
@@ -1776,11 +1759,11 @@ class StyleEspace(unohelper.Base, XJobExecutor):
     """Espace les mots de la sélection"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_espace__(desktop.getCurrentComponent())
 
-def lirecouleur_espace( args=None ):
+def lirecouleur_espace( __args=None ):
     """Espace les mots de la sélection"""
     __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
 
@@ -1792,12 +1775,12 @@ class StyleSepareMots(unohelper.Base, XJobExecutor):
     """Sépare les mots de la sélection en coloriant les espaces"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_separe_mots__(desktop.getCurrentComponent())
 
-def lirecouleur_separe_mots( args=None ):
+def lirecouleur_separe_mots( __args=None ):
     """Sépare les mots de la sélection en coloriant les espaces"""
     __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_separe_mots__(XSCRIPTCONTEXT.getDocument())
@@ -1810,11 +1793,11 @@ class StyleCouleurMots(unohelper.Base, XJobExecutor):
     """Colorie les mots en alternant les couleurs (comme syll_dys)"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_couleur_mots__(desktop.getCurrentComponent())
 
-def lirecouleur_couleur_mots( args=None ):
+def lirecouleur_couleur_mots( __args=None ):
     """Colorie les mots en alternant les couleurs (comme syll_dys)"""
     __lirecouleur_couleur_mots__(XSCRIPTCONTEXT.getDocument())
 
@@ -1826,11 +1809,11 @@ class StylePara(unohelper.Base, XJobExecutor):
     """Espace les lignes de la sélection"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_espace_lignes__(desktop.getCurrentComponent())
 
-def lirecouleur_espace_lignes( args=None ):
+def lirecouleur_espace_lignes( __args=None ):
     """Espace les lignes de la sélection"""
     __lirecouleur_espace_lignes__(XSCRIPTCONTEXT.getDocument())
 
@@ -1842,11 +1825,11 @@ class StyleLarge(unohelper.Base, XJobExecutor):
     """Espace les lignes et les mots de la sélection"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_large__(desktop.getCurrentComponent())
 
-def lirecouleur_large( args=None ):
+def lirecouleur_large( __args=None ):
     """Espace les lignes et les mots de la sélection"""
     __lirecouleur_large__(XSCRIPTCONTEXT.getDocument())
 
@@ -1858,11 +1841,11 @@ class StyleExtraLarge(unohelper.Base, XJobExecutor):
     """Espace les lignes de la sélection ainsi que les caractères"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_extra_large__(desktop.getCurrentComponent())
 
-def lirecouleur_extra_large( args=None ):
+def lirecouleur_extra_large( __args=None ):
     """Espace les lignes de la sélection ainsi que les caractères"""
     __lirecouleur_extra_large__(XSCRIPTCONTEXT.getDocument())
 
@@ -1874,11 +1857,11 @@ class StylePhonemes(unohelper.Base, XJobExecutor):
     """Colorie les phonèmes en couleurs arc en ciel"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_phonemes__(desktop.getCurrentComponent())
 
-def lirecouleur_phonemes( args=None ):
+def lirecouleur_phonemes( __args=None ):
     """Colorie les phonèmes en couleurs arc en ciel"""
     __lirecouleur_phonemes__(XSCRIPTCONTEXT.getDocument())
 
@@ -1890,11 +1873,11 @@ class StyleGraphemesComplexes(unohelper.Base, XJobExecutor):
     """Colorie les graphèmes complexes"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_graphemes_complexes__(desktop.getCurrentComponent())
 
-def lirecouleur_graphemes_complexes( args=None ):
+def lirecouleur_graphemes_complexes( __args=None ):
     """Colorie les graphèmes complexes"""
     __lirecouleur_graphemes_complexes__(XSCRIPTCONTEXT.getDocument())
 
@@ -1906,11 +1889,11 @@ class StyleSyllabes(unohelper.Base, XJobExecutor):
     """Mise en évidence des syllabes soulignées"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_syllabes__(desktop.getCurrentComponent(),  "souligne")
 
-def lirecouleur_syllabes( args=None ):
+def lirecouleur_syllabes( __args=None ):
     """Mise en évidence des syllabes soulignées"""
     __lirecouleur_syllabes__(XSCRIPTCONTEXT.getDocument(), 'souligne')
 
@@ -1921,17 +1904,15 @@ class StyleSyllDys(unohelper.Base, XJobExecutor):
     """Mise en évidence des syllabes -- dyslexiques"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_syllabes__(desktop.getCurrentComponent(), "dys")
-        __lirecouleur_dynsylldys__(desktop.getCurrentComponent())
 
-def lirecouleur_sylldys( args=None ):
+def lirecouleur_sylldys( __args=None ):
     """Mise en évidence des syllabes -- dyslexiques"""
     xDocument = XSCRIPTCONTEXT.getDocument()
 
     __lirecouleur_syllabes__(xDocument, 'dys')
-    __lirecouleur_dynsylldys__(xDocument)
 
 
 ###################################################################################
@@ -1941,11 +1922,11 @@ class SupprimerSyllabes(unohelper.Base, XJobExecutor):
     """Supprime les formes ajoutées sur la page pour marquer les syllabes"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_suppr_syllabes__(desktop.getCurrentComponent())
 
-def lirecouleur_suppr_syllabes( args=None ):
+def lirecouleur_suppr_syllabes( __args=None ):
     """Supprime les cuvettes qui marquent les liaisons"""
     __lirecouleur_suppr_syllabes__(XSCRIPTCONTEXT.getDocument())
 
@@ -1957,11 +1938,11 @@ class StyleLMuettes(unohelper.Base, XJobExecutor):
     """Met uniquement en évidence les lettres muettes"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_l_muettes__(desktop.getCurrentComponent())
 
-def lirecouleur_l_muettes( args=None ):
+def lirecouleur_l_muettes( __args=None ):
     """Met uniquement en évidence les lettres muettes"""
     __lirecouleur_l_muettes__(XSCRIPTCONTEXT.getDocument())
 
@@ -1973,11 +1954,11 @@ class StylePhonMuet(unohelper.Base, XJobExecutor):
     """Formate la sélection comme phonème muet"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_phon_muet__(desktop.getCurrentComponent())
 
-def lirecouleur_phon_muet( args=None ):
+def lirecouleur_phon_muet( __args=None ):
     """Formate la sélection comme phonème muet"""
     __lirecouleur_phon_muet__(XSCRIPTCONTEXT.getDocument())
 
@@ -1989,11 +1970,11 @@ class SupprimerDecos(unohelper.Base, XJobExecutor):
     """Supprime les formes ajoutées sur la page pour marquer certains sons"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_suppr_decos__(desktop.getCurrentComponent())
 
-def lirecouleur_suppr_decos( args=None ):
+def lirecouleur_suppr_decos( __args=None ):
     """Supprime les formes ajoutées sur al page pour marquer certains sons"""
     __lirecouleur_suppr_decos__(XSCRIPTCONTEXT.getDocument())
 
@@ -2005,11 +1986,11 @@ class StylePonctuation(unohelper.Base, XJobExecutor):
     """Marque la ponctuation d'un texte."""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_ponctuation__(desktop.getCurrentComponent())
 
-def lirecouleur_ponctuation( args=None ):
+def lirecouleur_ponctuation( __args=None ):
     """Marque la ponctuation d'un texte."""
     __lirecouleur_ponctuation__(XSCRIPTCONTEXT.getDocument())
 
@@ -2021,12 +2002,12 @@ class StyleLiaisons(unohelper.Base, XJobExecutor):
     """Mise en évidence des liaisons"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_liaisons__(desktop.getCurrentComponent())
 
-def lirecouleur_liaisons( args=None ):
+def lirecouleur_liaisons( __args=None ):
     """Mise en évidence des liaisons"""
     __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_liaisons__(XSCRIPTCONTEXT.getDocument())
@@ -2035,12 +2016,12 @@ class StyleLiaisonsForcees(unohelper.Base, XJobExecutor):
     """Forcer la mise en évidence des liaisons (mode enseignant)"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_espace__(desktop.getCurrentComponent())
         __lirecouleur_liaisons__(desktop.getCurrentComponent(), forcer=True)
 
-def lirecouleur_liaisons_forcees( args=None ):
+def lirecouleur_liaisons_forcees( __args=None ):
     """Mise en évidence des liaisons"""
     __lirecouleur_espace__(XSCRIPTCONTEXT.getDocument())
     __lirecouleur_liaisons__(XSCRIPTCONTEXT.getDocument(), forcer=True)
@@ -2053,11 +2034,11 @@ class ConfusionLettres(unohelper.Base, XJobExecutor):
     """Colorie les lettres sélectionnées pour éviter les confusions"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_confusion_lettres__(desktop.getCurrentComponent())
 
-def lirecouleur_confusion_lettres( args=None ):
+def lirecouleur_confusion_lettres( __args=None ):
     """Colorie les lettres sélectionnées pour éviter les confusions"""
     __lirecouleur_confusion_lettres__(XSCRIPTCONTEXT.getDocument())
 
@@ -2069,11 +2050,11 @@ class ConsonneVoyelle(unohelper.Base, XJobExecutor):
     """Colorie les consonnes et les voyelles"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_consonne_voyelle__(desktop.getCurrentComponent())
 
-def lirecouleur_consonne_voyelle( args=None ):
+def lirecouleur_consonne_voyelle( __args=None ):
     """Colorie les consonnes et les voyelles"""
     __lirecouleur_consonne_voyelle__(XSCRIPTCONTEXT.getDocument())
 
@@ -2085,11 +2066,11 @@ class StyleLignesAlternees(unohelper.Base, XJobExecutor):
     """Alterne les styles pour les lignes du document"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_lignes__(desktop.getCurrentComponent())
 
-def lirecouleur_lignes( args=None ):
+def lirecouleur_lignes( __args=None ):
     """Alterne les styles pour les lignes du document -- dyslexiques"""
     __lirecouleur_lignes__(XSCRIPTCONTEXT.getDocument())
 
@@ -2101,11 +2082,11 @@ class StylePhonemesAlternes(unohelper.Base, XJobExecutor):
     """Alterne les styles pour les phonèmes du document"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_alterne_phonemes__(desktop.getCurrentComponent())
 
-def lirecouleur_alterne_phonemes( args=None ):
+def lirecouleur_alterne_phonemes( __args=None ):
     """Alterne les styles pour les phonèmes du document -- dyslexiques"""
     __lirecouleur_alterne_phonemes__(XSCRIPTCONTEXT.getDocument())
 
@@ -2117,11 +2098,11 @@ class NewLireCouleurDocument(unohelper.Base, XJobExecutor):
     """Création d'un nouveau document LireCouleur"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __new_lirecouleur_document__(desktop.getCurrentComponent(), self.ctx)
 
-def new_lirecouleur_document(args=None):
+def new_lirecouleur_document(__args=None):
     __new_lirecouleur_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
 
 ###################################################################################
@@ -2131,18 +2112,16 @@ class LireCouleurModeleDocument(unohelper.Base, XJobExecutor):
     """Enregistrer le document courant comme modèle LireCouleur"""
     def __init__(self, ctx):
         self.ctx = ctx
-    def trigger(self, args):
+    def trigger(self, __args):
         desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
         __lirecouleur_modele_document__(desktop.getCurrentComponent(), self.ctx)
 
-def lirecouleur_modele_document(args=None):
+def lirecouleur_modele_document(__args=None):
     __lirecouleur_modele_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
     
 def __lirecouleur_modele_document__(xDocument, xContext):
-    __arret_dynsylldys__(xDocument)
-
     # récupération du nom du fichier courant
-    curUrl = xDocument.getURL()
+    __curUrl = xDocument.getURL()
     
     # recherche d'un nouveau nom de fichier
     i = 1
@@ -2159,169 +2138,6 @@ def __lirecouleur_modele_document__(xDocument, xContext):
     # fermer le fichier courant et réouvrir le fichier d'origine
     __new_lirecouleur_document__(xDocument, xContext)
     xDocument.close(True)
-
-###################################################################################
-# Lit le passage courant sous le curseur
-###################################################################################
-class Lire():
-    """Lit la syllabe courante sous le curseur"""
-    def __init__(self, xDocument, applic, nb_altern, choix_syllo):
-        self.xDocument = xDocument
-        self.xController = self.xDocument.getCurrentController()
-        self.curseurMot = None
-        self.ps = None
-        self.isyl = 0
-        self.jsyl = 0
-        self.nb_altern = nb_altern
-        self.choix_syllo = choix_syllo
-        self.applic = applic
-        
-    def debutMot(self, xtr):
-        if not self.curseurMot is None:
-            # remise en place de la couleur d'arrière plan de la syllabe
-            self.curseurMot.setPropertyToDefault('CharBackColor')
-            del self.curseurMot
-            del self.ps
-        
-        self.curseurMot = xtr.getText().createTextCursorByRange(xtr)
-        self.curseurMot.collapseToStart()
-        xtr.gotoEndOfWord(True)
-        mot = xtr.getString()
-
-        # suppressions et remplacements de caractères perturbateurs
-        mot = nettoyeur_caracteres(mot)
-
-        # traite le paragraphe en phonèmes
-        pp = generer_paragraphe_phonemes(mot)
-
-        # recompose les syllabes
-        self.ps = generer_paragraphe_syllabes(pp, self.choix_syllo)[0]
-        del pp
-        
-        # surligner la première syllabe
-        self.isyl = 0
-        psyl = len(self.ps[self.isyl])
-
-        #ncurs = xtr.getText().createTextCursorByRange(xtr)
-        self.curseurMot.goRight(psyl, True)
-        self.curseurMot.setPropertyValue('CharStyleName', 'altern_ligne_1')
-        self.xController.getViewCursor().gotoRange(self.curseurMot, False)
-        self.xController.getViewCursor().collapseToEnd()
-        if self.applic:
-            #in order to patch an openoffice bug
-            self.xController.getViewCursor().goLeft(1, False)
-        colorier_lettres_muettes(self.xDocument, self.ps[self.isyl], self.curseurMot, 'perso')
-
-    def selection(self):
-        # récupération du curseur physique
-        xTextViewCursor = self.xController.getViewCursor()
-        xtr = xTextViewCursor.getText().createTextCursorByRange(xTextViewCursor)
-
-        if xtr.isEndOfWord():
-            if not self.curseurMot is None:
-                self.curseurMot.setPropertyToDefault('CharBackColor')
-                setStyle(styles_syllabes['dys'][str(self.jsyl%self.nb_altern+1)], self.curseurMot)
-                colorier_lettres_muettes(self.xDocument, self.ps[self.isyl], self.curseurMot, 'perso')
-                self.jsyl += 1
-                del self.curseurMot
-                del self.ps
-                self.curseurMot = None
-
-            # passage au mot suivant
-            xtr.gotoNextWord(False)
-            xTextViewCursor.gotoRange(xtr, False)
-            
-        if xtr.isStartOfWord():
-            self.debutMot(xtr)
-        else:
-            if not self.curseurMot is None:
-                # passage à la syllabe suivante
-                            
-                # remise en place de la couleur d'arrière plan de la syllabe
-                self.curseurMot.setPropertyToDefault('CharBackColor')
-                setStyle(styles_syllabes['dys'][str(self.jsyl%self.nb_altern+1)], self.curseurMot)
-                colorier_lettres_muettes(self.xDocument, self.ps[self.isyl], self.curseurMot, 'perso')
-                self.curseurMot.collapseToEnd()
-
-                self.isyl += 1
-                self.jsyl += 1
-                if self.isyl < len(self.ps):
-                    psyl = len(self.ps[self.isyl])
-
-                    # surligner la syllabe courante
-                    self.curseurMot.goRight(psyl, True)
-                    self.curseurMot.setPropertyValue('CharStyleName', 'altern_ligne_1')
-                    xTextViewCursor.gotoRange(self.curseurMot, False)
-                    xTextViewCursor.collapseToEnd()
-                    if self.applic:
-                        #in order to patch an openoffice bug
-                        self.xController.getViewCursor().goLeft(1, False)
-                    colorier_lettres_muettes(self.xDocument, self.ps[self.isyl], self.curseurMot, 'perso')
-                else:
-                    xtr.gotoEndOfWord(False)
-                    xtr.gotoNextWord(False)
-                    del self.curseurMot
-                    self.curseurMot = None
-                    del self.ps
-                    xTextViewCursor.gotoRange(xtr, False)
-                    xTextViewCursor.collapseToEnd()
-                    if self.applic:
-                        #in order to patch an openoffice bug
-                        self.xController.getViewCursor().goLeft(1, False)
-            else:
-                # placement du curseur physique en cours de mot par l'utilisateur : passage au mot suivant
-                xtr.gotoNextWord(False)
-                xTextViewCursor.gotoRange(xtr, False)
-                xTextViewCursor.collapseToEnd()
-                if self.applic:
-                    #in order to patch an openoffice bug
-                    self.xController.getViewCursor().goLeft(1, False)
-
-        del xtr
-
-###################################################################################
-# Classe de gestion des déplacements d'une syllabe à l'autre
-###################################################################################
-class LireCouleurHandler(unohelper.Base, XKeyHandler):
-    enabled = True
-
-    def __init__(self, xDocument, applic):
-        self.xDocument = xDocument
-        self.is_text_doc = self.xDocument.supportsService("com.sun.star.text.TextDocument")
-        
-        settings = Settings()
-
-        # Importer les styles de coloriage de texte
-        importStylesLireCouleur(xDocument)
-
-        # chargement du dictionnaire de décodage
-        loadLCDict(getLirecouleurDictionary())
-
-        # récup de la période d'alternance des couleurs
-        nb_altern = settings.get('__alternate__')
-
-        # récupération de l'information sur le choix entre syllabes orales ou syllabes écrites
-        choix_syllo = settings.get('__syllo__')
-
-        self.lit = Lire(self.xDocument, applic, nb_altern, choix_syllo)
-
-    def keyPressed(self, event):
-            if not(LireCouleurHandler.enabled and self.is_text_doc):
-                return False
-            ##if event.Modifiers == MOD2:
-            if event.KeyCode == keyRight:
-                # ALT + ->
-                ##__deplacement__(self.xDocument, __lectureSuivant__)
-                self.lit.selection()
-                return True
-            return False
-
-    def keyReleased(self, event):
-        return False
-        
-    def enable(self, val=True):
-        LireCouleurHandler.enabled = val
-
 
 ###################################################################################
 # lists the scripts, that shall be visible inside OOo. Can be omitted.
@@ -2511,3 +2327,27 @@ g_ImplementationHelper.addImplementation( \
 g_ImplementationHelper.addImplementation( \
     LireCouleurModeleDocument,'org.lirecouleur.LireCouleurModeleDocument', \
     ('com.sun.star.task.Job',))
+
+"""
+
+"""
+if __name__ == "__main__":
+    # get the uno component context from the PyUNO runtime
+    localContext = uno.getComponentContext()
+
+    # create the UnoUrlResolver
+    resolver = localContext.ServiceManager.createInstanceWithContext(
+                "com.sun.star.bridge.UnoUrlResolver", localContext )
+
+    # connect to the running office
+    ctx = resolver.resolve( "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext" )
+    smgr = ctx.ServiceManager
+
+    # get the central desktop object
+    desktop = smgr.createInstanceWithContext( "com.sun.star.frame.Desktop",ctx)
+
+    # access the current writer document
+    xDocument = desktop.getCurrentComponent()
+    
+    __lirecouleur_phonemes__(xDocument)
+
