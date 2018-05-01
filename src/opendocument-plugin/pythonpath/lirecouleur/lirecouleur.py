@@ -45,7 +45,7 @@ __dico_deco__ = None
 """
 sampa2lc = {'p':'p', 'b':'b', 't':'t', 'd':'d', 'k':'k', 'g':'g', 'f':'f', 'v':'v',
 's':'s', 'z':'z', 'S':'s^', 'Z':'g^', 'j':'j', 'm':'m', 'n':'n', 'J':'g~',
-'N':'n~', 'l':'l', 'R':'r', 'w':'wa', 'H':'y', 'i':'i', 'e':'e', 'E':'e^',
+'N':'n~', 'l':'l', 'R':'r', 'w':'w', 'H':'y', 'i':'i', 'e':'e', 'E':'e^',
 'a':'a', 'A':'a', 'o':'o', 'O':'o_ouvert', 'u':'u', 'y':'y', '2':'x^', '9':'x',
 '@':'q', 'e~':'e~', 'a~':'a~', 'o~':'o~', '9~':'x~', '#':'#'}
 
@@ -747,14 +747,11 @@ autom = {
             'nisole':[{'+':r"$",'-':r"^"},'n',1], ## exemple : n'a
             'apostrophe':[{'+':r"(\'|\’)"},'n',2] ## apostrophe
             }],
-    'o' : [['in','oignon','i','oua','oui','oue','tomn','monsieur','n','m','nm','y1','y2','u','o','oe_0',
+    'o' : [['in','oignon','i','tomn','monsieur','n','m','nm','y1','y2','u','o','oe_0',
             'oe_1','oe_2', 'oe_3','voeux','oeufs','noeud','oeu_defaut','oe_defaut'],
-            {'in':[{'+':r"i[nm]([bcçdfghjklnmpqrstvwxz]|$)"},'w_e~',3],
+            {'in':[{'+':r"i[nm]([bcçdfghjklnmpqrstvwxz]|$)"},'u',1],
             'oignon':[{'-':r"^",'+':r"ignon"},'o',2],
             'i':[{'+':u(r"(i|î)")},'wa',2],
-            'oue':[{'-':r"^",'+':u(r"ue")},'w_e^_comp',3], # ouest, oued
-            'oui':[{'-':r"^",'+':u(r"ui")},'w_i',3], # oui
-            'oua':[{'+':u(r"ua([bcçdfghjklpqrstvwxz]|$)")},'wa',3],
             'u':[{'+':u(r"[uwûù]")},'u',2], ## son [u] : clou, clown
             'tomn':[{'-':r"t",'+':r"mn"},'o',1], ## regle spécifique pour 'automne' et ses dérivés
             'monsieur':[{'-':r"m",'+':r"nsieur"},'q',2],
@@ -858,7 +855,7 @@ autom = {
             'wisig':[{'+':r"isig"},'v',1], # wisigoth
             'wag':[{'+':r"ag"},'v',1], # wagons et wagnérien
             'wa':[{'+':r"a"},'wa',2], # watt, wapiti, etc.
-            'wi':[{'+':r"i"},'w_i',2], # kiwi
+            'wi':[{'+':r"i"},'u',1], # kiwi
             '*':[{},'w',1]}],
     'x' : [['six_dix','gz_1','gz_2','gz_3','gz_4','gz_5','_aeox','fix','_ix'],
             {'six_dix':[{'-':r"(s|d)i"},'s_x',1],
@@ -1089,6 +1086,9 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
     codage = post_traitement_e_ouvert_ferme(codage)
 
     if not detection_phonemes_debutant:
+        # post traitement pour associer u + [an, in, en, on, a, é, etc.]
+        codage = post_traitement_w(codage)
+
         # post traitement pour associer yod + [an, in, en, on, a, é, etc.]
         codage = post_traitement_yod(codage)
 
@@ -1099,13 +1099,24 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
 
 def all_indices(value, qlist):
     indices = []
-    idx = -1
-    while True:
-        try:
-            idx = qlist.index(value, idx+1)
-            indices.append(idx)
-        except ValueError:
-            break
+    if isinstance(value, list):
+        for v in value:
+            idx = -1
+            while True:
+                try:
+                    idx = qlist.index(v, idx+1)
+                    indices.append(idx)
+                except ValueError:
+                    break
+
+    else:
+        idx = -1
+        while True:
+            try:
+                idx = qlist.index(value, idx+1)
+                indices.append(idx)
+            except ValueError:
+                break
     return indices
 
 ###################################################################################
@@ -1117,14 +1128,10 @@ def post_traitement_yod(pp):
         return pp
 
     phonemes = [x[0] for x in pp]
-    if not 'i' in phonemes:
-        # pas de 'yod' dans le mot
-        return pp
-
-    # recherche de tous les indices de phonèmes avec 'i'
     nb_ph = len(pp)-1
-    i_j = all_indices('i', phonemes[:nb_ph+1])
 
+    # recherche de tous les indices de phonèmes avec 'i' ou 'j'
+    i_j = all_indices(['i', 'j'], phonemes[:nb_ph+1])
     for i_ph in i_j:
         if i_ph >= nb_ph:
             # fin de mot (bizarre d'ailleurs !)
@@ -1132,8 +1139,43 @@ def post_traitement_yod(pp):
         
         # phonème suivant
         phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'x', 'x^', 'u']
-        if phonemes[i_ph+1] in phon_suivant and len(pp[i_ph][1]) == 1:
+        if phonemes[i_ph+1] in phon_suivant:
             pp[i_ph] = ('j_'+phonemes[i_ph+1], pp[i_ph][1]+pp[i_ph+1][1])
+            if len(pp[i_ph+2:]) > 0:
+                pp[i_ph+1:nb_ph] = pp[i_ph+2:nb_ph] # compactage de la chaîne de phonèmes
+            else:
+                del pp[nb_ph]
+            nb_ph = len(pp)-1
+
+    return pp
+
+###################################################################################
+# Post traitement la constitution d'allophones des phonèmes avec w
+# référence : voir http://andre.thibault.pagesperso-orange.fr/PhonologieSemaine10.pdf (cours du 3 février 2016)
+###################################################################################
+def post_traitement_w(pp):
+    if not isinstance(pp, list) or len(pp) == 1:
+        return pp
+
+    phonemes = [x[0] for x in pp]
+    nb_ph = len(pp)-1
+    
+    # transformation des [wa] en [w_a]
+    i_j = all_indices('wa', phonemes)
+    for i_ph in i_j:
+        pp[i_ph] = ('w_a', pp[i_ph][1])
+    
+    # recherche de tous les indices de phonèmes avec 'u'
+    i_j = all_indices('u', phonemes[:nb_ph+1])
+    for i_ph in i_j:
+        if i_ph >= nb_ph:
+            # fin de mot (bizarre d'ailleurs !)
+            return pp
+        
+        # phonème suivant
+        phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'x', 'x^', 'i']
+        if phonemes[i_ph+1] in phon_suivant:
+            pp[i_ph] = ('w_'+phonemes[i_ph+1], pp[i_ph][1]+pp[i_ph+1][1])
             if len(pp[i_ph+2:]) > 0:
                 pp[i_ph+1:nb_ph] = pp[i_ph+2:nb_ph] # compactage de la chaîne de phonèmes
             else:
