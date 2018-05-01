@@ -1,6 +1,7 @@
 ------------------------- 4.7 ------------------------- 
 Corrections :
 * homogénéisation du décodage pour les "w" -- correction de la règle 'ouat'
+* correction du modèle de document pour l'import des styles de caractères
 
 
 ------------------------- 4.6.2 ------------------------- 
