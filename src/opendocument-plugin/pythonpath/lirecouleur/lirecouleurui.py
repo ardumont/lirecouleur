@@ -36,7 +36,7 @@ from .utils import (Settings, create_uno_service, create_uno_struct)
 from .lirecouleur import (generer_paragraphe_phonemes, pretraitement_texte, nettoyeur_caracteres, loadLCDict, u,
                           teste_liaison, generer_paragraphe_syllabes)
 
-__version__ = "4.6"
+__version__ = "4.7"
 
 # create LANG environment variable
 import locale
@@ -116,11 +116,6 @@ def getOOoSetupValue(sNodePath, sProperty):
     xConfig = getOOoSetupNode(sNodePath)
     return xConfig.getByName(sProperty)
 
-__style_par_defaut__ = ""
-#applic = getOOoSetupValue("/org.openoffice.Setup/Product", "ooName").lower()
-#if applic.startswith("libreoffice"):
-    #__style_par_defaut__ = "Style par défaut"
-
 """
     Get the URL of LireCouleur
 """
@@ -199,7 +194,6 @@ style_phon_perso = {
         'e_comp':{'CharStyleName':'phon_ez_comp'},
         'w':{'CharStyleName':'phon_w'},
         'wa':{'CharStyleName':'phon_wa'},
-        'w5':{'CharStyleName':'phon_w5'},
         'e^':{'CharStyleName':'phon_et'},
         'e^_comp':{'CharStyleName':'phon_et_comp'},
         'a~':{'CharStyleName':'phon_an'},
@@ -236,33 +230,21 @@ style_phon_perso = {
         'r':{'CharStyleName':'phon_r'},
         'ks':{'CharStyleName':'phon_ks'},
         'gz':{'CharStyleName':'phon_gz'},
-        '#_amb':{'CharStyleName':__style_par_defaut__},
         'espace':{'CharStyleName':'espace'},
         'liaison':{'CharStyleName':'liaison'},
         'consonne':{'CharStyleName':'phon_consonne'},
         'voyelle':{'CharStyleName':'phon_voyelle'},
-        'ponctuation':{'CharStyleName':'ponctuation'},
-        'defaut':{'CharStyleName':__style_par_defaut__}
+        'ponctuation':{'CharStyleName':'ponctuation'}
         }
 
 style_phon_complexes = {
         'verb_3p':{'CharStyleName':'conjug_3p'},
         '#':{'CharStyleName':'phon_muet'},
-        'q_caduc':{'CharStyleName':__style_par_defaut__},
-        'a':{'CharStyleName':__style_par_defaut__},
-        'q':{'CharStyleName':__style_par_defaut__},
-        'i':{'CharStyleName':__style_par_defaut__},
-        'o':{'CharStyleName':__style_par_defaut__},
         'o_comp':{'CharStyleName':'phon_voyelle_comp'},
-        'o_ouvert':{'CharStyleName':__style_par_defaut__},
         'u':{'CharStyleName':'phon_voyelle_comp'},
-        'y':{'CharStyleName':__style_par_defaut__},
-        'e':{'CharStyleName':__style_par_defaut__},
         'e_comp':{'CharStyleName':'phon_voyelle_comp'},
         'w':{'CharStyleName':'phon_voyelle_comp'},
         'wa':{'CharStyleName':'phon_voyelle_comp'},
-        'w5':{'CharStyleName':'phon_voyelle_comp'},
-        'e^':{'CharStyleName':__style_par_defaut__},
         'e^_comp':{'CharStyleName':'phon_voyelle_comp'},
         'a~':{'CharStyleName':'phon_voyelle_comp'},
         'e~':{'CharStyleName':'phon_voyelle_comp'},
@@ -276,35 +258,18 @@ style_phon_complexes = {
         'z^_g':{'CharStyleName':'phon_consonne_comp'},
         's_x':{'CharStyleName':'phon_consonne_comp'},
         'n~':{'CharStyleName':'phon_consonne_comp'},
-        'p':{'CharStyleName':__style_par_defaut__},
-        't':{'CharStyleName':__style_par_defaut__},
-        'k':{'CharStyleName':__style_par_defaut__},
         'k_qu':{'CharStyleName':'phon_consonne_comp'},
-        'b':{'CharStyleName':__style_par_defaut__},
-        'd':{'CharStyleName':__style_par_defaut__},
-        'g':{'CharStyleName':__style_par_defaut__},
-        'f':{'CharStyleName':__style_par_defaut__},
         'f_ph':{'CharStyleName':'phon_consonne_comp'},
-        's':{'CharStyleName':__style_par_defaut__},
         's_c':{'CharStyleName':'phon_consonne_comp'},
         's_t':{'CharStyleName':'phon_consonne_comp'},
         's^':{'CharStyleName':'phon_consonne_comp'},
-        'v':{'CharStyleName':__style_par_defaut__},
-        'z':{'CharStyleName':__style_par_defaut__},
-        'z^':{'CharStyleName':__style_par_defaut__},
-        'm':{'CharStyleName':__style_par_defaut__},
-        'n':{'CharStyleName':__style_par_defaut__},
-        'l':{'CharStyleName':__style_par_defaut__},
-        'r':{'CharStyleName':__style_par_defaut__},
         'ks':{'CharStyleName':'phon_consonne_comp'},
         'gz':{'CharStyleName':'phon_consonne_comp'},
-        '#_amb':{'CharStyleName':__style_par_defaut__},
         'espace':{'CharStyleName':'espace'},
         'liaison':{'CharStyleName':'liaison'},
         'consonne':{'CharStyleName':'phon_consonne'},
         'voyelle':{'CharStyleName':'phon_voyelle'},
-        'ponctuation':{'CharStyleName':'ponctuation'},
-        'defaut':{'CharStyleName':__style_par_defaut__}
+        'ponctuation':{'CharStyleName':'ponctuation'}
         }
 
 __style_phon_perso__ = {
@@ -332,7 +297,6 @@ __style_phon_perso__ = {
         'x^':{'CharColor':0X00800000},
         'w':{'CharColor':0X00892ca0},
         'wa':{'CharColor':0X00892ca0},
-        'w5':{'CharColor':0X003deb3d, 'CharShadowed':True, 'CharUnderline':6},
         'j':{'CharColor':0X00892ca0, 'CharShadowed':True},
         'z_s':{'CharColor':0x0000000, 'CharWeight':150.0},
         'g_u':{'CharColor':0x0000000, 'CharWeight':150.0},
@@ -365,8 +329,7 @@ __style_phon_perso__ = {
         'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
         'consonne':{'CharColor':0x000000ff},
         'voyelle':{'CharColor':0x00ff0000},
-        'ponctuation':{'CharBackColor':0x00ff0000},
-        'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
+        'ponctuation':{'CharBackColor':0x00ff0000}
         }
 
 __style_phon_complexes__ = {
@@ -385,7 +348,6 @@ __style_phon_complexes__ = {
         'e_comp':{'CharColor':0x00ff950e},
         'w':{'CharColor':0x00ff950e},
         'wa':{'CharColor':0x00ff950e},
-        'w5':{'CharColor':0x00ff950e},
         'e^':{'CharColor':0x0000000},
         'e^_comp':{'CharColor':0x00ff950e},
         'a~':{'CharColor':0x00ff950e},
@@ -427,8 +389,7 @@ __style_phon_complexes__ = {
         'liaison':{'CharScaleWidth':200, 'CharUnderline':10},
         'consonne':{'CharColor':0x000000ff},
         'voyelle':{'CharColor':0x00ff0000},
-        'ponctuation':{'CharBackColor':0x00ff0000},
-        'defaut':{'CharUnderline':0, 'CharPosture':0, 'CharColor':0X00000000, 'CharWeight':100.0, 'CharShadowed':False, 'CharBackColor':0x00ffffff}
+        'ponctuation':{'CharBackColor':0x00ff0000}
         }
 
 style_phon_altern = {
@@ -476,6 +437,7 @@ __style_mot_dys__ = {
 style_yod = {
         'a':{'CharStyleName':'yod_phon_a'},
         'q':{'CharStyleName':'yod_phon_e'},
+        'q_caduc':{'CharStyleName':'yod_phon_e_caduc'},
         'i':{'CharStyleName':'yod_phon_i'},
         'o':{'CharStyleName':'yod_phon_o'},
         'o_comp':{'CharStyleName':'yod_phon_o_comp'},
@@ -497,6 +459,7 @@ __style_yod__ = {
         'a':{'CharColor':__style_phon_perso__['a']['CharColor'], 'CharUnderline':11},
         'a~':{'CharColor':__style_phon_perso__['a~']['CharColor'], 'CharUnderline':11},
         'q':{'CharColor':__style_phon_perso__['q']['CharColor'], 'CharUnderline':11},
+        'q_caduc':{'CharColor':__style_phon_perso__['q_caduc']['CharColor'], 'CharUnderline':11},
         'i':{'CharColor':__style_phon_perso__['i']['CharColor'], 'CharUnderline':11},
         'e~':{'CharColor':__style_phon_perso__['e~']['CharColor'], 'CharUnderline':11},
         'o':{'CharColor':__style_phon_perso__['o']['CharColor'], 'CharUnderline':11},
@@ -590,29 +553,19 @@ def createCharacterStyles(xModel, style_nom, style_forme):
     """ Création des styles de caractères nécessaires à l'application """
     charStyles = xModel.getStyleFamilies().getByName('CharacterStyles')
 
-    try:
-        #first create the default character style
-        defaultcharstylename = style_nom['defaut']['CharStyleName']
-        if len(defaultcharstylename) > 0 and not charStyles.hasByName(defaultcharstylename):
-            tmp_style = xModel.createInstance('com.sun.star.style.CharacterStyle')    # create a char style
-            tmp_style.setPropertiesToDefault( ('CharCaseMap','CharEscapement','CharEscapementHeight','CharPosture','CharUnderline','CharWeight') )
-            charStyles.insertByName(defaultcharstylename, tmp_style)    # insert the style in the document
-    except:
-        pass
-
     # then create the other character styles
     for phon in style_nom.keys():
         charstylename = style_nom[phon]['CharStyleName']
         if len(charstylename) > 0 and not charStyles.hasByName(charstylename):
-            charstylestruct = style_forme[phon]
-            tmp_style = xModel.createInstance('com.sun.star.style.CharacterStyle')    # create a char style
-            for kpv in charstylestruct.keys():
-                tmp_style.setPropertyValue(kpv, charstylestruct[kpv])
             try:
-                tmp_style.setParentStyle(defaultcharstylename)    # set parent charstyle
+                charstylestruct = style_forme[phon]
+                tmp_style = xModel.createInstance('com.sun.star.style.CharacterStyle')    # create a char style
+                for kpv in charstylestruct.keys():
+                    tmp_style.setPropertyValue(kpv, charstylestruct[kpv])
+                tmp_style.setParentStyle('LireCouleur')    # set parent charstyle
+                charStyles.insertByName(charstylename, tmp_style)
             except:
                 pass
-            charStyles.insertByName(charstylename, tmp_style)
 
 def makeShape(oDrawDoc, cShapeClassName, oPosition=None, oSize=None):
     """Create a new shape of the specified class.
@@ -660,32 +613,53 @@ def makePoint(nX, nY):
 __memDocument__ = None
 def importStylesLireCouleur(xModel):
     global __memDocument__
-    if __memDocument__ == xModel:
-        # on n'a pas changé de document donc pas besoin de recharger les styles
-        return
-    __memDocument__ = xModel
+    if __memDocument__ != xModel:
+        # si on n'a pas changé de document, pas besoin de recharger les styles
+        __memDocument__ = xModel
+    
+        try:
+            """
+                Importation des styles à partir d'un fichier odt
+            """
+            ''' chemin d'accès au fichier qui contient les styles à utiliser '''
+            url = getLirecouleurTemplateURL()
 
-    try:
-        """
-            Importation des styles à partir d'un fichier odt
-        """
-        ''' chemin d'accès au fichier qui contient les styles à utiliser '''
-        url = getLirecouleurTemplateURL()
-        ppp = create_uno_struct("com.sun.star.beans.PropertyValue")
-        ppp.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
-        ppp.Value = False
-        xModel.getStyleFamilies().loadStylesFromURL(url, (ppp,))
-    except:
-        pass
-        
-    createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
-    createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
-    createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
-    createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
-    createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
-    createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
-    createCharacterStyles(xModel, style_yod, __style_yod__)
-    createCharacterStyles(xModel, style_wau, __style_wau__)
+            ppp1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            ppp1.Name = "LoadPageStyles"
+            ppp1.Value = False
+            ppp2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            ppp2.Name = "LoadFrameStyles"
+            ppp2.Value = False
+            ppp3 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            ppp3.Name = "LoadNumberingStyles"
+            ppp3.Value = False
+            ppp4 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            ppp4.Name = "LoadTextStyles" # on veut écraser uniquement les styles de texte
+            ppp4.Value = True
+            ppp5 = create_uno_struct("com.sun.star.beans.PropertyValue")
+            ppp5.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
+            ppp5.Value = False
+            xModel.getStyleFamilies().loadStylesFromURL(url, (ppp1, ppp2, ppp3, ppp4, ppp5,))
+        except:            
+            createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
+            createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
+            createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
+            createCharacterStyles(xModel, style_mot_dys, __style_mot_dys__)
+            createCharacterStyles(xModel, styles_lignes_altern, __styles_lignes_altern__)
+            createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
+            createCharacterStyles(xModel, style_yod, __style_yod__)
+            createCharacterStyles(xModel, style_wau, __style_wau__)
+    
+    # ajuster le style des e caduc en fonction du choix d'affichage entre "syllabes orales" ou "syllabes écrites"
+    settings = Settings()
+    if settings.get('__syllo__')[1]:
+        # syllabes orales : e caduc affiché comme le phonème muet
+        style_phon_perso['q_caduc'] = style_phon_perso['#']
+        style_yod['q_caduc']['CharStyleName'] = 'phon_y'
+    else:
+        # syllabes écrites : e caduc affiché comme le e
+        style_phon_perso['q_caduc'] = style_phon_perso['q']
+        style_yod['q_caduc']['CharStyleName'] = 'yod_phon_e_caduc'
 
 ######################################################################################
 # Place un point sous une lettre muette
@@ -903,6 +877,9 @@ def code_phonemes(xDocument, phonemes, style, cursor, selecteurphonemes=None, de
                         if stylphon.startswith('w_') and txt_phon.startswith('ou'):
                             # micmac pour savoir s'il faut souligner une ou 2 lettres
                             il = 2
+                        if stylphon.startswith('j_') and txt_phon.startswith('ill'):
+                            # micmac pour savoir s'il faut souligner une ou 3 lettres
+                            il = 3
                         cur = formaterTexte(txt_phon[:il], cur, style_semi[stylphon[0]][stylphon[2:]])
                         txt_phon = txt_phon[il:]
                         stylphon = stylphon[2:]
@@ -1344,9 +1321,12 @@ def colorier_lettres_muettes(xDocument, paragraphe, cursor, style):
     # récupération de l'information sur le marquage des lettres muettes par des points
     settings = Settings()
     point_lmuette = settings.get('__point__')
+    e_caduc = settings.get('__syllo__')[1] #indique si les e caducs doivent être marqués comme des lettres muettes
 
     # récup du masque des phonèmes à afficher : uniquement les lettres muettes
     selecteurphonemes = {'#':1, 'verb_3p':1}
+    if e_caduc:
+        selecteurphonemes['q_caduc'] = 1
 
     lMots = extraitMots(cursor)
     for curMot in lMots:
@@ -1882,7 +1862,7 @@ def __lirecouleur_alterne_phonemes__(xDocument):
         del xTextRange
     except:
         return False
-    return True
+    return __lirecouleur_l_muettes__(xDocument)
 
 ###################################################################################
 # Marque les graphèmes complexes en fonction des styles du document
@@ -2196,4 +2176,35 @@ def __new_lirecouleur_document__(__xDocument, ctx):
         desktop.loadComponentFromURL('private:factory/swriter', "_blank", 0, ())
     except:
         pass
+
+"""
+    Recharger les styles de caractères depuis le modèle LireCouleur
+"""
+def __lirecouleur_recharger_styles__(xDocument):
+    try:
+        """
+            Importation des styles à partir d'un fichier odt
+        """
+        ''' chemin d'accès au fichier qui contient les styles à utiliser '''
+        url = getLirecouleurTemplateURL()
+        ppp1 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp1.Name = "LoadPageStyles"
+        ppp1.Value = False
+        ppp2 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp2.Name = "LoadFrameStyles"
+        ppp2.Value = False
+        ppp3 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp3.Name = "LoadNumberingStyles"
+        ppp3.Value = False
+        ppp4 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp4.Name = "LoadTextStyles" # on veut uniquement les styles de texte
+        ppp4.Value = True
+        ppp5 = create_uno_struct("com.sun.star.beans.PropertyValue")
+        ppp5.Name = "OverwriteStyles" # on veut écraser les styles existants
+        ppp5.Value = True
+        xDocument.getStyleFamilies().loadStylesFromURL(url, (ppp1, ppp2, ppp3, ppp4, ppp5,))
+    except:
+        pass
+
+
 

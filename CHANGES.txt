@@ -2,7 +2,10 @@
 Corrections :
 * homogénéisation du décodage pour les "w" -- correction de la règle 'ouat'
 * correction du modèle de document pour l'import des styles de caractères
+* homogénéisation du décodage des semi-consonnes pour distinguer le cas où on les considère comme des phonèmes du cas où on les considère comme des variations du phonème voyelle qui suit
 
+Nouvelle fonction :
+* recharger les styles de caractères d'un document depuis le modèle LireCouleur
 
 ------------------------- 4.6.2 ------------------------- 
 Corrections :

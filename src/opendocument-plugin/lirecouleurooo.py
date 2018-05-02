@@ -46,7 +46,7 @@ from lirecouleur.lirecouleurui import (i18n,__lirecouleur_phonemes__,__lirecoule
         __lirecouleur_liaisons__,__lirecouleur_lignes__,__lirecouleur_phon_muet__,__lirecouleur_graphemes_complexes__,
         __lirecouleur_ponctuation__,__lirecouleur_separe_mots__,__lirecouleur_suppr_decos__,__lirecouleur_suppr_syllabes__,
         __lirecouleur_syllabes__,__new_lirecouleur_document__, getLirecouleurDictionary,__lirecouleur_alterne_phonemes__,
-        importStylesLireCouleur,getLirecouleurURL)
+        importStylesLireCouleur,getLirecouleurURL, __lirecouleur_recharger_styles__)
 
 
 l_styles_phon = ['phon_a', 'phon_e', 'phon_i', 'phon_u', 'phon_ou', 'phon_ez', 'phon_o_ouvert', 'phon_et',
@@ -96,7 +96,7 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
         selectphonemes['e~'] = self.getState('phon_in')
         selectphonemes['x~'] = self.getState('phon_un')
         selectphonemes['o~'] = self.getState('phon_on')
-        selectphonemes['w'] = selectphonemes['wa'] = selectphonemes['w5'] = self.getState('phon_wa')
+        selectphonemes['wa'] = self.getState('phon_wa')
         selectphonemes['j'] = self.getState('phon_y')
 
         selectphonemes['n'] = self.getState('phon_n')
@@ -126,7 +126,15 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
         selectphonemes['ks'] = self.getState('phon_ks')
         selectphonemes['gz'] = self.getState('phon_gz')
 
-        selectphonemes['#'] = selectphonemes['q_caduc'] = self.getState('phon_muet')
+        selectphonemes['#'] = self.getState('phon_muet')
+
+        # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle' et à 'wau'+'voyelle'
+        for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u', 'q_caduc']:
+            try:
+                selectphonemes['j_'+phon] = selectphonemes[phon]
+                selectphonemes['w_'+phon] = selectphonemes[phon]
+            except:
+                pass
 
         settings.setValue('__selection_phonemes__', selectphonemes)
         self.controlContainer.endExecute()
@@ -196,6 +204,14 @@ class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
         item1 = self.controlContainer.getControl('listTyp1Syll').getSelectedItemPos()
         item2 = self.controlContainer.getControl('listTyp2Syll').getSelectedItemPos()
         settings.setValue('__syllo__', (item1, item2))
+        
+        # selon le type de syllabes choisies, les e caducs doivent être affichés différemment
+        selectphonemes = settings.get('__selection_phonemes__')
+        if item2:
+            selectphonemes['q_caduc'] = selectphonemes['yod_q_caduc'] = selectphonemes['#']
+        else:
+            selectphonemes['q_caduc'] = selectphonemes['yod_q_caduc'] = selectphonemes['q']
+        settings.setValue('__selection_phonemes__', selectphonemes)
 
         self.controlContainer.endExecute()
 
@@ -238,6 +254,17 @@ class MyActionListener(unohelper.Base, XActionListener):
         settings.setValue('__point__', self.controlContainer.getControl('chk_checkPoint').getState())
         settings.setValue('__template__', self.controlContainer.getControl('fieldTemp').getText())
         settings.setValue('__locale__', self.controlContainer.getControl('listLocale').getSelectedItem())
+
+        item_syllo = self.controlContainer.getControl('chk_checkSyllo').getState()
+        settings.setValue('__syllo__', (settings.get('__syllo__')[0], item_syllo))
+        
+        # selon le type de syllabes choisies, les e caducs doivent être affichés différemment
+        selectphonemes = settings.get('__selection_phonemes__')
+        if item_syllo:
+            selectphonemes['q_caduc'] = selectphonemes['yod_q_caduc'] = selectphonemes['#']
+        else:
+            selectphonemes['q_caduc'] = selectphonemes['yod_q_caduc'] = selectphonemes['q']
+        settings.setValue('__selection_phonemes__', selectphonemes)
 
         self.controlContainer.endExecute()
 
@@ -392,8 +419,11 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     # lecture pour savoir s'il faut mettre un point sous les lettres muettes
     selectpoint = settings.get('__point__')
 
-    # décodage ds phonèmes niveau débutant lecteur ou standard
+    # décodage des phonèmes niveau débutant lecteur ou standard
     selectsimple = settings.get('__detection_phonemes__')
+
+    # affichage des  caducs comme lettres muettes
+    selectsyllo = settings.get('__syllo__')[1]
 
     # lecture du mode de décodage (dépend de la localisation)
     select_locale = settings.get('__locale__')
@@ -406,18 +436,21 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
 
     dialogModel.PositionX = 200
     dialogModel.PositionY = 100
-    dialogModel.Width = 210
-    dialogModel.Height = 110
+    dialogModel.Width = 230
+    dialogModel.Height = 127
     dialogModel.Title = _("Configuration générale LireCouleur")
     
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
 
     createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
-                    _(u("Détection des phonèmes niveau débutant lecteur")), selectsimple, dialogModel.Width-10)
+                    _(u("Détecter les semi-consonnes comme phonèmes indépendants")), selectsimple, dialogModel.Width-10)
+
+    createCheckBox(dialogModel, 10, 25, "checkSyllo", 0,
+                    _(u("Afficher les e caducs comme lettres muettes")), selectsyllo, dialogModel.Width-10)
 
     labelListLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelListLocale.PositionX = 10
-    labelListLocale.PositionY = 27
+    labelListLocale.PositionY = 42
     labelListLocale.Width  = 50
     labelListLocale.Height = 12
     labelListLocale.Name = "labelListLocale"
@@ -441,12 +474,12 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
         listLocale.SelectedItems = (0,)
     dialogModel.insertByName(listLocale.Name, listLocale)
 
-    createCheckBox(dialogModel, 10, 43, "checkPoint", 0,
+    createCheckBox(dialogModel, 10, 58, "checkPoint", 0,
                     _(u("Placer des symboles sous certains sons")), selectpoint, dialogModel.Width-10)
 
     labelTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelTemp.PositionX = 10
-    labelTemp.PositionY = 60
+    labelTemp.PositionY = 75
     labelTemp.Width  = dialogModel.Width-12
     labelTemp.Height = 10
     labelTemp.Name = "labelTemp"
@@ -456,7 +489,7 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
 
     fieldTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
     fieldTemp.PositionX = 10
-    fieldTemp.PositionY  = labelTemp.PositionY+labelTemp.Height
+    fieldTemp.PositionY  = labelTemp.PositionY+labelTemp.Height+2
     fieldTemp.Width = dialogModel.Width-42
     fieldTemp.Height = 14
     fieldTemp.Name = "fieldTemp"
@@ -566,13 +599,13 @@ def __configuration_phonemes__(xDocument, xContext):
 
     dialogModel.PositionX = 200
     dialogModel.PositionY = 100
-    dialogModel.Width = 210
+    dialogModel.Width = 220
     dialogModel.Height = 230
     dialogModel.Title = _("Configuration : phonèmes")
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#phonemes")
 
-    createLabel(dialogModel, 10, 10, "lbl_1", 1, _(u("Choisir les phonèmes ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
+    createLabel(dialogModel, 5, 10, "lbl_1", 1, _(u("Choisir les phonèmes ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
 
     # créer les checkboxes des phonèmes
     esp_y = 12 ; esp_x = 70
@@ -765,7 +798,7 @@ def __configuration_sylldys__(xDocument, xContext):
     dialogModel.insertByName(labelRadio.Name, labelRadio)
 
     listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
-    listTyp1Syll.Width  = 50
+    listTyp1Syll.Width  = 65
     listTyp1Syll.Height  = 12
     listTyp1Syll.PositionX = dialogModel.Width/2-listTyp1Syll.Width
     listTyp1Syll.PositionY = labelRadio.PositionY+12
@@ -875,7 +908,7 @@ def __configuration_syllabes__(__xDocument, xContext):
     dialogModel.insertByName(labelRadio.Name, labelRadio)
 
     listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
-    listTyp1Syll.Width  = 50
+    listTyp1Syll.Width  = 65
     listTyp1Syll.Height  = 12
     listTyp1Syll.PositionX = dialogModel.Width/2-listTyp1Syll.Width
     listTyp1Syll.PositionY = labelRadio.PositionY+12
@@ -2140,6 +2173,20 @@ def __lirecouleur_modele_document__(xDocument, xContext):
     xDocument.close(True)
 
 ###################################################################################
+# Lit le passage courant sous le curseur
+###################################################################################
+class LireCouleurRechargerStyles(unohelper.Base, XJobExecutor):
+    """Recharger les styles de caractères à partir du modèle LireCouleur"""
+    def __init__(self, ctx):
+        self.ctx = ctx
+    def trigger(self, __args):
+        desktop = self.ctx.ServiceManager.createInstanceWithContext('com.sun.star.frame.Desktop', self.ctx)
+        __lirecouleur_recharger_styles__(desktop.getCurrentComponent())
+
+def lirecouleur_recharger_styles(__args=None):
+    __lirecouleur_recharger_styles__(XSCRIPTCONTEXT.getDocument())
+
+###################################################################################
 # lists the scripts, that shall be visible inside OOo. Can be omitted.
 ###################################################################################
 g_exportedScripts = lirecouleur_defaut, lirecouleur_espace, lirecouleur_phonemes, lirecouleur_syllabes, \
@@ -2148,7 +2195,7 @@ lirecouleur_liaisons_forcees, lirecouleur_confusion_lettres, lirecouleur_suppr_s
 lirecouleur_ponctuation, lirecouleur_suppr_decos, lirecouleur_phon_muet, lirecouleur_graphemes_complexes, \
 new_lirecouleur_document, gestionnaire_dictionnaire_dialog, lirecouleur_espace_lignes, lirecouleur_consonne_voyelle, \
 lirecouleur_large, lirecouleur_extra_large, lirecouleur_noir, lirecouleur_separe_mots, \
-lirecouleur_couleur_mots, lirecouleur_alterne_phonemes, \
+lirecouleur_couleur_mots, lirecouleur_alterne_phonemes, lirecouleur_recharger_styles, \
 configuration_phonemes, configuration_sylldys, configuration_lignes, configuration_couleur_mots, \
 configuration_alterne_phonemes, configuration_graphemes_complexes, configuration_consonne_voyelle, \
 configuration_confusion_lettres, configuration_syllabes, configuration_espace, lirecouleur_modele_document,
@@ -2328,6 +2375,11 @@ g_ImplementationHelper.addImplementation( \
     LireCouleurModeleDocument,'org.lirecouleur.LireCouleurModeleDocument', \
     ('com.sun.star.task.Job',))
 
+
+g_ImplementationHelper.addImplementation( \
+    LireCouleurRechargerStyles,'org.lirecouleur.LireCouleurRechargerStyles', \
+    ('com.sun.star.task.Job',))
+
 """
 
 """
@@ -2350,4 +2402,6 @@ if __name__ == "__main__":
     xDocument = desktop.getCurrentComponent()
     
     __lirecouleur_phonemes__(xDocument)
+    #__gestionnaire_config_dialog__(xDocument, ctx)
+    #__lirecouleur_recharger_styles__(xDocument)
 

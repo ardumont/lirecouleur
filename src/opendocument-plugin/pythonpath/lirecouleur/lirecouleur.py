@@ -1138,7 +1138,7 @@ def post_traitement_yod(pp):
             return pp
         
         # phonème suivant
-        phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'x', 'x^', 'u']
+        phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'q', 'q_caduc', 'x', 'x^', 'u']
         if phonemes[i_ph+1] in phon_suivant:
             pp[i_ph] = ('j_'+phonemes[i_ph+1], pp[i_ph][1]+pp[i_ph+1][1])
             if len(pp[i_ph+2:]) > 0:

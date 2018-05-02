@@ -222,13 +222,13 @@ class Settings(object):
         if not prop is None:
             selphon = [ph.split(':') for ph in prop.split(';')]
             self.SelectionPhonemes = dict([[ph[0], eval(ph[1])] for ph in selphon])
-            # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle'
-            for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u']:
+            # considérer que la sélection des phonèmes 'voyelle' s'étend à 'yod'+'voyelle' et à 'wau'+'voyelle'
+            for phon in ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o~', 'i', 'e~', 'x', 'x^', 'u', 'q_caduc']:
                 try:
                     self.SelectionPhonemes['j_'+phon] = self.SelectionPhonemes[phon]
                     self.SelectionPhonemes['w_'+phon] = self.SelectionPhonemes[phon]
                 except:
-                    pass
+                    self.SelectionPhonemes[phon] = self.SelectionPhonemes['j_'+phon] = self.SelectionPhonemes['w_'+phon] = 0
         prop = self.getPropertyValue(cua, "__selection_lettres__")
         if not prop is None:
             selphon = [ph.split(':') for ph in prop.split(';')]
@@ -241,6 +241,11 @@ class Settings(object):
             self.Syllo = (ConstLireCouleur.SYLLABES_LC, ConstLireCouleur.SYLLABES_ECRITES)
         else:
             self.Syllo = (choix_syllo%2, int(choix_syllo/10)%2)
+        if self.Syllo[1]:
+            self.SelectionPhonemes['q_caduc'] = self.SelectionPhonemes['yod_q_caduc'] = self.SelectionPhonemes['#']
+        else:
+            self.SelectionPhonemes['q_caduc'] = self.SelectionPhonemes['yod_q_caduc'] = self.SelectionPhonemes['q']
+
         self.Superpose = self.getPropertyValue(cua, "__superpose__")
         self.Alternate = self.getPropertyValue(cua, "__alternate__")
         self.Locale = self.getPropertyValue(cua, "__locale__")
