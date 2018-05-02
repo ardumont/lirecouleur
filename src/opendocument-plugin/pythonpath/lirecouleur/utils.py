@@ -6,7 +6,6 @@ import uno
 import unohelper
 
 from com.sun.star.awt.PosSize import (POSSIZE as PS_POSSIZE)
-from builtins import int
 
 CONFIG_NODE = "/lire.libre.lirecouleur/Settings"
 
@@ -32,7 +31,7 @@ def create_uno_struct(cTypeName):
     # Get the IDL class for the type name
     oXIdlClass = oCoreReflection.forName( cTypeName )
     # Create the struct.
-    __, oStruct = oXIdlClass.createObject( None )
+    __oReturnValue, oStruct = oXIdlClass.createObject( None )
     return oStruct
 
 def create_uno_service(serviceName, ctx=None):
