@@ -24,6 +24,8 @@
 # Place, Suite 330, Boston, MA  02111-1307  USA
 ###################################################################################
 
+from __future__ import unicode_literals
+
 import os
 import re
 import logging
@@ -151,8 +153,14 @@ def setLCDictEntry(key, phon, syll):
 ###################################################################################
 # reste du passage à Python3 pour le traitement des unicode
 ###################################################################################
+if not 'unicode' in dir(__builtins__):
+    def unicode(obj, __dummy): return str(obj)
+
 def u(txt):
-    return str(txt)
+    try:
+        return unicode(txt, 'utf-8')
+    except:
+        return txt
 
 ###################################################################################
 # Liste des mots non correctement traités :
@@ -187,7 +195,7 @@ verbes_ier = ['affilier','allier','allier','amnistier','amplifier','anesthesier'
 'confier','congedier','contrarier','copier','crier','crucifier','dactylographier',
 'differencier','disgracier','disqualifier','dissocier','distancier','diversifier','domicilier',
 'decrier','dedier','defier','deifier','delier','demarier','demultiplier','demystifier','denazifier',
-'denier','deplier','deprecier','dequalifier',u('dévier'),'envier','estropier','excommunier',
+'denier','deplier','deprecier','dequalifier','devier','envier','estropier','excommunier',
 'exemplifier','exfolier','expatrier','expier','exproprier','expedier','extasier','falsifier',
 'fier','fluidifier','fortifier','frigorifier','fructifier','gazeifier','glorifier','gracier',
 'gratifier','horrifier','humidifier','humilier','identifier','incendier','ingenier','initier',
@@ -1646,8 +1654,14 @@ if __name__ == "__main__":
         print ('test de liaison')
         print (pretraitement_texte(u(sys.argv[1]))+ ' '+ pretraitement_texte(u(sys.argv[2]))+ ' : '+ str(teste_liaison(pretraitement_texte(u(sys.argv[1])), pretraitement_texte(u(sys.argv[2])))))
     else:
+        l_mots = []
         for i in range(len(sys.argv)-1):
-            message_test = u(sys.argv[i+1])
+            l_mots.append(u(sys.argv[i+1]))
+        if len(l_mots) == 0:
+            l_mots = [u(u('lirecouleur')), u('éléphant')]
+        
+        for mot in l_mots:
+            message_test = mot
             print (u('test chaine de phonemes debutant lecteur : ')+message_test)
             pp = generer_paragraphe_phonemes(message_test, 1)
             print (message_test + ': '+ str(pp))

@@ -309,7 +309,7 @@ def createCheckBox(dialogModel, px, py, name, index, label, etat, w=58):
     # créer le label titre
     labelBP = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelBP.PositionX = px+14
-    labelBP.PositionY = py+2
+    labelBP.PositionY = py
     labelBP.Width  = w
     labelBP.Height = 10
     labelBP.Name = name
@@ -457,7 +457,7 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     dialogModel.insertByName(labelListLocale.Name, labelListLocale)
 
     listLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
-    listLocale.PositionX = labelListLocale.PositionX+labelListLocale.Width
+    listLocale.PositionX = labelListLocale.PositionX+labelListLocale.Width+5
     listLocale.PositionY = labelListLocale.PositionY
     listLocale.Width  = 50
     listLocale.Height  = 12
