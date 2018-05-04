@@ -608,45 +608,45 @@ def __configuration_phonemes__(xDocument, xContext):
     # créer les checkboxes des phonèmes
     esp_y = 12 ; esp_x = 70
     i = 2 ; x = 10 ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_a", i, u('[~a] ta'), selectphonemes['a'])
+    createCheckBox(dialogModel, x, y, "phon_a", i, u('[~a] ta'), selectphonemes['a'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_e", i, u('[~e] le'), selectphonemes['q'])
+    createCheckBox(dialogModel, x, y, "phon_e", i, u('[~e] le'), selectphonemes['q'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_i", i, u('[~i] il'), selectphonemes['i'])
+    createCheckBox(dialogModel, x, y, "phon_i", i, u('[~i] il'), selectphonemes['i'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_u", i, u('[~y] tu'), selectphonemes['y'])
-    i += 1 ; y += esp_y
-
-    x += esp_x ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_ou", i, u('[~u] fou'), selectphonemes['u'])
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_ez", i, u('[~é] né'), selectphonemes['e'])
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_o_ouvert", i, u('[~o] mot'), selectphonemes['o'])
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_et", i, u('[~è] sel'), selectphonemes['e^'])
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_an", i, u('[~an] grand'), selectphonemes['a~'])
+    createCheckBox(dialogModel, x, y, "phon_u", i, u('[~y] tu'), selectphonemes['y'], 50)
     i += 1 ; y += esp_y
 
     x += esp_x ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_on", i, u('[~on] son'), selectphonemes['o~'])
+    createCheckBox(dialogModel, x, y, "phon_ou", i, u('[~u] fou'), selectphonemes['u'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_eu", i, u('[~x] feu'), selectphonemes['x'])
+    createCheckBox(dialogModel, x, y, "phon_ez", i, u('[~é] né'), selectphonemes['e'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_in", i, u('[~in] fin'), selectphonemes['e~'])
+    createCheckBox(dialogModel, x, y, "phon_o_ouvert", i, u('[~o] mot'), selectphonemes['o'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_un", i, u('[~un] un'), selectphonemes['e~'])
+    createCheckBox(dialogModel, x, y, "phon_et", i, u('[~è] sel'), selectphonemes['e^'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_wa", i, u('[~w] noix'), selectphonemes['w'])
+    createCheckBox(dialogModel, x, y, "phon_an", i, u('[~an] grand'), selectphonemes['a~'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_y", i, u('[~j] fille'), selectphonemes['j'])
+
+    x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "phon_on", i, u('[~on] son'), selectphonemes['o~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_eu", i, u('[~x] feu'), selectphonemes['x'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_in", i, u('[~in] fin'), selectphonemes['e~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_un", i, u('[~un] un'), selectphonemes['e~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_wa", i, u('[~w] noix'), selectphonemes['w'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_y", i, u('[~j] fille'), selectphonemes['j'], 50)
     i += 1 ; y += esp_y
 
     x = 10
-    createCheckBox(dialogModel, x, y, "phon_ng", i, u('[~ng] parking'), selectphonemes['g~'])
+    createCheckBox(dialogModel, x, y, "phon_ng", i, u('[~ng] parking'), selectphonemes['g~'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_gn", i, u('[~gn] ligne'), selectphonemes['n~'])
+    createCheckBox(dialogModel, x, y, "phon_gn", i, u('[~gn] ligne'), selectphonemes['n~'], 50)
     i += 1
 
     x += esp_x
@@ -654,46 +654,46 @@ def __configuration_phonemes__(xDocument, xContext):
     i += 1
 
     y += esp_y ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_r", i, u('[~r] rat'), selectphonemes['r'])
+    createCheckBox(dialogModel, x, y, "phon_r", i, u('[~r] rat'), selectphonemes['r'], 50)
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_l", i, u('[~l] ville'), selectphonemes['l'])
+    createCheckBox(dialogModel, x, y, "phon_l", i, u('[~l] ville'), selectphonemes['l'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_m", i, u('[~m] mami'), selectphonemes['m'])
+    createCheckBox(dialogModel, x, y, "phon_m", i, u('[~m] mami'), selectphonemes['m'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_n", i, u('[~n] âne'), selectphonemes['n'])
+    createCheckBox(dialogModel, x, y, "phon_n", i, u('[~n] âne'), selectphonemes['n'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_v", i, u('[~v] vélo'), selectphonemes['v'])
+    createCheckBox(dialogModel, x, y, "phon_v", i, u('[~v] vélo'), selectphonemes['v'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_z", i, u('[~z] zoo'), selectphonemes['z'])
+    createCheckBox(dialogModel, x, y, "phon_z", i, u('[~z] zoo'), selectphonemes['z'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_ge", i, u('[~ge] jupe'), selectphonemes['z^'])
+    createCheckBox(dialogModel, x, y, "phon_ge", i, u('[~ge] jupe'), selectphonemes['z^'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_f", i, u('[~f] effacer'), selectphonemes['f'])
+    createCheckBox(dialogModel, x, y, "phon_f", i, u('[~f] effacer'), selectphonemes['f'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_s", i, u('[~s] scie'), selectphonemes['s'])
+    createCheckBox(dialogModel, x, y, "phon_s", i, u('[~s] scie'), selectphonemes['s'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_ch", i, u('[c~h] chat'), selectphonemes['s^'])
+    createCheckBox(dialogModel, x, y, "phon_ch", i, u('[c~h] chat'), selectphonemes['s^'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_p", i, u('[~p] papa'), selectphonemes['p'])
+    createCheckBox(dialogModel, x, y, "phon_p", i, u('[~p] papa'), selectphonemes['p'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_t", i, u('[~t] tortue'), selectphonemes['t'])
+    createCheckBox(dialogModel, x, y, "phon_t", i, u('[~t] tortue'), selectphonemes['t'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_k", i, u('[~k] coq'), selectphonemes['k'])
+    createCheckBox(dialogModel, x, y, "phon_k", i, u('[~k] coq'), selectphonemes['k'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_b", i, u('[~b] bébé'), selectphonemes['b'])
+    createCheckBox(dialogModel, x, y, "phon_b", i, u('[~b] bébé'), selectphonemes['b'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_d", i, u('[~d] dindon'), selectphonemes['d'])
+    createCheckBox(dialogModel, x, y, "phon_d", i, u('[~d] dindon'), selectphonemes['d'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_g", i, u('[~g] gare'), selectphonemes['g'])
+    createCheckBox(dialogModel, x, y, "phon_g", i, u('[~g] gare'), selectphonemes['g'], 50)
 
     i += 1 ; x = 10+esp_x ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_ks", i, u('[ks] ksi'), selectphonemes['ks'])
+    createCheckBox(dialogModel, x, y, "phon_ks", i, u('[ks] ksi'), selectphonemes['ks'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_gz", i, u('[gz] exact'), selectphonemes['gz'])
+    createCheckBox(dialogModel, x, y, "phon_gz", i, u('[gz] exact'), selectphonemes['gz'], 50)
     i += 1 ; x += esp_x
 
     createCheckBox(dialogModel, 10, dialogModel.Height-36, "checkPoint", 0,
