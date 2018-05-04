@@ -136,6 +136,8 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
             except:
                 pass
 
+        settings.setValue('__point__', self.controlContainer.getControl('chk_checkPoint').getState())
+
         settings.setValue('__selection_phonemes__', selectphonemes)
         self.controlContainer.endExecute()
 
@@ -251,7 +253,6 @@ class MyActionListener(unohelper.Base, XActionListener):
     def actionPerformed(self, __actionEvent):
         settings = Settings()
         settings.setValue('__detection_phonemes__', self.controlContainer.getControl('chk_checkSimple').getState())
-        settings.setValue('__point__', self.controlContainer.getControl('chk_checkPoint').getState())
         settings.setValue('__template__', self.controlContainer.getControl('fieldTemp').getText())
         settings.setValue('__locale__', self.controlContainer.getControl('listLocale').getSelectedItem())
 
@@ -416,9 +417,6 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     # get the service manager
     smgr = xContext.ServiceManager
 
-    # lecture pour savoir s'il faut mettre un point sous les lettres muettes
-    selectpoint = settings.get('__point__')
-
     # décodage des phonèmes niveau débutant lecteur ou standard
     selectsimple = settings.get('__detection_phonemes__')
 
@@ -437,7 +435,7 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     dialogModel.PositionX = 200
     dialogModel.PositionY = 100
     dialogModel.Width = 230
-    dialogModel.Height = 127
+    dialogModel.Height = 115
     dialogModel.Title = _("Configuration générale LireCouleur")
     
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
@@ -474,12 +472,9 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
         listLocale.SelectedItems = (0,)
     dialogModel.insertByName(listLocale.Name, listLocale)
 
-    createCheckBox(dialogModel, 10, 58, "checkPoint", 0,
-                    _(u("Placer des symboles sous certains sons")), selectpoint, dialogModel.Width-10)
-
     labelTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelTemp.PositionX = 10
-    labelTemp.PositionY = 75
+    labelTemp.PositionY = 62
     labelTemp.Width  = dialogModel.Width-12
     labelTemp.Height = 10
     labelTemp.Name = "labelTemp"
@@ -591,6 +586,9 @@ def __configuration_phonemes__(xDocument, xContext):
     # get the service manager
     smgr = xContext.ServiceManager
 
+    # lecture pour savoir s'il faut mettre un point sous les lettres muettes
+    selectpoint = settings.get('__point__')
+
     # read the already selected phonemes in the .lirecouleur file
     selectphonemes = settings.get('__selection_phonemes__')
 
@@ -600,7 +598,7 @@ def __configuration_phonemes__(xDocument, xContext):
     dialogModel.PositionX = 200
     dialogModel.PositionY = 100
     dialogModel.Width = 220
-    dialogModel.Height = 230
+    dialogModel.Height = 250
     dialogModel.Title = _("Configuration : phonèmes")
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#phonemes")
@@ -697,6 +695,9 @@ def __configuration_phonemes__(xDocument, xContext):
     i += 1 ; x += esp_x
     createCheckBox(dialogModel, x, y, "phon_gz", i, u('[gz] exact'), selectphonemes['gz'])
     i += 1 ; x += esp_x
+
+    createCheckBox(dialogModel, 10, dialogModel.Height-36, "checkPoint", 0,
+                    _(u("Placer des symboles sous les phonèmes sélectionnés")), selectpoint, dialogModel.Width-10)
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
@@ -2402,6 +2403,6 @@ if __name__ == "__main__":
     xDocument = desktop.getCurrentComponent()
     
     __lirecouleur_phonemes__(xDocument)
-    #__gestionnaire_config_dialog__(xDocument, ctx)
+    #__configuration_phonemes__(xDocument, ctx)
     #__lirecouleur_recharger_styles__(xDocument)
 

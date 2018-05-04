@@ -85,6 +85,12 @@ def getLirecouleurTemplateURL():
             return uno.systemPathToFileUrl(url)
     return ""
 
+def getLirecouleurTemplateDirURL():
+    url = getLirecouleurTemplateURL()
+    if len(url) > 0:
+        url = os.sep.join(url.split(os.sep)[:-1])+os.sep
+    return url
+
 def getLirecouleurDictionary():
     localdir = os.sep.join([getLirecouleurDirectory(), 'locale'])
     loclang = os.environ['LANG']
@@ -729,7 +735,7 @@ def marqueImage(xDocument, stylphon, txt_phon, cursor):
 
     # définition de l'arc de cercle (cuvette)
     try:
-        fimgname = getLirecouleurURL()+"/images/"+style_phon_perso[stylphon]['CharStyleName']+".png"
+        fimgname = getLirecouleurTemplateDirURL()+style_phon_perso[stylphon]['CharStyleName']+".png"
     except:
         return deplacerADroite(txt_phon, cursor)
     if os.path.isfile(uno.fileUrlToSystemPath(fimgname)):
@@ -1258,15 +1264,12 @@ def colorier_defaut(paragraphe, cursor, choix):
 ###################################################################################
 # Conversion d'un paragraphe en mettant ses phonèmes en couleur
 ###################################################################################
-def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
+def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2, point_sm=False):
     # chargement du dictionnaire de décodage
     loadLCDict(getLirecouleurDictionary())
 
     # lecture des informations de configuration
     settings = Settings()
-
-    # récupération de l'information sur le marquage des lettres muettes par des points
-    point_lmuette = settings.get('__point__')
 
     # savoir si on détecte les phonèmes standard ou pour des débutants lecteurs
     detection_phonemes_debutant = settings.get('__detection_phonemes__')
@@ -1302,7 +1305,7 @@ def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2):
             for umot in pp:
                 if isinstance(umot, list):
                     # recodage du mot en couleurs
-                    curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_lmuette)
+                    curs = code_phonemes(xDocument, umot, style, curs, selecteurphonemes, point_sm)
                 else:
                     # passage de la portion de texte non traitée (ponctuation, espaces...)
                     curs = deplacerADroite(umot, curs)
@@ -1823,6 +1826,7 @@ def __lirecouleur_phonemes__(xDocument):
     # récup de l'option de superposition de fonction
     settings = Settings()
     superpose = settings.get('__superpose__')
+    point_sm = settings.get('__point__')
 
     try:
         for xtr in xTextRange:
@@ -1831,7 +1835,7 @@ def __lirecouleur_phonemes__(xDocument):
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
                 del xtrTemp
-            colorier_phonemes_style(xDocument, theString, xtr, 'perso')
+            colorier_phonemes_style(xDocument, theString, xtr, 'perso', 2, point_sm)
         del xTextRange
     except:
         return False
