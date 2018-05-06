@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
 
 ###################################################################################
 # Macro destinée à l'affichage de textes en couleur et à la segmentation
@@ -32,7 +33,6 @@ import random
 import re
 import os
 
-from gettext import gettext as _
 from com.sun.star.awt import (XActionListener, XMouseListener)
 from com.sun.star.task import XJobExecutor
 from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
@@ -436,15 +436,15 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 230
     dialogModel.Height = 115
-    dialogModel.Title = _("Configuration générale LireCouleur")
+    dialogModel.Title = "Configuration générale LireCouleur"
     
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
 
     createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
-                    _(u("Détecter les semi-consonnes comme phonèmes indépendants")), selectsimple, dialogModel.Width-10)
+                    "Détecter les semi-consonnes comme phonèmes indépendants", selectsimple, dialogModel.Width-10)
 
     createCheckBox(dialogModel, 10, 25, "checkSyllo", 0,
-                    _(u("Afficher les e caducs comme lettres muettes")), selectsyllo, dialogModel.Width-10)
+                    "Afficher les e caducs comme lettres muettes", selectsyllo, dialogModel.Width-10)
 
     labelListLocale = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelListLocale.PositionX = 10
@@ -479,7 +479,7 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     labelTemp.Height = 10
     labelTemp.Name = "labelTemp"
     labelTemp.TabIndex = 1
-    labelTemp.Label = _(u("Nom du fichier modèle :"))
+    labelTemp.Label = "Nom du fichier modèle :"
     dialogModel.insertByName(labelTemp.Name, labelTemp)
 
     fieldTemp = dialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
@@ -503,8 +503,8 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -599,110 +599,110 @@ def __configuration_phonemes__(xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 220
     dialogModel.Height = 250
-    dialogModel.Title = _("Configuration : phonèmes")
+    dialogModel.Title = "Configuration : phonèmes"
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#phonemes")
 
-    createLabel(dialogModel, 5, 10, "lbl_1", 1, _(u("Choisir les phonèmes ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
+    createLabel(dialogModel, 5, 10, "lbl_1", 1, "Choisir les phonèmes ; doublecliquer sur le libellé pour éditer le style", dialogModel.Width-12)
 
     # créer les checkboxes des phonèmes
     esp_y = 12 ; esp_x = 70
     i = 2 ; x = 10 ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_a", i, u('[~a] ta'), selectphonemes['a'], 50)
+    createCheckBox(dialogModel, x, y, "phon_a", i, '[~a] ta', selectphonemes['a'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_e", i, u('[~e] le'), selectphonemes['q'], 50)
+    createCheckBox(dialogModel, x, y, "phon_e", i, '[~e] le', selectphonemes['q'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_i", i, u('[~i] il'), selectphonemes['i'], 50)
+    createCheckBox(dialogModel, x, y, "phon_i", i, '[~i] il', selectphonemes['i'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_u", i, u('[~y] tu'), selectphonemes['y'], 50)
-    i += 1 ; y += esp_y
-
-    x += esp_x ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_ou", i, u('[~u] fou'), selectphonemes['u'], 50)
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_ez", i, u('[~é] né'), selectphonemes['e'], 50)
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_o_ouvert", i, u('[~o] mot'), selectphonemes['o'], 50)
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_et", i, u('[~è] sel'), selectphonemes['e^'], 50)
-    i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_an", i, u('[~an] grand'), selectphonemes['a~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_u", i, '[~y] tu', selectphonemes['y'], 50)
     i += 1 ; y += esp_y
 
     x += esp_x ; y = 25
-    createCheckBox(dialogModel, x, y, "phon_on", i, u('[~on] son'), selectphonemes['o~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ou", i, '[~u] fou', selectphonemes['u'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_eu", i, u('[~x] feu'), selectphonemes['x'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ez", i, '[~é] né', selectphonemes['e'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_in", i, u('[~in] fin'), selectphonemes['e~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_o_ouvert", i, '[~o] mot', selectphonemes['o'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_un", i, u('[~un] un'), selectphonemes['e~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_et", i, '[~è] sel', selectphonemes['e^'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_wa", i, u('[~w] noix'), selectphonemes['w'], 50)
+    createCheckBox(dialogModel, x, y, "phon_an", i, '[~an] grand', selectphonemes['a~'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_y", i, u('[~j] fille'), selectphonemes['j'], 50)
+
+    x += esp_x ; y = 25
+    createCheckBox(dialogModel, x, y, "phon_on", i, '[~on] son', selectphonemes['o~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_eu", i, '[~x] feu', selectphonemes['x'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_in", i, '[~in] fin', selectphonemes['e~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_un", i, '[~un] un', selectphonemes['e~'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_wa", i, '[~w] noix', selectphonemes['w'], 50)
+    i += 1 ; y += esp_y
+    createCheckBox(dialogModel, x, y, "phon_y", i, '[~j] fille', selectphonemes['j'], 50)
     i += 1 ; y += esp_y
 
     x = 10
-    createCheckBox(dialogModel, x, y, "phon_ng", i, u('[~ng] parking'), selectphonemes['g~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ng", i, '[~ng] parking', selectphonemes['g~'], 50)
     i += 1 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_gn", i, u('[~gn] ligne'), selectphonemes['n~'], 50)
+    createCheckBox(dialogModel, x, y, "phon_gn", i, '[~gn] ligne', selectphonemes['n~'], 50)
     i += 1
 
     x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_muet", i, u('[#] lettres muettes, e caduc'), selectphonemes['#'], 100)
+    createCheckBox(dialogModel, x, y, "phon_muet", i, '[#] lettres muettes, e caduc', selectphonemes['#'], 100)
     i += 1
 
     y += esp_y ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_r", i, u('[~r] rat'), selectphonemes['r'], 50)
+    createCheckBox(dialogModel, x, y, "phon_r", i, '[~r] rat', selectphonemes['r'], 50)
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_l", i, u('[~l] ville'), selectphonemes['l'], 50)
+    createCheckBox(dialogModel, x, y, "phon_l", i, '[~l] ville', selectphonemes['l'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_m", i, u('[~m] mami'), selectphonemes['m'], 50)
+    createCheckBox(dialogModel, x, y, "phon_m", i, '[~m] mami', selectphonemes['m'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_n", i, u('[~n] âne'), selectphonemes['n'], 50)
+    createCheckBox(dialogModel, x, y, "phon_n", i, '[~n] âne', selectphonemes['n'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_v", i, u('[~v] vélo'), selectphonemes['v'], 50)
+    createCheckBox(dialogModel, x, y, "phon_v", i, '[~v] vélo', selectphonemes['v'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_z", i, u('[~z] zoo'), selectphonemes['z'], 50)
+    createCheckBox(dialogModel, x, y, "phon_z", i, '[~z] zoo', selectphonemes['z'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_ge", i, u('[~ge] jupe'), selectphonemes['z^'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ge", i, '[~ge] jupe', selectphonemes['z^'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_f", i, u('[~f] effacer'), selectphonemes['f'], 50)
+    createCheckBox(dialogModel, x, y, "phon_f", i, '[~f] effacer', selectphonemes['f'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_s", i, u('[~s] scie'), selectphonemes['s'], 50)
+    createCheckBox(dialogModel, x, y, "phon_s", i, '[~s] scie', selectphonemes['s'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_ch", i, u('[c~h] chat'), selectphonemes['s^'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ch", i, '[c~h] chat', selectphonemes['s^'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_p", i, u('[~p] papa'), selectphonemes['p'], 50)
+    createCheckBox(dialogModel, x, y, "phon_p", i, '[~p] papa', selectphonemes['p'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_t", i, u('[~t] tortue'), selectphonemes['t'], 50)
+    createCheckBox(dialogModel, x, y, "phon_t", i, '[~t] tortue', selectphonemes['t'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_k", i, u('[~k] coq'), selectphonemes['k'], 50)
+    createCheckBox(dialogModel, x, y, "phon_k", i, '[~k] coq', selectphonemes['k'], 50)
 
     i += 1 ; x = 10 ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_b", i, u('[~b] bébé'), selectphonemes['b'], 50)
+    createCheckBox(dialogModel, x, y, "phon_b", i, '[~b] bébé', selectphonemes['b'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_d", i, u('[~d] dindon'), selectphonemes['d'], 50)
+    createCheckBox(dialogModel, x, y, "phon_d", i, '[~d] dindon', selectphonemes['d'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_g", i, u('[~g] gare'), selectphonemes['g'], 50)
+    createCheckBox(dialogModel, x, y, "phon_g", i, '[~g] gare', selectphonemes['g'], 50)
 
     i += 1 ; x = 10+esp_x ; y += esp_y
-    createCheckBox(dialogModel, x, y, "phon_ks", i, u('[ks] ksi'), selectphonemes['ks'], 50)
+    createCheckBox(dialogModel, x, y, "phon_ks", i, '[ks] ksi', selectphonemes['ks'], 50)
     i += 1 ; x += esp_x
-    createCheckBox(dialogModel, x, y, "phon_gz", i, u('[gz] exact'), selectphonemes['gz'], 50)
+    createCheckBox(dialogModel, x, y, "phon_gz", i, '[gz] exact', selectphonemes['gz'], 50)
     i += 1 ; x += esp_x
 
     createCheckBox(dialogModel, 10, dialogModel.Height-36, "checkPoint", 0,
-                    _(u("Placer des symboles sous les phonèmes sélectionnés")), selectpoint, dialogModel.Width-10)
+                    "Placer des symboles sous les phonèmes sélectionnés", selectpoint, dialogModel.Width-10)
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -772,7 +772,7 @@ def __configuration_sylldys__(xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 140
-    dialogModel.Title = _("Configuration : syllabes en couleur")
+    dialogModel.Title = "Configuration : syllabes en couleur"
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#sylldys")
 
@@ -784,7 +784,7 @@ def __configuration_sylldys__(xDocument, xContext):
     labelCoul.Height = 16
     labelCoul.Name = "labelCoul"
     labelCoul.TabIndex = 1
-    labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
+    labelCoul.Label = "Période d'alternance des couleurs (lignes, syllabes, etc.) :"
     createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
     dialogModel.insertByName(labelCoul.Name, labelCoul)
 
@@ -795,7 +795,7 @@ def __configuration_sylldys__(xDocument, xContext):
     labelRadio.Height = 10
     labelRadio.Name = "labelRadio"
     labelRadio.TabIndex = 1
-    labelRadio.Label = _(u("Souligner les syllabes :"))
+    labelRadio.Label = "Souligner les syllabes :"
     dialogModel.insertByName(labelRadio.Name, labelRadio)
 
     listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
@@ -820,11 +820,11 @@ def __configuration_sylldys__(xDocument, xContext):
     listTyp2Syll.TabIndex = 1
     listTyp2Syll.Dropdown = True
     listTyp2Syll.MultiSelection = False
-    listTyp2Syll.StringItemList = ( _(u("écrites")), _(u("orales")) )
+    listTyp2Syll.StringItemList = ( "écrites", "orales" )
     listTyp2Syll.SelectedItems = (selectsyllo[1]%2,)
     dialogModel.insertByName(listTyp2Syll.Name, listTyp2Syll)
 
-    createLabel(dialogModel, 10, listTyp2Syll.PositionY+25, "labelStyles", 1, _(u("Editer les styles :")))
+    createLabel(dialogModel, 10, listTyp2Syll.PositionY+25, "labelStyles", 1, "Editer les styles :")
     createButton(dialogModel, 30, listTyp2Syll.PositionY+37, "syll_dys_1", "style 1")
     createButton(dialogModel, 70, listTyp2Syll.PositionY+37, "syll_dys_2", "style 2")
     createButton(dialogModel, 110, listTyp2Syll.PositionY+37, "syll_dys_3", "style 3")
@@ -832,8 +832,8 @@ def __configuration_sylldys__(xDocument, xContext):
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -896,7 +896,7 @@ def __configuration_syllabes__(__xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 70
-    dialogModel.Title = _("Configuration : souligner les syllabes")
+    dialogModel.Title = "Configuration : souligner les syllabes"
 
     labelRadio = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     labelRadio.PositionX = 10
@@ -905,7 +905,7 @@ def __configuration_syllabes__(__xDocument, xContext):
     labelRadio.Height = 10
     labelRadio.Name = "labelRadio"
     labelRadio.TabIndex = 1
-    labelRadio.Label = _(u("Souligner les syllabes :"))
+    labelRadio.Label = "Souligner les syllabes :"
     dialogModel.insertByName(labelRadio.Name, labelRadio)
 
     listTyp1Syll = dialogModel.createInstance("com.sun.star.awt.UnoControlListBoxModel")
@@ -933,7 +933,7 @@ def __configuration_syllabes__(__xDocument, xContext):
     listTyp2Syll.TabIndex = 1
     listTyp2Syll.Dropdown = True
     listTyp2Syll.MultiSelection = False
-    listTyp2Syll.StringItemList = ( _(u("écrites")), _(u("orales")) )
+    listTyp2Syll.StringItemList = ( "écrites", "orales" )
     if selectsyllo[1] in [0, 1]:
         listTyp2Syll.SelectedItems = (selectsyllo[1],)
     else:
@@ -942,8 +942,8 @@ def __configuration_syllabes__(__xDocument, xContext):
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1090,7 +1090,7 @@ def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 100
-    dialogModel.Title = _("Configuration : alternance de "+titre)
+    dialogModel.Title = "Configuration : alternance de "+titre
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#"+url)
 
@@ -1102,11 +1102,11 @@ def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
     labelCoul.Height = 16
     labelCoul.Name = "labelCoul"
     labelCoul.TabIndex = 1
-    labelCoul.Label = _(u("Période d'alternance des couleurs (lignes, syllabes, etc.) :"))
+    labelCoul.Label = "Période d'alternance des couleurs (lignes, syllabes, etc.) :"
     createNumericField(dialogModel, dialogModel.Width/2-30, labelCoul.PositionY+12, "fieldCoul", 0, nbcouleurs)
     dialogModel.insertByName(labelCoul.Name, labelCoul)
 
-    createLabel(dialogModel, 10, labelCoul.PositionY+30, "labelStyles", 1, _(u("Editer les styles :")))
+    createLabel(dialogModel, 10, labelCoul.PositionY+30, "labelStyles", 1, "Editer les styles :")
     createButton(dialogModel, 30, labelCoul.PositionY+42, "style_1", "style 1")
     createButton(dialogModel, 70, labelCoul.PositionY+42, "style_2", "style 2")
     createButton(dialogModel, 110, labelCoul.PositionY+42, "style_3", "style 3")
@@ -1114,8 +1114,8 @@ def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1178,16 +1178,16 @@ def __configuration_consonne_voyelle__(xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 70
-    dialogModel.Title = _("Configuration : consonnes et voyelles")
+    dialogModel.Title = "Configuration : consonnes et voyelles"
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#consonne_voyelle")
 
-    createLabel(dialogModel, 10, 10, "labelStyles", 1, _(u("Editer les styles de caractères :")), 100)
+    createLabel(dialogModel, 10, 10, "labelStyles", 1, "Editer les styles de caractères :", 100)
     createButton(dialogModel, 30, 22, "phon_voyelle", "voyelles", 60)
     createButton(dialogModel, 120, 22, "phon_consonne", "consonnes", 60)
 
     # create the button model and set the properties
-    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", _(u("Ok")), 40)
+    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", "Ok", 40)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1248,16 +1248,16 @@ def __configuration_graphemes_complexes__(xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 70
-    dialogModel.Title = _("Configuration : graphèmes complexes")
+    dialogModel.Title = "Configuration : graphèmes complexes"
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#graphemes_complexes")
 
-    createLabel(dialogModel, 10, 10, "labelStyles", 1, _(u("Editer les styles de caractères :")), 100)
+    createLabel(dialogModel, 10, 10, "labelStyles", 1, "Editer les styles de caractères :", 100)
     createButton(dialogModel, 20, 22, "phon_voyelle_comp", "voyelles complexes", 80)
     createButton(dialogModel, 110, 22, "phon_consonne_comp", "consonnes complexes", 80)
 
     # create the button model and set the properties
-    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", _(u("Ok")), 40)
+    createButton(dialogModel, dialogModel.Width/2-20, dialogModel.Height-16, "okButtonName", "Ok", 40)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1324,11 +1324,11 @@ def __configuration_confusion_lettres__(xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 220
     dialogModel.Height = 90
-    dialogModel.Title = _("Configuration : confusions lettres")
+    dialogModel.Title = "Configuration : confusions lettres"
 
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#confusion_lettres")
 
-    createLabel(dialogModel, 10, 10, "lbl_1", 1, _(u("Choisir les lettres ; doublecliquer sur le libellé pour éditer le style")), dialogModel.Width-12)
+    createLabel(dialogModel, 10, 10, "lbl_1", 1, "Choisir les lettres ; doublecliquer sur le libellé pour éditer le style", dialogModel.Width-12)
 
     # créer les checkboxes des phonèmes
     esp_y = 12 ; esp_x = 50
@@ -1355,8 +1355,8 @@ def __configuration_confusion_lettres__(xDocument, xContext):
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1457,7 +1457,7 @@ def __configuration_espace__(__xDocument, xContext):
     dialogModel.PositionY = 100
     dialogModel.Width = 210
     dialogModel.Height = 70
-    dialogModel.Title = _("Configuration : espacement des mots")
+    dialogModel.Title = "Configuration : espacement des mots"
 
     # créer le champ de saisie du nombre d'espaces
     labelEsp = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
@@ -1467,14 +1467,14 @@ def __configuration_espace__(__xDocument, xContext):
     labelEsp.Height = 16
     labelEsp.Name = "labelEsp"
     labelEsp.TabIndex = 1
-    labelEsp.Label = _(u("Nombre d'espaces entre chaque mot :"))
+    labelEsp.Label = "Nombre d'espaces entre chaque mot :"
     createNumericField(dialogModel, dialogModel.Width/2-30, labelEsp.PositionY+12, "fieldEsp", 0, nbespaces, 1, 10)
     dialogModel.insertByName(labelEsp.Name, labelEsp)
 
     # create the button model and set the properties
     createSeparator(dialogModel, 10, dialogModel.Height-21, "sep", dialogModel.Width-21)
-    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", _(u("Valider")), 60)
-    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", _(u("Annuler")), 60)
+    createButton(dialogModel, dialogModel.Width/2-61, dialogModel.Height-16, "okButtonName", "Valider", 60)
+    createButton(dialogModel, dialogModel.Width/2+1, dialogModel.Height-16, "cancelButtonName", "Annuler", 60)
 
     # create the dialog control and set the model
     controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", xContext);
@@ -1562,13 +1562,13 @@ class DictAddActionListener(unohelper.Base, XActionListener):
         if len(ctrl) > 0 and key != ctrl:
             # les phonèmes ne redonnent pas le mot utilisé comme clé d'index
             ctrl = '/'.join([ph.split('.')[0] for ph in re.split('/', phon)])
-            MsgBox(self.parent, self.toolkit, _(u("Phonèmes"))+' : '+key+' <=> '+ctrl+' ... incorrect')
+            MsgBox(self.parent, self.toolkit, "Phonèmes"+' : '+key+' <=> '+ctrl+' ... incorrect')
             return
 
         ctrl = ''.join(syll.split('/'))
         if len(ctrl) > 0 and key != ctrl:
             # les syllabes ne redonnent pas le mot utilisé comme clé d'index
-            MsgBox(self.parent, self.toolkit, _(u("Syllabes"))+' : '+key+' <=> '+syll+' ... incorrect')
+            MsgBox(self.parent, self.toolkit, "Syllabes"+' : '+key+' <=> '+syll+' ... incorrect')
             return
 
         deja_la = False
@@ -1623,7 +1623,7 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     dialogModel.PositionY = 50
     dialogModel.Width = 300
     dialogModel.Height = 150
-    dialogModel.Title = _(u("Dictionnaire LireCouleur"))
+    dialogModel.Title = "Dictionnaire LireCouleur"
 
     buttAdd = dialogModel.createInstance("com.sun.star.awt.UnoControlButtonModel")
     buttAdd.Width = 20
@@ -1658,7 +1658,7 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     label1.Height = 10
     label1.Name = "label1"
     label1.TabIndex = 1
-    label1.Label = _(u("Entrée dictionnaire"))
+    label1.Label = "Entrée dictionnaire"
 
     label2 = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     label2.PositionX = label1.PositionX+label1.Width+2
@@ -1667,7 +1667,7 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     label2.Height = 10
     label2.Name = "label2"
     label2.TabIndex = 1
-    label2.Label = _(u("Phonèmes"))
+    label2.Label = "Phonèmes"
 
     label3 = dialogModel.createInstance("com.sun.star.awt.UnoControlFixedTextModel")
     label3.PositionX = label2.PositionX+label2.Width+2
@@ -1676,7 +1676,7 @@ def __gestionnaire_dictionnaire_dialog__(xDocument, xContext):
     label3.Height = 10
     label3.Name = "label3"
     label3.TabIndex = 1
-    label3.Label = _(u("Syllabes"))
+    label3.Label = "Syllabes"
 
     field1 = dialogModel.createInstance("com.sun.star.awt.UnoControlEditModel")
     field1.PositionX = label1.PositionX

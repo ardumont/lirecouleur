@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
+from __future__ import unicode_literals
 
 ###################################################################################
 # Macro destinée à l'affichage de textes en couleur et à la segmentation
@@ -36,7 +37,7 @@ from .utils import (Settings, create_uno_service, create_uno_struct)
 from .lirecouleur import (generer_paragraphe_phonemes, pretraitement_texte, nettoyeur_caracteres, loadLCDict, u,
                           teste_liaison, generer_paragraphe_syllabes)
 
-__version__ = "4.7"
+__version__ = "4.8"
 
 # create LANG environment variable
 import locale
@@ -1099,7 +1100,7 @@ def getXTextRange(xDocument, fonction='mot', mode=0):
     except:
         return None
 
-    theString = xTextRange.getString()
+    theString = u(xTextRange.getString())
     xText = xTextRange.getText() ## get the XText interface
 
     if len(theString)==0:
@@ -1280,7 +1281,7 @@ def colorier_phonemes_style(xDocument, paragraphe, cursor, style, nb_altern=2, p
     lMots = extraitMots(cursor)
     for curMot in lMots:
         # suppressions et remplacements de caractères perturbateurs
-        paragraphe = nettoyeur_caracteres(curMot.getString())
+        paragraphe = nettoyeur_caracteres(u(curMot.getString()))
 
         # traite le paragraphe en phonèmes
         pp = generer_paragraphe_phonemes(paragraphe, detection_phonemes_debutant)
@@ -1334,7 +1335,7 @@ def colorier_lettres_muettes(xDocument, paragraphe, cursor, style):
     lMots = extraitMots(cursor)
     for curMot in lMots:
         # suppressions et remplacements de caractères perturbateurs
-        paragraphe = nettoyeur_caracteres(curMot.getString())
+        paragraphe = nettoyeur_caracteres(u(curMot.getString()))
 
         # traite le paragraphe en phonèmes
         pp = generer_paragraphe_phonemes(paragraphe)
@@ -1368,13 +1369,13 @@ def colorier_liaisons(__texte, cursor, style, forcer=False):
 
     xText = pp[0].getText()
     mot_prec = u(pp[0].getString())
-    mot_prec = re.sub(u('[\'´’]'), '@', mot_prec.lower())
+    mot_prec = re.sub('[\'´’]', '@', mot_prec.lower())
     umot = u(pp[1].getString())
-    umot = re.sub(u('[\'´’]'), '@', umot.lower())
+    umot = re.sub('[\'´’]', '@', umot.lower())
     mot_suiv = ""
     for i_mot in range(1,l_pp-1):
         mot_suiv = u(pp[i_mot+1].getString())
-        mot_suiv = re.sub(u('[\'´’]'), '@', mot_suiv.lower())
+        mot_suiv = re.sub('[\'´’]', '@', mot_suiv.lower())
         format_liaison = False
 
         if len(umot.strip()) == 0:
@@ -1497,7 +1498,7 @@ def colorier_consonnes_voyelles(paragraphe, cursor, style):
         e_consonnes.append(lettre)
         e_consonnes.append(lettre.upper())
     e_voyelles = []
-    for lettre in ['a','e','i','o','u','y',u('é'),u('è'),u('ë'),u('ê'),u('à'),u('â'),u('ä'),u('î'),u('î'),u('ù'),u('û'),u('ö'),u('ô')]:
+    for lettre in ['a','e','i','o','u','y','é','è','ë','ê','à','â','ä','î','î','ù','û','ö','ô']:
         e_voyelles.append(lettre)
         e_voyelles.append(lettre.upper())
 
@@ -1583,7 +1584,7 @@ def __lirecouleur_defaut__(xDocument, choix='defaut'):
         if xTextRange == None:
             return False
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
 
             colorier_defaut(theString, xtr, choix)
         del xTextRange
@@ -1615,7 +1616,7 @@ def __lirecouleur_espace__(xDocument):
         sub_espaces = ''.join([' ' for i in range(nb_sub_espaces)])
 
         for xtr in xTextRange:
-            paragraphe = xtr.getString()
+            paragraphe = u(xtr.getString())
 
             # placer le curseur au début de la zone de traitement
             xtr.collapseToStart()
@@ -1830,7 +1831,7 @@ def __lirecouleur_phonemes__(xDocument):
 
     try:
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
@@ -1857,7 +1858,7 @@ def __lirecouleur_alterne_phonemes__(xDocument):
 
     try:
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
@@ -1883,7 +1884,7 @@ def __lirecouleur_graphemes_complexes__(xDocument):
 
     try:
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
@@ -1913,7 +1914,7 @@ def __lirecouleur_syllabes__(xDocument, style = 'souligne'):
         superpose = settings.get('__superpose__')
 
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             if not superpose:
                 xtrTemp = xDocument.getText().createTextCursorByRange(xtr)
                 colorier_defaut(theString, xtrTemp, 'noir')
@@ -1933,7 +1934,7 @@ def __lirecouleur_suppr_syllabes__(xDocument):
         if xTextRange == None:
             return False
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             supprimer_arcs_syllabes(xDocument, theString, xtr)
         del xTextRange
     except:
@@ -1951,7 +1952,7 @@ def __lirecouleur_l_muettes__(xDocument):
             return False
 
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             colorier_lettres_muettes(xDocument, theString, xtr, 'perso')
 
         del xTextRange
@@ -1973,7 +1974,7 @@ def __lirecouleur_phon_muet__(xDocument):
         xIndexAccess = xSelectionSupplier.getSelection()
         xTextRange = xIndexAccess.getByIndex(0)
     
-        if xTextRange == None or len(xTextRange.getString()) == 0:
+        if xTextRange == None or len(u(xTextRange.getString())) == 0:
             return False
 
         # récupération de l'information sur le marquage des lettres muettes par des points
@@ -1981,7 +1982,7 @@ def __lirecouleur_phon_muet__(xDocument):
         point_lmuette = settings.get('__point__')
 
         xtr = xTextRange.getText().createTextCursorByRange(xTextRange)
-        theString = xtr.getString()
+        theString = u(xtr.getString())
         xtr.collapseToStart()
         xtr = formaterTexte(theString, xtr, styles_phonemes['perso']['#'])
         if point_lmuette and xDocument.supportsService("com.sun.star.text.TextDocument"):
@@ -2008,13 +2009,13 @@ def __lirecouleur_suppr_decos__(xDocument):
 ###################################################################################
 def __lirecouleur_ponctuation__(xDocument):
     # caractères de ponctuation recherchés
-    ponctuation = u('.!?…,;:«»—()[]')
+    ponctuation = '.!?…,;:«»—()[]'
 
     #the writer controller impl supports the css.view.XSelectionSupplier interface
     xSelectionSupplier = xDocument.getCurrentController()
     xIndexAccess = xSelectionSupplier.getSelection()
     xTextRange = xIndexAccess.getByIndex(0)
-    if xTextRange is None or len(xTextRange.getString()) == 0:
+    if xTextRange is None or len(u(xTextRange.getString())) == 0:
         xTextRange = getXTextRange(xDocument, fonction='texte', mode=0)[0]
 
     # Importer les styles de coloriage de texte
@@ -2061,7 +2062,7 @@ def __lirecouleur_liaisons__(xDocument, forcer=False):
         return False
     for xtr in xTextRange:
         try:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
             colorier_liaisons(theString, xtr, 'perso', forcer)
         except:
             pass
@@ -2078,7 +2079,7 @@ def __lirecouleur_confusion_lettres__(xDocument):
         if xTextRange == None:
             return False
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
 
             colorier_confusion_lettres(theString, xtr, 'perso')
         del xTextRange
@@ -2096,7 +2097,7 @@ def __lirecouleur_consonne_voyelle__(xDocument):
         if xTextRange == None:
             return False
         for xtr in xTextRange:
-            theString = xtr.getString()
+            theString = u(xtr.getString())
 
             colorier_consonnes_voyelles(theString, xtr, 'complexes')
         del xTextRange
@@ -2112,7 +2113,7 @@ def __lirecouleur_lignes__(xDocument):
     xSelectionSupplier = xDocument.getCurrentController()
     xIndexAccess = xSelectionSupplier.getSelection()
     xTextRange = xIndexAccess.getByIndex(0)
-    if xTextRange is None or len(xTextRange.getString()) == 0:
+    if xTextRange is None or len(u(xTextRange.getString())) == 0:
         xTextRange = getXTextRange(xDocument, fonction='texte', mode=0)[0]
 
     # Importer les styles de coloriage de texte
