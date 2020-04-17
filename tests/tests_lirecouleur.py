@@ -10,7 +10,7 @@
 #
 # voir http://www.arkaline.fr/doku.php?id=logiciels:lirecouleur
 #
-# Copyright (c) 2016 by Marie-Pierre Brungard
+# Copyright (c) 2016-2020 by Marie-Pierre Brungard
 #
 # GNU General Public Licence (GPL) version 3
 #
@@ -32,57 +32,58 @@ from lirecouleur import *
 
 class TestSonsIsoles(unittest.TestCase):
     def setUp(self):
-        self.voyelles = [[('a', 'a')], [('q', 'e')], [('i', 'i')], [('i', 'y')],
-        [('o', 'o')], [('o_comp', 'au')], [('o_comp', 'eau')], [('y', 'u')], [('u', 'ou')],
-        [('a~', 'en')], [('a~', 'an')], [('a~', 'am')], [('x~', 'un')],
-        [('x~', 'um')], [('e~', 'in')], [('e~', 'im')], [('e', u('é'))], [('e_comp', 'er')],
-        [('e_comp', 'ez')], [('e_comp', 'et')], [('e^', u('è'))], [('e^_comp', 'est')],
-        [('e_comp', 'ai')], [('e^_comp', 'ei')], [('wa', 'oi')], [('w_e~', 'oin')]]
+        self.voyelles = [
+            [('a', 'a')], [('q', 'e')], [('i', 'i')], [('i', 'y')],
+            [('o', 'o')], [('o_comp', 'au')], [('o_comp', 'eau')], [('y', 'u')], [('u', 'ou')],
+            [('a~', 'en')], [('a~', 'an')], [('a~', 'am')], [('x~', 'un')],
+            [('x~', 'um')], [('e~', 'in')], [('e~', 'im')], [('e', u('é'))], [('e_comp', 'er')],
+            [('e_comp', 'ez')], [('e_comp', 'et')], [('e^', u('è'))], [('e^_comp', 'est')],
+            [('e_comp', 'ai')], [('e^_comp', 'ei')], [('wa', 'oi')], [('w_e~', 'oin')]]
 
-        self.consonnes = [[('b', 'b')], [('s_c', 'c')], [('d', 'd')], [('f', 'f')],
-        [('g', 'g')], [('#', 'h')], [('i', 'i')], [('z^', 'j')], [('k', 'k')], [('l', 'l')],
-        [('m', 'm')], [('n', 'n')], [('p', 'p')], [('k', 'q')], [('r', 'r')], [('s', 's')],
-        [('t', 't')], [('v', 'v')], [('w', 'w')], [('#', 'x')], [('#', 'z')]]
+        self.consonnes = [
+            [('b', 'b')], [('s_c', 'c')], [('d', 'd')], [('f', 'f')],
+            [('g', 'g')], [('#', 'h')], [('i', 'i')], [('z^', 'j')], [('k', 'k')], [('l', 'l')],
+            [('m', 'm')], [('n', 'n')], [('p', 'p')], [('k', 'q')], [('r', 'r')], [('s', 's')],
+            [('t', 't')], [('v', 'v')], [('w', 'w')], [('#', 'x')], [('#', 'z')]]
 
     def test_sons_voyelles(self):
-        nb_sons = len(self.voyelles)
-        for i in range(nb_sons):
-            son = self.voyelles[i][0][1]
-            self.assertEqual(extraire_phonemes(son, son, 0), self.voyelles[i])
+        for phonemes in self.voyelles:
+            voyelle, son = phonemes[0]
+            self.assertEqual(extraire_phonemes(son, son, 0), phonemes)
 
     def test_sons_consonnes(self):
-        nb_sons = len(self.consonnes)
-        for i in range(nb_sons):
-            son = self.consonnes[i][0][1]
-            self.assertEqual(extraire_phonemes(son, son, 0), self.consonnes[i])
+        for phonemes in self.consonnes:
+            _, son = phonemes[0]
+            self.assertEqual(extraire_phonemes(son, son, 0), phonemes)
+
 
 class TestMotsRegleA(unittest.TestCase):
     def setUp(self):
         self.mots = [
-        ('baye', [('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
-        ('cobaye', [('k', 'c'), ('o', 'o'), ('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
-        ('pays', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('#', 's')]),
-        ('paysan', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a~', 'an')]),
-        ('paysanne', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a', 'a'), ('n', 'nn'), ('q_caduc', 'e')]),
-        ('taureau', [('t', 't'), ('o_comp', 'au'), ('r', 'r'), ('o_comp', 'eau')]),
-        ('ail', [('a', 'a'), ('j', 'il')]),
-        ('maille', [('m', 'm'), ('a', 'a'), ('j', 'ill'), ('q_caduc', 'e')]),
-        ('ainsi', [('e~', 'ain'), ('s', 's'), ('i', 'i')]),
-        ('capitaine', [('k', 'c'), ('a', 'a'), ('p', 'p'), ('i', 'i'), ('t', 't'), ('e^_comp', 'ai'), ('n', 'n'), ('q_caduc', 'e')]),
-        ('main', [('m', 'm'), ('e~', 'ain')]),
-        ('plaint', [('p', 'p'), ('l', 'l'), ('e~', 'ain'), ('#', 't')]),
-        ('vaincu', [('v', 'v'), ('e~', 'ain'), ('k', 'c'), ('y', 'u')]),
-        ('salade', [('s', 's'), ('a', 'a'), ('l', 'l'), ('a', 'a'), ('d', 'd'), ('q_caduc', 'e')]),
-        ('appât', [('a', 'a'), ('p', 'pp'), ('a', 'â'), ('#', 't')]),
-        ('déjà', [('d', 'd'), ('e', 'é'), ('z^', 'j'), ('a', 'à')])
+            ('baye', [('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
+            ('cobaye', [('k', 'c'), ('o', 'o'), ('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
+            ('pays', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('#', 's')]),
+            ('paysan', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a~', 'an')]),
+            ('paysanne', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a', 'a'), ('n', 'nn'), ('q_caduc', 'e')]),
+            ('taureau', [('t', 't'), ('o_comp', 'au'), ('r', 'r'), ('o_comp', 'eau')]),
+            ('ail', [('a', 'a'), ('j', 'il')]),
+            ('maille', [('m', 'm'), ('a', 'a'), ('j', 'ill'), ('q_caduc', 'e')]),
+            ('ainsi', [('e~', 'ain'), ('s', 's'), ('i', 'i')]),
+            ('capitaine', [('k', 'c'), ('a', 'a'), ('p', 'p'), ('i', 'i'), ('t', 't'), ('e^_comp', 'ai'), ('n', 'n'), ('q_caduc', 'e')]),
+            ('main', [('m', 'm'), ('e~', 'ain')]),
+            ('plaint', [('p', 'p'), ('l', 'l'), ('e~', 'ain'), ('#', 't')]),
+            ('vaincu', [('v', 'v'), ('e~', 'ain'), ('k', 'c'), ('y', 'u')]),
+            ('salade', [('s', 's'), ('a', 'a'), ('l', 'l'), ('a', 'a'), ('d', 'd'), ('q_caduc', 'e')]),
+            ('appât', [('a', 'a'), ('p', 'pp'), ('a', 'â'), ('#', 't')]),
+            ('déjà', [('d', 'd'), ('e', 'é'), ('z^', 'j'), ('a', 'à')])
         ]
 
     def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
+        for mot, phonemes in self.mots:
+            mot = pretraitement_texte(mot)
             # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+            self.assertEqual(extraire_phonemes(mot, mot, 0),
+                             [(phon[0], u(phon[1])) for phon in phonemes])
 
 class TestMotsRegleB(unittest.TestCase):
     def setUp(self):
