@@ -1019,23 +1019,27 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
     return (trouve_p and trouve_s)
 
 
-###################################################################################
-# Décodage d'un mot sous la forme d'une suite de phonèmes
-###################################################################################
 def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
+    """ Décodage d'un mot sous la forme d'une suite de phonèmes
+
+    """
     p_mot = 0
     codage = []
     if para is None:
         para = mot
 
-    if mot in __dico_deco__.keys():
-        if len(__dico_deco__[mot][0].strip()) > 0:
-            """ Le mot est dans le dictionnaire et le décodage doit être fait en conséquence """
-            smot = re.split('/', __dico_deco__[mot][0].strip())
     logging.info('-------------------- %s --------------------', mot)
+
+    mot_ = __dico_deco__.get(mot)
+    if mot_ is not None:
+        mot_ = mot_[0].strip()
+        if len(mot_) > 0:
+            # Le mot est dans le dictionnaire et le décodage doit être fait en conséquence
+            smot = re.split('/', mot_)
             i = 0
             while p_mot < len(mot) and i < len(smot):
-                lsmot = smot[i].split('.')  # séparer graphème effectif et graphème correspondant au phonème souhaité
+                # séparer graphème effectif et graphème correspondant au phonème souhaité
+                lsmot = smot[i].split('.')
                 phon = lsmot[0]
                 if len(lsmot) > 1 and len(lsmot[1]) > 0:
                     phon = lsmot[1]
@@ -1061,7 +1065,7 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
                 p_mot += len(lsmot[0])
                 i += 1
 
-    """ Le mot n'est dans le dictionnaire et le décodage est standard """
+    # Le mot n'est dans le dictionnaire et le décodage est standard
     while p_mot < len(mot):
         # On teste l'application des règles de composition des sons
         lettre = mot[p_mot]
