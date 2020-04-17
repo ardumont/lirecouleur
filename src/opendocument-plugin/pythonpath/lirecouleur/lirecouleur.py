@@ -299,14 +299,14 @@ def regle_ient(mot, pos_mot):
     # il faut savoir si le mot est un verbe dont l'infinitif se termine par 'ier' ou non
     pseudo_infinitif = mot[:-2] + 'r'
     if pseudo_infinitif in verbes_ier:
-        logging.info("func regle_ient : " + mot + " (" + pseudo_infinitif + ")")
+        logging.info("func regle_ient : %s (%s)", mot, pseudo_infinitif)
         return True
     pseudo_infinitif = texte_sans_accent(pseudo_infinitif)
     if len(pseudo_infinitif) > 1 and pseudo_infinitif[1] == '@':
         # mot précédé d'un déterminant élidé - codage de l'apostrophe : voir pretraitement_texte
         pseudo_infinitif = pseudo_infinitif[2:]
     if pseudo_infinitif in verbes_ier:
-        logging.info("func regle_ient : " + mot + " (" + pseudo_infinitif + ")")
+        logging.info("func regle_ient : %s (%s)", mot, pseudo_infinitif)
         return True
     return False
 
@@ -318,7 +318,7 @@ def regle_ient(mot, pos_mot):
 def regle_mots_ent(mot, pos_mot):
     m = re.match('^[bcdfghjklmnpqrstvwxz]ent(s?)$', mot)
     if m != None:
-        logging.info("func regle_mots_ent : " + mot + " -- mot commencant par une consonne et terminé par 'ent'")
+        logging.info("func regle_mots_ent : %s -- mot commencant par une consonne et terminé par 'ent'", mot)
         return True
 
     # il faut savoir si le mot figure dans la liste des adverbes ou des noms répertoriés
@@ -334,13 +334,13 @@ def regle_mots_ent(mot, pos_mot):
 
     # comparaison directe avec la liste de mots où le 'ent' final se prononce [a~]
     if comparateur in mots_ent:
-        logging.info("func regle_mots_ent : " + mot + " -- mot répertorié")
+        logging.info("func regle_mots_ent : %s -- mot répertorié", mot)
         return True
 
     # comparaison avec la liste de verbes qui se terminent par 'enter'
     pseudo_verbe = comparateur + 'er'
     if pseudo_verbe in verbes_enter:
-        logging.info("func regle_mots_ent : " + mot + " -- verbe 'enter'")
+        logging.info("func regle_mots_ent : %s -- verbe 'enter'", mot)
         return True
 
     return False
@@ -369,7 +369,7 @@ def regle_ment(mot, pos_mot):
     if len(mot) > 6:
         if re.match('dorment', mot[-7:]) != None:
             return False
-    logging.info("func regle_ment : " + mot + " (" + pseudo_infinitif + ")")
+    logging.info("func regle_ment : %s (%s)", mot, pseudo_infinitif)
     return True
 
 
@@ -411,7 +411,7 @@ def regle_er(mot, pos_mot):
     'alter', 'aster', 'fer', 'ver', 'diver', 'perver', 'enfer', 'traver', 'univer', 'cuiller', 'container', 'cutter',
     'révolver', 'super', 'master', 'enver']
     if m_sing in exceptions_final_er:
-        logging.info("func regle_er : " + mot + " -- le mot n'est pas une exception comme 'amer' ou 'cher'")
+        logging.info("func regle_er : %s -- le mot n'est pas une exception comme 'amer' ou 'cher'", mot)
         return True
     return False
 
@@ -432,7 +432,7 @@ def regle_nc_ai_final(mot, pos_mot):
 
     if m_seul in possibles:
         res = (pos_mot == len(mot) - 1)
-        logging.info("func regle_nc_ai_final : " + mot + " -- " + str(res))
+        logging.info("func regle_nc_ai_final : %s -- %s", mot, res)
         return res
     return False
 
@@ -448,7 +448,7 @@ def regle_avoir(mot, pos_mot):
                 'eusse', 'eusses', 'eût', 'eussions', 'eussiez', 'eussent']
     if mot in possibles:
         res = (pos_mot < 2)
-        logging.info("func regle_avoir : " + mot + " -- " + str(res))
+        logging.info("func regle_avoir : %s -- %s", mot, res)
         return res
     return False
 
@@ -482,7 +482,7 @@ def regle_s_final(mot, __pos_mot):
         m_seul = m_seul[2:]
 
     if m_seul in mots_s_final:
-        logging.info("func regle_s_final : " + m_seul + " -- mot avec un 's' final qui se prononce")
+        logging.info("func regle_s_final : %s -- mot avec un 's' final qui se prononce", m_seul)
         return True
     return False
 
@@ -508,7 +508,7 @@ def regle_t_final(mot, __pos_mot):
         m_sing = m_sing[2:]
 
     if m_sing in mots_t_final:
-        logging.info("func regle_t_final : " + mot + " -- mot avec un 't' final qui se prononce")
+        logging.info("func regle_t_final : %s -- mot avec un 't' final qui se prononce", mot)
         return True
     return False
 
@@ -533,7 +533,7 @@ def regle_tien(mot, pos_mot):
     # il faut savoir si le mot figure dans la liste des exceptions
     exceptions_final_tien = ['chrétien', 'entretien', 'kantien', 'proustien', 'soutien']
     if m_sing in exceptions_final_tien:
-        logging.info("func regle_tien : " + mot + " -- mot où le 't' de 'tien' se prononce 't'")
+        logging.info("func regle_tien : %s -- mot où le 't' de 'tien' se prononce 't'", mot)
         return True
     return False
 
@@ -969,7 +969,8 @@ def pretraitement_texte(texte, substitut=' '):
 ###################################################################################
 def teste_regle(nom_regle, cle, mot, pos_mot):
 
-    logging.debug ('mot : ' + mot + '[' + str(pos_mot - 1) + '] lettre : ' + mot[pos_mot - 1] + ' regle : ' + nom_regle)
+    logging.debug ('mot : %s [%s] lettre : %s regle : %s',
+                   mot, pos_mot - 1, mot[pos_mot - 1], nom_regle)
     if hasattr(cle, '__call__'):
         # la regle est une fonction spécifique
         # logging.debug(nom_regle, ' fonction');
@@ -980,8 +981,8 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
     trouve_p = True
 
     if '+' in cle.keys():
-        logging.debug(nom_regle + ' cle + testee : ' + cle['+'])
-        logging.debug (mot, pos_mot)
+        logging.debug('%s cle + testee : %s', nom_regle, cle['+'])
+        logging.debug(mot, pos_mot)
         # il faut lire les lettres qui suivent
         # recherche le modèle demandé au début de la suite du mot
         pattern = re.compile(cle['+'])
@@ -989,7 +990,7 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
         trouve_s = ((res != None) and (res.start() == pos_mot))
 
     if '-' in cle.keys():
-        logging.debug(nom_regle + ' cle - testee : ' + cle['-']);
+        logging.debug('%s cle + testee : %s', nom_regle, cle['-'])
         trouve_p = False
         pattern = re.compile(cle['-'])
         # teste si la condition inclut le début du mot ou seulement les lettres qui précèdent
@@ -1006,7 +1007,7 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
         else :
             k = pos_mot - 2
             while ((k > -1) and (not trouve_p)):
-                logging.debug (mot, k, pos_mot)
+                logging.debug(mot, k, pos_mot)
                 # il faut lire les lettres qui précèdent
                 # recherche le modèle demandé à la fin du début du mot
                 res = pattern.match(mot, k, pos_mot)
@@ -1027,11 +1028,11 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
     if para is None:
         para = mot
 
-    logging.info('--------------------' + mot + '--------------------')
     if mot in __dico_deco__.keys():
         if len(__dico_deco__[mot][0].strip()) > 0:
             """ Le mot est dans le dictionnaire et le décodage doit être fait en conséquence """
             smot = re.split('/', __dico_deco__[mot][0].strip())
+    logging.info('-------------------- %s --------------------', mot)
             i = 0
             while p_mot < len(mot) and i < len(smot):
                 lsmot = smot[i].split('.')  # séparer graphème effectif et graphème correspondant au phonème souhaité
@@ -1062,27 +1063,28 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
 
     """ Le mot n'est dans le dictionnaire et le décodage est standard """
     while p_mot < len(mot):
-        # On teste d'application des règles de composition des sons
+        # On teste l'application des règles de composition des sons
         lettre = mot[p_mot]
-        logging.debug ('lettre : ' + lettre)
+        logging.debug('lettre : %s', lettre)
 
         trouve = False
         if lettre in autom:
             aut = autom[lettre][1]
-            logging.debug ('liste des règles : ' + str(aut))
+            logging.debug('liste des règles : %s', aut)
             i = 0
             while (not trouve) and (i < len(autom[lettre][0])):
                 k = autom[lettre][0][i]
                 if teste_regle(k, aut[k][0], mot, p_mot + 1):
                     phoneme = aut[k][1]
                     pas = aut[k][2]
-                    codage.append((phoneme, para[p_para:p_para + pas]))
-                    logging.info('phoneme:' + phoneme + ' ; lettre(s) lue(s):' + para[p_para:p_para + pas])
+                    lettre_lue = para[p_para:p_para + pas]
+                    codage.append((phoneme, lettre_lue))
+                    logging.info('phoneme: %s ; lettre(s) lue(s): %s', phoneme, lettre_lue)
                     p_mot += pas
                     p_para += pas
                     trouve = True
                 i += 1
-            logging.debug ('trouve:' + str(trouve) + ' - ' + str(codage))
+            logging.debug('trouve: %s - %s', trouve, codage)
 
             if (not trouve) and (p_mot == len(mot) - 1) and ('@' in aut):
                 if p_mot == len(mot) - 1:
@@ -1093,7 +1095,7 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
                     trouve = True
                     p_mot += 1
                     p_para += 1
-                    logging.info('phoneme fin de mot:' + phoneme + ' ; lettre lue:' + lettre)
+                    logging.info('phoneme fin de mot: %s ; lettre lue: %s', phoneme, lettre)
 
             # rien trouvé donc on prend le phonème de base ('*')
             if not trouve:
@@ -1103,19 +1105,19 @@ def extraire_phonemes(mot, para=None, p_para=0, detection_phonemes_debutant=0):
                     codage.append((phoneme, para[p_para:p_para + pas]))
                     p_para += pas
                     p_mot += pas
-                    logging.info('phoneme par defaut:' + phoneme + ' ; lettre lue:' + lettre)
+                    logging.info('phoneme par defaut: %s ; lettre lue: %s', phoneme, lettre)
                 except:
                     codage.append(('', lettre))
                     p_para += 1
                     p_mot += 1
-                    logging.info('non phoneme ; caractere lu:' + lettre)
+                    logging.info('non phoneme ; caractere lu: %s', lettre)
         else:
             codage.append(('', lettre))
             p_mot += 1
             p_para += 1
-            logging.info('non phoneme ; caractere lu:' + lettre)
+            logging.info('non phoneme ; caractere lu: %s', lettre)
 
-    logging.info('--------------------' + str(codage) + '--------------------')
+    logging.info('-------------------- %s --------------------', codage)
 
     # post traitement pour différencier les eu ouverts et les eu fermés
     codage = post_traitement_e_ouvert_ferme(codage)
@@ -1348,7 +1350,7 @@ def extraire_syllabes_util(phonemes, mode=(ConstLireCouleur.SYLLABES_LC, ConstLi
                     sylls.append(cur_syl)
                     i += 1
 
-                logging.info('--------------------' + str(sylls) + '--------------------')
+                logging.info('-------------------- %s --------------------', sylls)
                 return sylls, [ph for ph in phonemes]
 
     """ Le mot n'est dans le dictionnaire et le décodage est standard """
@@ -1373,7 +1375,7 @@ def extraire_syllabes_util(phonemes, mode=(ConstLireCouleur.SYLLABES_LC, ConstLi
         nphonemes = [ph for ph in phonemes]
     nb_phon = len(nphonemes)
 
-    logging.info('--------------------' + str(nphonemes) + '--------------------')
+    logging.info('-------------------- %s --------------------', nphonemes)
     # préparer la liste de syllabes
     sylph = []
     for i in range(nb_phon):
@@ -1405,7 +1407,7 @@ def extraire_syllabes_util(phonemes, mode=(ConstLireCouleur.SYLLABES_LC, ConstLi
                     sylph[j] = sylph[j + 1]
                 sylph.pop()
         i += 1
-    logging.info("mixer doubles phonèmes consonnes (bl, tr, cr, etc.) :" + str(sylph))
+    logging.info("mixer doubles phonèmes consonnes (bl, tr, cr, etc.) : %s", sylph)
 
     # mixer les doubles phonèmes [y] et [i], [u] et [i,e~,o~]
     i = 0
@@ -1421,7 +1423,7 @@ def extraire_syllabes_util(phonemes, mode=(ConstLireCouleur.SYLLABES_LC, ConstLi
                     sylph[j] = sylph[j + 1]
                 sylph.pop()
         i += 1
-    logging.info("mixer doubles phonèmes voyelles ([y] et [i], [u] et [i,e~,o~]) :" + str(sylph))
+    logging.info("mixer doubles phonèmes voyelles ([y] et [i], [u] et [i,e~,o~]) : %s", sylph)
 
     # accrocher les lettres muettes aux lettres qui précèdent
     i = 0
@@ -1503,7 +1505,7 @@ def extraire_syllabes(phonemes, mode=(ConstLireCouleur.SYLLABES_LC, ConstLireCou
     del sylls
     del nphonemes
 
-    logging.info('--------------------' + str(lsylls) + '--------------------')
+    logging.info('-------------------- %s --------------------', lsylls)
     return lsylls
 
 
