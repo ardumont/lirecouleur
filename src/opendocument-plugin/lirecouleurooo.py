@@ -68,7 +68,7 @@ class CancelActionListener(unohelper.Base, XActionListener):
 class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        
+
     def getState(self, val):
         try:
             return self.controlContainer.getControl('chk_'+val).State
@@ -77,7 +77,7 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
 
     def actionPerformed(self, __actionEvent):
         global l_styles_phon
-        
+
         settings = Settings()
 
         selectphonemes = settings.get('__selection_phonemes__')
@@ -144,7 +144,7 @@ class ConfigurationPhonemesActionListener(unohelper.Base, XActionListener):
 class ConfigurationConfusionLettresActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        
+
     def getState(self, val):
         try:
             return self.controlContainer.getControl('chk_'+val).State
@@ -175,7 +175,7 @@ class EditStyleActionListener(unohelper.Base, XActionListener):
         self.ctx = ctx
         self.document = document
         self.stylname = stylname
-        
+
     def actionPerformed(self, __actionEvent):
         dispatcher = self.ctx.ServiceManager.createInstanceWithContext( 'com.sun.star.frame.DispatchHelper', self.ctx)
         prop1 = create_uno_struct("com.sun.star.beans.PropertyValue")
@@ -184,17 +184,17 @@ class EditStyleActionListener(unohelper.Base, XActionListener):
         prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
         prop2.Name = 'Family'
         prop2.Value = 1
-        dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+        dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1,
         prop2,))
 
 class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        
+
 
     def actionPerformed(self, __actionEvent):
         global l_styles_phon
-        
+
         settings = Settings()
 
         try:
@@ -202,11 +202,11 @@ class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
             settings.setValue('__alternate__', int(nbcouleurs))
         except:
             pass
-        
+
         item1 = self.controlContainer.getControl('listTyp1Syll').getSelectedItemPos()
         item2 = self.controlContainer.getControl('listTyp2Syll').getSelectedItemPos()
         settings.setValue('__syllo__', (item1, item2))
-        
+
         # selon le type de syllabes choisies, les e caducs doivent être affichés différemment
         selectphonemes = settings.get('__selection_phonemes__')
         if item2:
@@ -220,16 +220,16 @@ class ConfigurationStyleSyllDysActionListener(unohelper.Base, XActionListener):
 class ConfigurationStyleAlternActionListener(unohelper.Base, XActionListener):
     def __init__(self, controlContainer):
         self.controlContainer = controlContainer
-        
+
 
     def actionPerformed(self, __actionEvent):
         global l_styles_phon
-        
+
         settings = Settings()
 
         nbcouleurs = self.controlContainer.getControl('fieldCoul').getValue()
         settings.setValue('__alternate__', int(nbcouleurs))
-        
+
         self.controlContainer.endExecute()
 
 class ConfigurationEspaceActionListener(unohelper.Base, XActionListener):
@@ -238,12 +238,12 @@ class ConfigurationEspaceActionListener(unohelper.Base, XActionListener):
 
     def actionPerformed(self, __actionEvent):
         global l_styles_phon
-        
+
         settings = Settings()
 
         nbesp = self.controlContainer.getControl('fieldEsp').getValue()
         settings.setValue('__subspaces__', int(nbesp))
-        
+
         self.controlContainer.endExecute()
 
 class MyActionListener(unohelper.Base, XActionListener):
@@ -258,7 +258,7 @@ class MyActionListener(unohelper.Base, XActionListener):
 
         item_syllo = self.controlContainer.getControl('chk_checkSyllo').getState()
         settings.setValue('__syllo__', (settings.get('__syllo__')[0], item_syllo))
-        
+
         # selon le type de syllabes choisies, les e caducs doivent être affichés différemment
         selectphonemes = settings.get('__selection_phonemes__')
         if item_syllo:
@@ -437,7 +437,7 @@ def __gestionnaire_config_dialog__(__xDocument, xContext):
     dialogModel.Width = 230
     dialogModel.Height = 115
     dialogModel.Title = "Configuration générale LireCouleur"
-    
+
     createLink(dialogModel, dialogModel.Width-12, 10, "http://lirecouleur.arkaline.fr/faqconfig/#general")
 
     createCheckBox(dialogModel, 10, 10, "checkSimple", 0,
@@ -550,7 +550,7 @@ class EditStyleMouseListener(unohelper.Base, XMouseListener):
             prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
             prop2.Name = 'Family'
             prop2.Value = 1
-            dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+            dispatcher.executeDispatch(self.document.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1,
             prop2,))
 
     def mouseReleased(self, ev): pass
@@ -1067,7 +1067,7 @@ def __configuration_alterne_phonemes__(xDocument, xContext):
 ######################################################################################
 def __configuration_alternance__(xDocument, xContext, titre, sb, url=""):
     """Ouvrir une fenêtre de dialogue pour configurer les styles de lignes alternées."""
-    
+
     # Importer les styles de coloriage de texte
     importStylesLireCouleur(xDocument)
 
@@ -1161,7 +1161,7 @@ def configuration_consonne_voyelle( __args=None ):
 ######################################################################################
 def __configuration_consonne_voyelle__(xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
-    
+
     # Importer les styles de coloriage de texte
     importStylesLireCouleur(xDocument)
 
@@ -1231,7 +1231,7 @@ def configuration_graphemes_complexes( __args=None ):
 ######################################################################################
 def __configuration_graphemes_complexes__(xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour configurer les styles des graphèmes complexes."""
-    
+
     # Importer les styles de coloriage de texte
     importStylesLireCouleur(xDocument)
 
@@ -1304,7 +1304,7 @@ def __configuration_confusion_lettres__(xDocument, xContext):
 
     # Importer les styles de coloriage de texte
     importStylesLireCouleur(xDocument)
-    
+
     # récupération des infos de configuration
     settings = Settings()
 
@@ -1414,7 +1414,7 @@ def __configuration_style_caractere__(xDocument, xContext, nstyle):
     prop2 = create_uno_struct("com.sun.star.beans.PropertyValue")
     prop2.Name = 'Family'
     prop2.Value = 1
-    dispatcher.executeDispatch(xDocument.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1, 
+    dispatcher.executeDispatch(xDocument.getCurrentController().getFrame(), ".uno:EditStyle", "", 0, (prop1,
     prop2,))
 
 ######################################################################################
@@ -1437,7 +1437,7 @@ def configuration_espace( __args=None ):
 ######################################################################################
 def __configuration_espace__(__xDocument, xContext):
     """Ouvrir une fenêtre de dialogue pour l'espacement des mots."""
-    
+
     # récupération des infos de configuration
     settings = Settings()
 
@@ -2152,11 +2152,11 @@ class LireCouleurModeleDocument(unohelper.Base, XJobExecutor):
 
 def lirecouleur_modele_document(__args=None):
     __lirecouleur_modele_document__(XSCRIPTCONTEXT.getDocument(), uno.getComponentContext())
-    
+
 def __lirecouleur_modele_document__(xDocument, xContext):
     # récupération du nom du fichier courant
     __curUrl = xDocument.getURL()
-    
+
     # recherche d'un nouveau nom de fichier
     i = 1
     url = os.sep.join([getLirecouleurURL(), "template", "lirecouleur_"+str(i)+".odt"])
@@ -2168,7 +2168,7 @@ def __lirecouleur_modele_document__(xDocument, xContext):
     settings = Settings()
     settings.setValue('__template__', url)
     xDocument.storeAsURL(url, ())
-    
+
     # fermer le fichier courant et réouvrir le fichier d'origine
     __new_lirecouleur_document__(xDocument, xContext)
     xDocument.close(True)
@@ -2401,8 +2401,7 @@ if __name__ == "__main__":
 
     # access the current writer document
     xDocument = desktop.getCurrentComponent()
-    
+
     __lirecouleur_phonemes__(xDocument)
     #__configuration_phonemes__(xDocument, ctx)
     #__lirecouleur_recharger_styles__(xDocument)
-

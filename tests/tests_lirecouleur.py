@@ -7,7 +7,7 @@
 # d'un test de décodage en phonèmes. Le décodage en syllabes porte sur des mots
 # réguliers et sur des mots irréguliers, avec vérification du décodage phonémique
 # au préalable.
-# 
+#
 # voir http://www.arkaline.fr/doku.php?id=logiciels:lirecouleur
 #
 # Copyright (c) 2016 by Marie-Pierre Brungard
@@ -38,7 +38,7 @@ class TestSonsIsoles(unittest.TestCase):
 		[('x~', 'um')], [('e~', 'in')], [('e~', 'im')], [('e', u('é'))], [('e_comp', 'er')],
 		[('e_comp', 'ez')], [('e_comp', 'et')], [('e^', u('è'))], [('e^_comp', 'est')],
 		[('e_comp', 'ai')], [('e^_comp', 'ei')], [('wa', 'oi')], [('w_e~', 'oin')]]
-	
+
 		self.consonnes = [[('b', 'b')], [('s_c', 'c')], [('d', 'd')], [('f', 'f')],
 		[('g', 'g')], [('#', 'h')], [('i', 'i')], [('z^', 'j')], [('k', 'k')], [('l', 'l')],
 		[('m', 'm')], [('n', 'n')], [('p', 'p')], [('k', 'q')], [('r', 'r')], [('s', 's')],

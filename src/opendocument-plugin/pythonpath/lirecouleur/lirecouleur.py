@@ -987,7 +987,7 @@ def teste_regle(nom_regle, cle, mot, pos_mot):
         pattern = re.compile(cle['+'])
         res = pattern.match(mot, pos_mot)
         trouve_s = ((res != None) and (res.start() == pos_mot))
-    
+
     if '-' in cle.keys():
         logging.debug(nom_regle + ' cle - testee : ' + cle['-']);
         trouve_p = False
@@ -1173,7 +1173,7 @@ def post_traitement_yod(pp):
         if i_ph >= nb_ph:
             # fin de mot (bizarre d'ailleurs !)
             return pp
-        
+
         # phonème suivant
         phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'q', 'q_caduc', 'x', 'x^', 'u']
         if phonemes[i_ph + 1] in phon_suivant:
@@ -1197,19 +1197,19 @@ def post_traitement_w(pp):
 
     phonemes = [x[0] for x in pp]
     nb_ph = len(pp) - 1
-    
+
     # transformation des [wa] en [w_a]
     i_j = all_indices('wa', phonemes)
     for i_ph in i_j:
         pp[i_ph] = ('w_a', pp[i_ph][1])
-    
+
     # recherche de tous les indices de phonèmes avec 'u'
     i_j = all_indices('u', phonemes[:nb_ph + 1])
     for i_ph in i_j:
         if i_ph >= nb_ph:
             # fin de mot (bizarre d'ailleurs !)
             return pp
-        
+
         # phonème suivant
         phon_suivant = ['a', 'a~', 'e', 'e^', 'e_comp', 'e^_comp', 'o', 'o_comp', 'o~', 'e~', 'x', 'x^', 'i']
         if phonemes[i_ph + 1] in phon_suivant:
@@ -1678,7 +1678,7 @@ def teste_liaison(mot_prec, mot_suiv):
             return True
         if mot_prec[-1] == 's' and not mot_prec in liaison_interdite and debut_mot_h_muet(mot_suiv):
             # liaison entre un mot a priori terminé par un 's' et un mot commenant par un h muet
-            return True    
+            return True
 
     return False
 
@@ -1700,7 +1700,7 @@ if __name__ == "__main__":
             l_mots.append(u(sys.argv[i + 1]))
         if len(l_mots) == 0:
             l_mots = ['lirecouleur', 'éléphant']
-        
+
         for mot in l_mots:
             message_test = mot
             print ('test chaine de phonemes debutant lecteur : ' + message_test)

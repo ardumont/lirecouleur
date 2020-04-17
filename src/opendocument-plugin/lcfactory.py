@@ -10,7 +10,7 @@ class lirecouleurFactory(unohelper.Base, XUIElementFactory):
     """ Factory for LireCouleur """
     def __init__(self, ctx):
         self.ctx = ctx
-    
+
     # XUIElementFactory
     def createUIElement(self, name, args):
         element = None
@@ -29,7 +29,7 @@ class lirecouleurFactory(unohelper.Base, XUIElementFactory):
                 except:
                     pass
         return element
-    
+
     # XServiceInfo
     def getImplementationName(self):
         return IMPL_NAME

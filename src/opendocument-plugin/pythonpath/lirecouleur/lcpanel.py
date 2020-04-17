@@ -12,7 +12,7 @@ from com.sun.star.ui import XUIElement, XToolPanel
 
 from com.sun.star.awt import ActionEvent
 
-from com.sun.star.awt.PosSize import (X as PS_X, Y as PS_Y, 
+from com.sun.star.awt.PosSize import (X as PS_X, Y as PS_Y,
     WIDTH as PS_WIDTH, HEIGHT as PS_HEIGHT, SIZE as PS_SIZE, POSSIZE as PS_POSSIZE)
 
 from com.sun.star.ui.UIElementType import TOOLPANEL as UET_TOOLPANEL
@@ -29,7 +29,7 @@ EXT_ID = "lire.libre.lirecouleur"
 RESOURCE_NAME = "private:resource/toolpanel/lire.libre/lirecouleur"
 
 from .utils import (create_container, get_backgroundcolor, create_uno_service, Settings)
-    
+
 from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lirecouleur_confusion_lettres__,
         __lirecouleur_consonne_voyelle__,__lirecouleur_couleur_mots__,__lirecouleur_defaut__,__lirecouleur_espace__,
         __lirecouleur_espace_lignes__,__lirecouleur_extra_large__,__lirecouleur_l_muettes__,__lirecouleur_large__,
@@ -39,26 +39,26 @@ from .lirecouleurui import (__lirecouleur_phonemes__,__lirecouleur_noir__,__lire
 
 class lirecouleurModel(unohelper.Base, XUIElement, XToolPanel, XComponent):
     """ LireCouleur model. """
-    
+
     def __init__(self, ctx, frame, parent):
         self.ctx = ctx
         self.frame = frame
         self.parent = parent
-        
+
         self.view = None
         self.window = None
         try:
             view = lirecouleurView(ctx, self, frame, parent)
             self.view = view
             self.window = view.container
-            
+
             def _focus_back():
                 self.frame.getContainerWindow().setFocus()
-            
+
             threading.Timer(0.3, _focus_back).start()
         except Exception as e:
             print('Exception 1:',e)
-    
+
     # XComponent
     def dispose(self):
         self.ctx = None
@@ -66,10 +66,10 @@ class lirecouleurModel(unohelper.Base, XUIElement, XToolPanel, XComponent):
         self.parent = None
         self.view = None
         self.window = None
-    
+
     def addEventListener(self, ev): pass
     def removeEventListener(self, ev): pass
-    
+
     # XUIElement
     def getRealInterface(self):
         return self
@@ -82,20 +82,20 @@ class lirecouleurModel(unohelper.Base, XUIElement, XToolPanel, XComponent):
     @property
     def Type(self):
         return UET_TOOLPANEL
-    
+
     # XToolPanel
     def createAccessible(self, __parent):
         return self.window.getAccessibleContext()
     @property
     def Window(self):
         return self.window
-    
+
     def dispatch(self, cmd, args):
         """ dispatch with arguments. """
         helper = self.ctx.getServiceManager().createInstanceWithContext(
             "com.sun.star.frame.DispatchHelper", self.ctx)
         helper.executeDispatch(self.frame, cmd, "_self", 0, args)
-    
+
     def hidden(self):
         self.data_model.enable_update(False)
     def shown(self):
@@ -120,7 +120,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
     TB_MARGIN = 3
     BUTTON_SEP = 2
     BUTTON_SZ = 32
-    
+
     def __init__(self, ctx, model, frame, parent):
         self.model = model
         self.parent = parent
@@ -131,19 +131,19 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         self.container = None
         self.width = 200
         self.height = 500
-        
+
         self.settings = Settings(ctx)
         self.FPossibles = self.settings.get("__fonctions_possibles__")
         self.FChoisies = [self.settings.get(fct)[2] for fct in self.FPossibles]
         self.TaillIco = self.settings.get('__taille_icones__')
         self.BUTTON_SZ = self.TaillIco
-        
+
         try:
             self._create_view()
         except Exception as e:
             print(("Failed to create LireCouleur view: %s" % e))
         parent.addWindowListener(self)
-    
+
     def _create_view(self):
         LR_MARGIN = self.LR_MARGIN
         TB_MARGIN = self.TB_MARGIN
@@ -152,7 +152,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         WIDTH = self.width
         HEIGHT = self.height
 
-        self.fbuttons = []        
+        self.fbuttons = []
         self.container = create_container(self.ctx, self.parent, ("BackgroundColor",), (get_backgroundcolor(self.parent),))
 
         # bouton de validation
@@ -203,7 +203,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
             if (posX+BUTTON_SZ) > WIDTH:
                 posY += (BUTTON_SZ+BUTTON_SEP)
                 posX = LR_MARGIN
-        
+
     def _update_view(self):
         LR_MARGIN = self.LR_MARGIN
         TB_MARGIN = self.TB_MARGIN
@@ -242,7 +242,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         self.container = None
         self.model = None
         self._context_menu = None
-    
+
     # XWindowListener
     def windowHidden(self, ev): pass
     def windowShown(self, ev): pass
@@ -348,11 +348,11 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
                 i += 1
             self.editContainer.endExecute()
             self._update_view()
-        
+
     def editLCBar(self):
         smgr = self.ctx.ServiceManager
         dialogModel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", self.ctx)
-        
+
         dialogModel.PositionX = 100
         dialogModel.PositionY = 50
         dialogModel.Width = 180
@@ -367,7 +367,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         validBtn.PositionY = dialogModel.Height-validBtn.Height-2
         validBtn.Name = "valid"
         dialogModel.insertByName(validBtn.Name, validBtn)
-        
+
         sz_button = 24
         nb_col = int(len(self.FPossibles)*(sz_button+2) / validBtn.PositionY + 1)
         sz_col = dialogModel.Width/nb_col
@@ -405,7 +405,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
                 if (posY+sz_button) > validBtn.PositionY:
                     posX += sz_col
                     posY = self.TB_MARGIN
-                    
+
                 i += 1
             except:
                 pass
@@ -414,7 +414,7 @@ class lirecouleurView(unohelper.Base, XWindowListener, XActionListener, XMouseLi
         controlContainer = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", self.ctx)
         controlContainer.setModel(dialogModel)
         self.editContainer = controlContainer
-        
+
         validCtrl = controlContainer.getControl("valid")
         validCtrl.setActionCommand(validBtn.Name)
         validCtrl.addActionListener(self)

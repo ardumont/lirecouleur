@@ -74,7 +74,7 @@ def getLirecouleurTemplateURL():
     tempname = os.sep.join([localdir, loclang, "lirecouleur.ott"])
     if os.path.isfile(tempname):
         return uno.systemPathToFileUrl(tempname)
-    
+
     url = getLirecouleurURL()
     if not url is None:
         url = os.sep.join([url, "template", "lirecouleur.ott"])
@@ -623,7 +623,7 @@ def importStylesLireCouleur(xModel):
     if __memDocument__ != xModel:
         # si on n'a pas changé de document, pas besoin de recharger les styles
         __memDocument__ = xModel
-    
+
         try:
             """
                 Importation des styles à partir d'un fichier odt
@@ -647,7 +647,7 @@ def importStylesLireCouleur(xModel):
             ppp5.Name = "OverwriteStyles" # on ne veut pas écraser les styles existants
             ppp5.Value = False
             xModel.getStyleFamilies().loadStylesFromURL(url, (ppp1, ppp2, ppp3, ppp4, ppp5,))
-        except:            
+        except:
             createCharacterStyles(xModel, style_phon_perso, __style_phon_perso__)
             createCharacterStyles(xModel, style_phon_complexes, __style_phon_complexes__)
             createCharacterStyles(xModel, style_syll_dys, __style_syll_dys__)
@@ -656,7 +656,7 @@ def importStylesLireCouleur(xModel):
             createCharacterStyles(xModel, style_phon_altern, __style_phon_altern__)
             createCharacterStyles(xModel, style_yod, __style_yod__)
             createCharacterStyles(xModel, style_wau, __style_wau__)
-    
+
     # ajuster le style des e caduc en fonction du choix d'affichage entre "syllabes orales" ou "syllabes écrites"
     settings = Settings()
     if settings.get('__syllo__')[1]:
@@ -741,7 +741,7 @@ def marqueImage(xDocument, stylphon, txt_phon, cursor):
         return deplacerADroite(txt_phon, cursor)
     if os.path.isfile(uno.fileUrlToSystemPath(fimgname)):
         hh = cursor.getPropertyValue("CharHeight")
-        
+
         xViewCursorSupplier = xDocument.getCurrentController()
         xTextViewCursor = xViewCursorSupplier.getViewCursor()
         xTextViewCursor.gotoRange(cursor, False) # remet le curseur physique au début (du mot)
@@ -1185,7 +1185,7 @@ def getXTextRange(xDocument, fonction='mot', mode=0):
             if not xtr_p.gotoNextSentence(False):
                 break
             xtr_p.gotoEndOfSentence(True)
-        
+
         # dernier morceau de phrase
         xtr_p.gotoRange(xTextRange, False)
         xtr_p.collapseToEnd()
@@ -1361,7 +1361,7 @@ def colorier_lettres_muettes(xDocument, paragraphe, cursor, style):
 def colorier_liaisons(__texte, cursor, style, forcer=False):
     # segmente le texte en portions mots / non mots
     pp = segmenteParagraphe(cursor)
-    
+
     # code le coloriage du paragraphe
     l_pp = len(pp)
     if l_pp < 2:
@@ -1385,7 +1385,7 @@ def colorier_liaisons(__texte, cursor, style, forcer=False):
                 curs.collapseToStart()
                 curs = formaterTexte(umot, curs, styles_phonemes[style]['liaison'])
                 format_liaison = True
-                
+
                 # formater la dernière lettre du mot précédent comme lettre non muette
                 cur_p = xText.createTextCursorByRange(pp[i_mot-1])
                 cur_p.collapseToEnd()
@@ -1671,7 +1671,7 @@ def __lirecouleur_separe_mots__(xDocument):
         xText = xTextR.getText()
         xWordCursor = xText.createTextCursorByRange(xTextR)
         xWordCursor.collapseToStart()
-                    
+
         # placement au début du dernier mot du paragraphe
         xTextR.collapseToEnd()
         xTextR.gotoPreviousWord(False)
@@ -1683,7 +1683,7 @@ def __lirecouleur_separe_mots__(xDocument):
             # mot par mot
             xWordCursor.gotoEndOfWord(True)
             xWordCursor.collapseToEnd()
-            
+
             if not xWordCursor.gotoNextWord(True):
                 return True
             if xWordCursor.isEndOfParagraph():
@@ -1719,21 +1719,21 @@ def __lirecouleur_couleur_mots__(xDocument):
         xWordCursor = xText.createTextCursorByRange(xTextR)
         xWordCursor.collapseToStart()
         xWordCursor.gotoStartOfWord(False)
-        
+
         # placement à la fin du dernier mot du paragraphe
         xTextR.collapseToEnd()
         xTextR.gotoPreviousWord(False)
         xTextR.gotoStartOfWord(False)
         xTextR.gotoEndOfWord(True)
-        
+
         i = 0
         while xText.compareRegionEnds(xWordCursor, xTextR) >= 0 and i < 10000:
             xWordCursor.collapseToStart()
             xWordCursor.gotoStartOfWord(False)
             xWordCursor.gotoEndOfWord(True)
             setStyle(styles_mots['dys'][str(imot+1)], xWordCursor)
-            imot = (imot + 1) % nb_altern 
-            
+            imot = (imot + 1) % nb_altern
+
             # mot suivant
             xWordCursor.collapseToEnd()
             if not xWordCursor.gotoNextWord(False):
@@ -1752,7 +1752,7 @@ def __lirecouleur_espace_lignes__(xDocument):
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
         if xTextRange == None:
             return False
-        
+
         for xtr in xTextRange:
             args = xtr.getPropertyValue('ParaLineSpacing')
             args.Height += 10
@@ -1773,7 +1773,7 @@ def __lirecouleur_large__(xDocument):
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
         if xTextRange == None:
             return False
-        
+
         for xtr in xTextRange:
             # double interligne
             args = xtr.getPropertyValue('ParaLineSpacing')
@@ -1803,7 +1803,7 @@ def __lirecouleur_extra_large__(xDocument):
         xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=0)
         if xTextRange == None:
             return False
-        
+
         for xtr in xTextRange:
             # espacement des caractères
             args = xtr.getPropertyValue('CharKerning')
@@ -1973,7 +1973,7 @@ def __lirecouleur_phon_muet__(xDocument):
         xSelectionSupplier = xDocument.getCurrentController()
         xIndexAccess = xSelectionSupplier.getSelection()
         xTextRange = xIndexAccess.getByIndex(0)
-    
+
         if xTextRange == None or len(u(xTextRange.getString())) == 0:
             return False
 
@@ -2052,10 +2052,10 @@ def __lirecouleur_ponctuation__(xDocument):
 ###################################################################################
 def __lirecouleur_liaisons__(xDocument, forcer=False):
     """Mise en évidence des liaisons"""
-    
+
     # Commencer par espacer les mots du texte
     __lirecouleur_espace__(xDocument)
-    
+
     # Mettre les liaisons en évidence
     xTextRange = getXTextRange(xDocument, fonction='paragraphe', mode=1)
     if xTextRange == None:
@@ -2125,7 +2125,7 @@ def __lirecouleur_lignes__(xDocument):
 
     xText = xTextRange.getText()
     xCursPara = xText.createTextCursorByRange(xTextRange)
-    
+
     xCursLi = xSelectionSupplier.getViewCursor()
     xCursLi.gotoRange(xTextRange, False)
     xCursLi.collapseToStart()
@@ -2152,7 +2152,7 @@ def __lirecouleur_lignes__(xDocument):
             if not xCursLi.goDown(1, False):
                 del xCursPara
                 return True
-            
+
         if not xCursPara.gotoNextParagraph(False):
             del xCursPara
             return True
@@ -2210,6 +2210,3 @@ def __lirecouleur_recharger_styles__(xDocument):
         xDocument.getStyleFamilies().loadStylesFromURL(url, (ppp1, ppp2, ppp3, ppp4, ppp5,))
     except:
         pass
-
-
-

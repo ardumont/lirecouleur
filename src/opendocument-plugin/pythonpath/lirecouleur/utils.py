@@ -49,12 +49,12 @@ def create_uno_service(serviceName, ctx=None):
 def create_control(ctx, control_type, x, y, width, height, names, values):
     """ create a control. """
     smgr = ctx.getServiceManager()
-    
+
     ctrl = smgr.createInstanceWithContext(
         "com.sun.star.awt." + control_type, ctx)
     ctrl_model = smgr.createInstanceWithContext(
         "com.sun.star.awt." + control_type + "Model", ctx)
-    
+
     if len(names) > 0:
         ctrl_model.setPropertyValues(names, values)
     ctrl.setModel(ctrl_model)
@@ -84,7 +84,7 @@ def create_controls(ctx, container, controls):
         cm.setPropertyValues(defs[6], defs[7])
         c.setModel(cm)
         c.setPosSize(defs[2], defs[3], defs[4], defs[5], PS_POSSIZE)
-        
+
         container.addControl(defs[1], c)
         if len(defs) == 9:
             options = defs[8]
@@ -96,7 +96,7 @@ def create_controls(ctx, container, controls):
             elif defs[0] == "Combo":
                 if "TextListener" in options:
                     c.addTextListener(options["TextListener"])
-        
+
     return container
 
 
@@ -110,9 +110,9 @@ def get_backgroundcolor(window):
 
 
 from com.sun.star.task import XInteractionHandler
- 
+
 class DummyHandler(unohelper.Base, XInteractionHandler):
-    """ dummy XInteractionHanlder interface for 
+    """ dummy XInteractionHanlder interface for
         the StringResouceWithLocation """
     def __init__(self): pass
     def handle(self,request): pass
@@ -126,7 +126,7 @@ def get_resource(ctx, location, locale, name):
             "com.sun.star.resource.StringResourceWithLocation", ctx)
         resolver.initialize((location, True, locale, name, "", DummyHandler()))
         ids = resolver.getResourceIDs()
-        
+
         for i in ids:
             res[i] = resolver.resolveString(i)
     except Exception as e:
@@ -191,21 +191,21 @@ class Settings(object):
                 self.ctx = uno.getComponentContext()
         except:
             pass
-    
+
     def configure(self, names, values):
         cua = get_config_access(self.ctx, CONFIG_NODE, True)
         try:
-            cua.setPropertyValues(names, values)            
+            cua.setPropertyValues(names, values)
             cua.commitChanges()
         except:
             pass
-    
+
     def getPropertyValue(self, cua, name):
         try:
             return cua.getPropertyValue(name)
         except:
             pass
-    
+
     def _load(self):
         cua = get_config_access(self.ctx, CONFIG_NODE)
         self.FPossibles = self.getPropertyValue(cua, "__fonctions_possibles__").split(':')
@@ -216,7 +216,7 @@ class Settings(object):
             if not prop is None:
                 self.Fonctions[fct] = prop.split(':')
                 self.Fonctions[fct][2] = eval(self.Fonctions[fct][2])
-        
+
         prop = self.getPropertyValue(cua, "__selection_phonemes__")
         if not prop is None:
             selphon = [ph.split(':') for ph in prop.split(';')]
@@ -250,7 +250,7 @@ class Settings(object):
         self.Locale = self.getPropertyValue(cua, "__locale__")
         self.SubSpaces = self.getPropertyValue(cua, "__subspaces__")
         self._loaded = True
-    
+
     def get(self, name):
         """ get specified value. """
         if not self._loaded:
@@ -288,7 +288,7 @@ class Settings(object):
     def setValue(self, name, value):
         """ set specified value. """
         cua = get_config_access(self.ctx, CONFIG_NODE, True)
-        
+
         try:
             if name == "__fonctions_possibles__":
                 self.FPossibles = value

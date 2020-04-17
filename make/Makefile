@@ -3,7 +3,7 @@ all : lirecouleur.oxt tests web
 clean :
 	rm -r images locale pythonpath template lirecouleur.dic lirecouleurooo.py AddonUI.xcu description.xml lirecouleur.oxt
 	rm -r Factories.xcu lirecouleur.xcu WriterWindowState.xcu lirecouleur.xcs lcfactory.py icon.png
-	rm ../tests/lirecouleur.* 
+	rm ../tests/lirecouleur.*
 	rm -r ../src/firefox-plugin/data/lirecouleur.js
 
 core : ../src/opendocument-plugin
