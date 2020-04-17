@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 # this is a modified version of http://aoo-extensions.sourceforge.net/en/project/watchingwindow extension
 import unohelper

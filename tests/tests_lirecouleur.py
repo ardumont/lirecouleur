@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 ###################################################################################
 # Jeu de tests unitaires de LireCouleur. Les tests portent sur la génération de
