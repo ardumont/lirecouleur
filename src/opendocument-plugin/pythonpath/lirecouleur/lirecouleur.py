@@ -1693,13 +1693,14 @@ def teste_liaison(mot_prec, mot_suiv):
 #
 ######################################################################################
 if __name__ == "__main__":
-
-
     loadLCDict('lirecouleur.dic')
 
     if len(sys.argv) == 3:
-        print ('test de liaison')
-        print (pretraitement_texte(u(sys.argv[1])) + ' ' + pretraitement_texte(u(sys.argv[2])) + ' : ' + str(teste_liaison(pretraitement_texte(u(sys.argv[1])), pretraitement_texte(u(sys.argv[2])))))
+        print('test de liaison')
+        syllabe1 = pretraitement_texte(u(sys.argv[1]))
+        syllabe2 = pretraitement_texte(u(sys.argv[2]))
+        print('%s %s : %s' % (
+            syllabe1, syllabe2, teste_liaison(syllabe1, syllabe2)))
     else:
         l_mots = []
         for i in range(len(sys.argv) - 1):
@@ -1709,24 +1710,21 @@ if __name__ == "__main__":
 
         for mot in l_mots:
             message_test = mot
-            print ('test chaine de phonemes debutant lecteur : ' + message_test)
+            print('test chaine de phonemes debutant lecteur : %s' % message_test)
             pp = generer_paragraphe_phonemes(message_test, 1)
-            print (message_test + ': ' + str(pp))
-            print ('\n')
-            print ('test chaine de phonemes : ' + message_test)
+            print('%s: %s\n' % (message_test, pp))
+            print('test chaine de phonemes : %s' % message_test)
             pp = generer_paragraphe_phonemes(message_test)
-            print (message_test + ': ' + str(pp))
-            print ('\n')
-            print ('test chaine de syllabes : ' + message_test)
+            print('%s: %s\n' % (message_test, pp))
+            print('test chaine de syllabes : %s' % message_test)
             ps = generer_paragraphe_syllabes(pp)
-            print (message_test + ': ' + str(ps))
-            print ('\n')
-            print ('test chaine de syllabes orales : ' + message_test)
-            ps = generer_paragraphe_syllabes(pp, (ConstLireCouleur.SYLLABES_LC, ConstLireCouleur.SYLLABES_ORALES))
-            print (message_test + ': ' + str(ps))
-            print ('\n')
-            print ('test chaine de syllabes ecrites : ' + message_test)
-            ps = generer_paragraphe_syllabes(pp, (ConstLireCouleur.SYLLABES_STD, ConstLireCouleur.SYLLABES_ECRITES))
-            print (message_test + ': ' + str(ps))
-            print ('\n')
-            print ('------------------------------')
+            print('%s: %s\n' % (message_test, pp))
+            print('test chaine de syllabes orales : %s' % message_test)
+            ps = generer_paragraphe_syllabes(
+                pp, (ConstLireCouleur.SYLLABES_LC, ConstLireCouleur.SYLLABES_ORALES))
+            print('%s: %s\n' % (message_test, pp))
+            print('test chaine de syllabes ecrites : %s' % message_test)
+            ps = generer_paragraphe_syllabes(
+                pp, (ConstLireCouleur.SYLLABES_STD, ConstLireCouleur.SYLLABES_ECRITES))
+            print('%s: %s\n' % (message_test, pp))
+            print('------------------------------')
