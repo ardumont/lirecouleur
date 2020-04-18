@@ -30,6 +30,10 @@
 import unittest
 from lirecouleur import *
 
+
+from typing import Iterable, Tuple
+
+
 class TestSonsIsoles(unittest.TestCase):
     def setUp(self):
         self.voyelles = [
@@ -57,52 +61,65 @@ class TestSonsIsoles(unittest.TestCase):
             self.assertEqual(extraire_phonemes(son, son, 0), phonemes)
 
 
-class TestMotsRegleA(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+class MixinTest(unittest.TestCase):
+    def assert_mots_ok(self,
+                       mots: Iterable[Tuple[str, Iterable[Tuple[str, str]]]]):
+         for mot, phonemes in mots:
+             mot = pretraitement_texte(mot)
+             expected_phonemes = [
+                 (phoneme, u(grapheme)) for phoneme, grapheme in phonemes
+             ]
+             actual_phonemes = extraire_phonemes(mot, mot, 0)
+             # contrôle de l'extraction de phonèmes
+             self.assertEqual(actual_phonemes, expected_phonemes)
+
+
+class TestMotsRegleA(MixinTest):
+    def test_mots(self):
+        mots = [
             ('baye', [('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
-            ('cobaye', [('k', 'c'), ('o', 'o'), ('b', 'b'), ('a', 'a'), ('j', 'y'), ('q_caduc', 'e')]),
+            ('cobaye', [('k', 'c'), ('o', 'o'), ('b', 'b'), ('a', 'a'),
+                        ('j', 'y'), ('q_caduc', 'e')]),
             ('pays', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('#', 's')]),
-            ('paysan', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a~', 'an')]),
-            ('paysanne', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'), ('a', 'a'), ('n', 'nn'), ('q_caduc', 'e')]),
-            ('taureau', [('t', 't'), ('o_comp', 'au'), ('r', 'r'), ('o_comp', 'eau')]),
+            ('paysan', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('z_s', 's'),
+                        ('a~', 'an')]),
+            ('paysanne', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'),
+                          ('z_s', 's'), ('a', 'a'), ('n', 'nn'),
+                          ('q_caduc', 'e')]),
+            ('taureau', [('t', 't'), ('o_comp', 'au'), ('r', 'r'),
+                         ('o_comp', 'eau')]),
             ('ail', [('a', 'a'), ('j', 'il')]),
-            ('maille', [('m', 'm'), ('a', 'a'), ('j', 'ill'), ('q_caduc', 'e')]),
+            ('maille', [('m', 'm'), ('a', 'a'), ('j', 'ill'),
+                        ('q_caduc', 'e')]),
             ('ainsi', [('e~', 'ain'), ('s', 's'), ('i', 'i')]),
-            ('capitaine', [('k', 'c'), ('a', 'a'), ('p', 'p'), ('i', 'i'), ('t', 't'), ('e^_comp', 'ai'), ('n', 'n'), ('q_caduc', 'e')]),
+            ('capitaine', [('k', 'c'), ('a', 'a'), ('p', 'p'), ('i', 'i'),
+                           ('t', 't'), ('e^_comp', 'ai'), ('n', 'n'),
+                           ('q_caduc', 'e')]),
             ('main', [('m', 'm'), ('e~', 'ain')]),
             ('plaint', [('p', 'p'), ('l', 'l'), ('e~', 'ain'), ('#', 't')]),
             ('vaincu', [('v', 'v'), ('e~', 'ain'), ('k', 'c'), ('y', 'u')]),
-            ('salade', [('s', 's'), ('a', 'a'), ('l', 'l'), ('a', 'a'), ('d', 'd'), ('q_caduc', 'e')]),
+            ('salade', [('s', 's'), ('a', 'a'), ('l', 'l'), ('a', 'a'),
+                        ('d', 'd'), ('q_caduc', 'e')]),
             ('appât', [('a', 'a'), ('p', 'pp'), ('a', 'â'), ('#', 't')]),
             ('déjà', [('d', 'd'), ('e', 'é'), ('z^', 'j'), ('a', 'à')])
         ]
 
-    def test_mots(self):
-        for mot, phonemes in self.mots:
-            mot = pretraitement_texte(mot)
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0),
-                             [(phon[0], u(phon[1])) for phon in phonemes])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleB(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
-        ('bébé', [('b', 'b'), ('e', 'é'), ('b', 'b'), ('e', 'é')]),
-        ('rabbin', [('r', 'r'), ('a', 'a'), ('b', 'bb'), ('e~', 'in')]),
-        ('plomb', [('p', 'p'), ('l', 'l'), ('o~', 'om'), ('#', 'b')])
+
+class TestMotsRegleB(MixinTest):
+    def test_mots(self):
+        mots = [
+            ('bébé', [('b', 'b'), ('e', 'é'), ('b', 'b'), ('e', 'é')]),
+            ('rabbin', [('r', 'r'), ('a', 'a'), ('b', 'bb'), ('e~', 'in')]),
+            ('plomb', [('p', 'p'), ('l', 'l'), ('o~', 'om'), ('#', 'b')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleC(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+class TestMotsRegleC(MixinTest):
+    def test_mots(self):
+        mots = [
         ('ce', [('s_c', 'c'), ('q', 'e')]),
         ('ci', [('s_c', 'c'), ('i', 'i')]),
         ('cygne', [('s_c', 'c'), ('i', 'y'), ('n~', 'gn'), ('q_caduc', 'e')]),
@@ -125,31 +142,22 @@ class TestMotsRegleC(unittest.TestCase):
         ('orchestre', [('o_ouvert', 'o'), ('r', 'r'), ('k', 'ch'), ('e^_comp', 'e'), ('s', 's'), ('t', 't'), ('r', 'r'), ('q_caduc', 'e')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleD(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleD(MixinTest):
+    def test_mots(self):
+        mots = [
         ('rade', [('r', 'r'), ('a', 'a'), ('d', 'd'), ('q_caduc', 'e')]),
         ('fond', [('f', 'f'), ('o~', 'on'), ('#', 'd')]),
         ('retard', [('r', 'r'), ('q', 'e'), ('t', 't'), ('a', 'a'), ('r', 'r'), ('#', 'd')])
         ]
+        self.assert_mots_ok(mots)
 
+
+class TestMotsRegleE(MixinTest):
     def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
-
-class TestMotsRegleE(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+        mots = [
         ('serpent', [('s', 's'), ('e^_comp', 'e'), ('r', 'r'), ('p', 'p'), ('a~', 'en'), ('#', 't')]),
         ('apparemment', [('a', 'a'), ('p', 'pp'), ('a', 'a'), ('r', 'r'), ('a', 'e'), ('m', 'mm'), ('a~', 'en'), ('#', 't')]),
         ('aiment', [('e^_comp', 'ai'), ('m', 'm'), ('q_caduc', 'e'), ('verb_3p', 'nt')]),
@@ -200,16 +208,12 @@ class TestMotsRegleE(unittest.TestCase):
         ('cet', [('s_c', 'c'), ('e^_comp', 'e'), ('t', 't')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleG(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleG(MixinTest):
+    def test_mots(self):
+        mots = [
         ('gagner', [('g', 'g'), ('a', 'a'), ('n~', 'gn'), ('e_comp', 'er')]),
         ('gamme', [('g', 'g'), ('a', 'a'), ('m', 'mm'), ('q_caduc', 'e')]),
         ('gomme', [('g', 'g'), ('o_ouvert', 'o'), ('m', 'mm'), ('q_caduc', 'e')]),
@@ -229,30 +233,21 @@ class TestMotsRegleG(unittest.TestCase):
         ('parking', [('p', 'p'), ('a', 'a'), ('r', 'r'), ('k', 'k'), ('i', 'i'), ('g~', 'ng')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleH(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleH(MixinTest):
+    def test_mots(self):
+        mots = [
         ('hibou', [('#', 'h'), ('i', 'i'), ('b', 'b'), ('u', 'ou')]),
         ('thé', [('t', 't'), ('#', 'h'), ('e', 'é')])
         ]
+        self.assert_mots_ok(mots)
 
+
+class TestMotsRegleI(MixinTest):
     def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
-
-class TestMotsRegleI(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+        mots = [
         ('ding', [('d', 'd'), ('i', 'i'), ('g~', 'ng')]),
         ('lin', [('l', 'l'), ('e~', 'in')]),
         ('imbiber', [('e~', 'im'), ('b', 'b'), ('i', 'i'), ('b', 'b'), ('e_comp', 'er')]),
@@ -272,86 +267,62 @@ class TestMotsRegleI(unittest.TestCase):
         ('mistigri', [('m', 'm'), ('i', 'i'), ('s', 's'), ('t', 't'), ('i', 'i'), ('g', 'g'), ('r', 'r'), ('i', 'i')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleJ(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleJ(MixinTest):
+    def test_mots(self):
+        mots = [
         ('joujou', [('z^', 'j'), ('u', 'ou'), ('z^', 'j'), ('u', 'ou')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleK(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleK(MixinTest):
+    def test_mots(self):
+        mots = [
         ('kaki', [('k', 'k'), ('a', 'a'), ('k', 'k'), ('i', 'i')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleL(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleL(MixinTest):
+    def test_mots(self):
+        mots = [
         ('il', [('i', 'i'), ('l', 'l')]),
         ('fusil', [('f', 'f'), ('y', 'u'), ('z_s', 's'), ('i', 'i'), ('#', 'l')]),
         ('outil', [('u', 'ou'), ('t', 't'), ('i', 'i'), ('#', 'l')]),
         ('gentil', [('z^_g', 'g'), ('a~', 'en'), ('t', 't'), ('i', 'i'), ('#', 'l')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleM(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleM(MixinTest):
+    def test_mots(self):
+        mots = [
         ('somme', [('s', 's'), ('o_ouvert', 'o'), ('m', 'mm'), ('q_caduc', 'e')]),
         ('automne', [('o_comp', 'au'), ('t', 't'), ('o', 'o'), ('#', 'm'), ('n', 'n'), ('q_caduc', 'e')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleN(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleN(MixinTest):
+    def test_mots(self):
+        mots = [
         ('tonne', [('t', 't'), ('o_ouvert', 'o'), ('n', 'nn'), ('q_caduc', 'e')]),
         ('lent', [('l', 'l'), ('a~', 'en'), ('#', 't')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleO(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleO(MixinTest):
+    def test_mots(self):
+        mots = [
         ('coin', [('k', 'c'), ('w_e~', 'oin')]),
         ('roi', [('r', 'r'), ('wa', 'oi')]),
         ('clou', [('k', 'c'), ('l', 'l'), ('u', 'ou')]),
@@ -365,16 +336,12 @@ class TestMotsRegleO(unittest.TestCase):
         ('homme', [('#', 'h'), ('o_ouvert', 'o'), ('m', 'mm'), ('q_caduc', 'e')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleP(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleP(MixinTest):
+    def test_mots(self):
+        mots = [
         ('papa', [('p', 'p'), ('a', 'a'), ('p', 'p'), ('a', 'a')]),
         ('alpha', [('a', 'a'), ('l', 'l'), ('f_ph', 'ph'), ('a', 'a')]),
         ('loup', [('l', 'l'), ('u', 'ou'), ('#', 'p')]),
@@ -389,46 +356,34 @@ class TestMotsRegleP(unittest.TestCase):
         ('baptise', [('b', 'b'), ('a', 'a'), ('#', 'p'), ('t', 't'), ('i', 'i'), ('z_s', 's'), ('q_caduc', 'e')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleQ(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleQ(MixinTest):
+    def test_mots(self):
+        mots = [
         ('quitte', [('k_qu', 'qu'), ('i', 'i'), ('t', 'tt'), ('q_caduc', 'e')]),
         ('coq', [('k', 'c'), ('o', 'o'), ('k', 'q')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleR(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleR(MixinTest):
+    def test_mots(self):
+        mots = [
         ('monsieur', [('m', 'm'), ('q', 'on'), ('s', 's'), ('j_x^', 'ieu'), ('#', 'r')]),
         ('messieurs', [('m', 'm'), ('e^_comp', 'e'), ('s', 'ss'), ('j_x^', 'ieu'), ('#', 'r'), ('#', 's')]),
         ('gars', [('g', 'g'), ('a', 'a'), ('#', 'rs')]),
         ('gare', [('g', 'g'), ('a', 'a'), ('r', 'r'), ('q_caduc', 'e')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleS(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleS(MixinTest):
+    def test_mots(self):
+        mots = [
         ('mars', [('m', 'm'), ('a', 'a'), ('r', 'r'), ('s', 's')]),
         ('os', [('o', 'o'), ('s', 's')]),
         ('bus', [('b', 'b'), ('y', 'u'), ('s', 's')]),
@@ -442,16 +397,12 @@ class TestMotsRegleS(unittest.TestCase):
         ('schlem', [('s^', 'sch'), ('l', 'l'), ('e^_comp', 'e'), ('m', 'm')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleT(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleT(MixinTest):
+    def test_mots(self):
+        mots = [
         ('titi', [('t', 't'), ('i', 'i'), ('t', 't'), ('i', 'i')]),
         ('soutien', [('s', 's'), ('u', 'ou'), ('t', 't'), ('j_e~', 'ien')]),
         ('martien', [('m', 'm'), ('a', 'a'), ('r', 'r'), ('s_t', 't'), ('j_e~', 'ien')]),
@@ -470,16 +421,12 @@ class TestMotsRegleT(unittest.TestCase):
         ('infect', [('e~', 'in'), ('f', 'f'), ('e^_comp', 'e'), ('k', 'c'), ('t', 't')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleU(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleU(MixinTest):
+    def test_mots(self):
+        mots = [
         ('commun', [('k', 'c'), ('o', 'o'), ('m', 'mm'), ('x~', 'un')]),
         ('cercueil', [('s_c', 'c'), ('e^_comp', 'e'), ('r', 'r'), ('k', 'c'), ('x', 'ue'), ('j', 'il')]),
         ('maximum', [('m', 'm'), ('a', 'a'), ('ks', 'x'), ('i', 'i'), ('m', 'm'), ('o', 'u'), ('m', 'm')]),
@@ -487,45 +434,33 @@ class TestMotsRegleU(unittest.TestCase):
         ('boum', [('b', 'b'), ('u', 'ou'), ('m', 'm')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleV(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleV(MixinTest):
+    def test_mots(self):
+        mots = [
         ('vélo', [('v', 'v'), ('e', 'é'), ('l', 'l'), ('o', 'o')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleW(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleW(MixinTest):
+    def test_mots(self):
+        mots = [
         ('wagon', [('v', 'w'), ('a', 'a'), ('g', 'g'), ('o~', 'on')]),
         ('kiwi', [('k', 'k'), ('i', 'i'), ('w_i', 'wi')]),
         ('wapiti', [('wa', 'wa'), ('p', 'p'), ('i', 'i'), ('t', 't'), ('i', 'i')]),
         ('sandwich', [('s', 's'), ('a~', 'an'), ('d', 'd'), ('w_i', 'wi'), ('s^', 'ch')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleX(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleX(MixinTest):
+    def test_mots(self):
+        mots = [
         ('six', [('s', 's'), ('i', 'i'), ('s_x', 'x')]),
         ('dix', [('d', 'd'), ('i', 'i'), ('s_x', 'x')]),
         ('axe', [('a', 'a'), ('ks', 'x'), ('q_caduc', 'e')]),
@@ -541,16 +476,12 @@ class TestMotsRegleX(unittest.TestCase):
         ('préexister', [('p', 'p'), ('r', 'r'), ('e', 'é'), ('e^', 'e'), ('gz', 'x'), ('i', 'i'), ('s', 's'), ('t', 't'), ('e_comp', 'er')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleY(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleY(MixinTest):
+    def test_mots(self):
+        mots = [
         ('abbaye', [('a', 'a'), ('b', 'bb'), ('e^_comp', 'a'), ('i', 'y'), ('#', 'e')]),
         ('voyage', [('v', 'v'), ('wa', 'o'), ('j_a', 'ya'), ('z^_g', 'g'), ('q_caduc', 'e')]),
         ('pays', [('p', 'p'), ('e^_comp', 'a'), ('i', 'y'), ('#', 's')]),
@@ -560,161 +491,286 @@ class TestMotsRegleY(unittest.TestCase):
         ('dynamo', [('d', 'd'), ('i', 'y'), ('n', 'n'), ('a', 'a'), ('m', 'm'), ('o', 'o')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestMotsRegleZ(unittest.TestCase):
-    def setUp(self):
-        self.mots = [
+
+class TestMotsRegleZ(MixinTest):
+    def test_mots(self):
+        mots = [
         ('zozoter', [('z', 'z'), ('o', 'o'), ('z', 'z'), ('o', 'o'), ('t', 't'), ('e_comp', 'er')])
         ]
 
-    def test_mots(self):
-        nb_mots = len(self.mots)
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots[i][0])
-            # contrôle de l'extraction de phonèmes
-            self.assertEqual(extraire_phonemes(mot, mot, 0), [(phon[0], u(phon[1])) for phon in self.mots[i][1]])
+        self.assert_mots_ok(mots)
 
-class TestSyllabesMots1(unittest.TestCase):
-    def setUp(self):
-        self.mots_phonemes = [
-        ('caisse', [('k', 'c'), ('e^_comp', 'ai'), ('s', 'ss'), ('q_caduc', 'e')]),
-        ('nul', [('n', 'n'), ('y', 'u'), ('l', 'l')]),
-        ('muscle', [('m', 'm'), ('y', 'u'), ('s', 's'), ('k', 'c'), ('l', 'l'), ('q_caduc', 'e')]),
-        ('pair', [('p', 'p'), ('e^_comp', 'ai'), ('r', 'r')]),
-        ('onze', [('o~', 'on'), ('z', 'z'), ('q_caduc', 'e')]),
-        ('force', [('f', 'f'), ('o_ouvert', 'o'), ('r', 'r'), ('s_c', 'c'), ('q_caduc', 'e')]),
-        ('couvée', [('k', 'c'), ('u', 'ou'), ('v', 'v'), ('e', 'é'), ('#', 'e')]),
-        ('friser', [('f', 'f'), ('r', 'r'), ('i', 'i'), ('z_s', 's'), ('e_comp', 'er')]),
-        ('éponge', [('e', 'é'), ('p', 'p'), ('o~', 'on'), ('z^_g', 'g'), ('q_caduc', 'e')]),
-        ('talon', [('t', 't'), ('a', 'a'), ('l', 'l'), ('o~', 'on')]),
-        ('copieur', [('k', 'c'), ('o', 'o'), ('p', 'p'), ('j_x', 'ieu'), ('r', 'r')]),
-        ('adresse', [('a', 'a'), ('d', 'd'), ('r', 'r'), ('e^_comp', 'e'), ('s', 'ss'), ('q_caduc', 'e')]),
-        ('abri', [('a', 'a'), ('b', 'b'), ('r', 'r'), ('i', 'i')]),
-        ('matin', [('m', 'm'), ('a', 'a'), ('t', 't'), ('e~', 'in')]),
-        ('fumer', [('f', 'f'), ('y', 'u'), ('m', 'm'), ('e_comp', 'er')]),
-        ('appel', [('a', 'a'), ('p', 'pp'), ('e^_comp', 'e'), ('l', 'l')]),
-        ('soleil', [('s', 's'), ('o', 'o'), ('l', 'l'), ('e^_comp', 'e'), ('j', 'il')]),
-        ('meilleur', [('m', 'm'), ('e^_comp', 'e'), ('j', 'ill'), ('x', 'eu'), ('r', 'r')]),
-        ('approche', [('a', 'a'), ('p', 'pp'), ('r', 'r'), ('o_ouvert', 'o'), ('s^', 'ch'), ('q_caduc', 'e')]),
-        ('sonnerie', [('s', 's'), ('o', 'o'), ('n', 'nn'), ('q', 'e'), ('r', 'r'), ('i', 'i'), ('#', 'e')]),
-        ('avenue', [('a', 'a'), ('v', 'v'), ('q', 'e'), ('n', 'n'), ('y', 'u'), ('#', 'e')]),
-        ('explosion', [('e^', 'e'), ('ks', 'x'), ('p', 'p'), ('l', 'l'), ('o', 'o'), ('z_s', 's'), ('j_o~', 'ion')]),
-        ('piloter', [('p', 'p'), ('i', 'i'), ('l', 'l'), ('o', 'o'), ('t', 't'), ('e_comp', 'er')]),
-        ('rétablir', [('r', 'r'), ('e', 'é'), ('t', 't'), ('a', 'a'), ('b', 'b'), ('l', 'l'), ('i', 'i'), ('r', 'r')])
-        ]
 
-        self.mots_syllabes = [
-        ('caisse', ['cai', 'sse']),
-        ('nul', ['nul']),
-        ('muscle', ['mus', 'cle']),
-        ('pair', ['pair']),
-        ('onze', ['on', 'ze']),
-        ('force', ['for', 'ce']),
-        ('couvée', ['cou', 'vée']),
-        ('friser', ['fri', 'ser']),
-        ('éponge', ['é', 'pon', 'ge']),
-        ('talon', ['ta', 'lon']),
-        ('copieur', ['co', 'pieur']),
-        ('adresse', ['a', 'dre', 'sse']),
-        ('abri', ['a', 'bri']),
-        ('matin', ['ma', 'tin']),
-        ('fumer', ['fu', 'mer']),
-        ('appel', ['a', 'ppel']),
-        ('soleil', ['so', 'leil']),
-        ('meilleur', ['me', 'illeur']),
-        ('approche', ['a', 'ppro', 'che']),
-        ('sonnerie', ['so', 'nne', 'rie']),
-        ('avenue', ['a', 've', 'nue']),
-        ('explosion', ['ex', 'plo', 'sion']),
-        ('piloter', ['pi', 'lo', 'ter']),
-        ('rétablir', ['ré', 'ta', 'blir'])
-        ]
-
-    def test_mots(self):
-        nb_mots = len(self.mots_syllabes)
-        self.assertEqual(nb_mots, len(self.mots_phonemes))
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots_syllabes[i][0])
+class MixinSyllabeTest(unittest.TestCase):
+    def assert_syllabes_ok(self, mots):
+        for mot, metadata in mots.items():
+            phonemes = metadata['phoneme']
+            syllabes = metadata['syllabe']
+            mot = pretraitement_texte(mot)
             # contrôle de type de chaîne
-            self.assertEqual(mot, u(self.mots_syllabes[i][0]))
+            self.assertEqual(mot, u(mot))
             # contrôle de l'extraction de phonèmes
             pp = extraire_phonemes(mot, mot, 0)
-            self.assertEqual(pp, [(phon[0], u(phon[1])) for phon in self.mots_phonemes[i][1]])
+            self.assertEqual(pp, [
+                (phoneme, u(grapheme)) for phoneme, grapheme in phonemes
+            ])
             # contrôler ensuite le décodage en syllabes
-            self.assertEqual(extraire_syllabes(pp), [u(syll) for syll in self.mots_syllabes[i][1]])
+            self.assertEqual(extraire_syllabes(pp), [u(syll) for syll in syllabes])
 
-class TestSyllabesMots2(unittest.TestCase):
-    def setUp(self):
-        self.mots_phonemes = [
-        ('cassis', [('k', 'c'), ('a', 'a'), ('s', 'ss'), ('i', 'i'), ('#', 's')]),
-        ('net', [('n', 'n'), ('e^_comp', 'et')]),
-        ('faisan', [('f', 'f'), ('e^_comp', 'ai'), ('z_s', 's'), ('a~', 'an')]),
-        ('moelle', [('m', 'm'), ('wa', 'oe'), ('l', 'll'), ('q_caduc', 'e')]),
-        ('aiguille', [('e^_comp', 'ai'), ('g', 'g'), ('y', 'u'), ('i', 'i'), ('j', 'll'), ('q_caduc', 'e')]),
-        ('porc', [('p', 'p'), ('o_ouvert', 'o'), ('r', 'r'), ('#', 'c')]),
-        ('tabac', [('t', 't'), ('a', 'a'), ('b', 'b'), ('a', 'a'), ('#', 'c')]),
-        ('ours', [('u', 'ou'), ('r', 'r'), ('s', 's')]),
-        ('chorale', [('k', 'ch'), ('o_ouvert', 'o'), ('r', 'r'), ('a', 'a'), ('l', 'l'), ('q_caduc', 'e')]),
-        ('femme', [('f', 'f'), ('a', 'e'), ('m', 'mm'), ('q_caduc', 'e')]),
-        ('oignon', [('o', 'oi'), ('n~', 'gn'), ('o~', 'on')]),
-        ('écho', [('e', 'é'), ('s^', 'ch'), ('o', 'o')]),
-        ('automne', [('o_comp', 'au'), ('t', 't'), ('o', 'o'), ('#', 'm'), ('n', 'n'), ('q_caduc', 'e')]),
-        ('mille', [('m', 'm'), ('i', 'i'), ('l', 'll'), ('q_caduc', 'e')]),
-        ('septième', [('s', 's'), ('e^_comp', 'e'), ('p', 'p'), ('t', 't'), ('j_e^', 'iè'), ('m', 'm'), ('q_caduc', 'e')]),
-        ('fusil', [('f', 'f'), ('y', 'u'), ('z_s', 's'), ('i', 'i'), ('#', 'l')]),
-        ('orchestre', [('o_ouvert', 'o'), ('r', 'r'), ('k', 'ch'), ('e^_comp', 'e'), ('s', 's'), ('t', 't'), ('r', 'r'), ('q_caduc', 'e')]),
-        ('hiver', [('#', 'h'), ('i', 'i'), ('v', 'v'), ('e_comp', 'er')]),
-        ('examen', [('e^', 'e'), ('gz', 'x'), ('a', 'a'), ('m', 'm'), ('e~', 'en')]),
-        ('second', [('s', 's'), ('q', 'e'), ('k', 'c'), ('o~', 'on'), ('#', 'd')]),
-        ('parasol', [('p', 'p'), ('a', 'a'), ('r', 'r'), ('a', 'a'), ('s', 's'), ('o', 'o'), ('l', 'l')]),
-        ('monsieur', [('m', 'm'), ('q', 'on'), ('s', 's'), ('j_x^', 'ieu'), ('#', 'r')]),
-        ('révolver', [('r', 'r'), ('e', 'é'), ('v', 'v'), ('o_ouvert', 'o'), ('l', 'l'), ('v', 'v'), ('e^_comp', 'e'), ('r', 'r')])
-        ]
 
-        self.mots_syllabes = [
-        ('cassis', ['ca', 'ssis']),
-        ('net', ['net']),
-        ('faisan', ['fai', 'san']),
-        ('moelle', ['moe', 'lle']),
-        ('aiguille', ['ai', 'gui', 'lle']),
-        ('porc', ['porc']),
-        ('tabac', ['ta', 'bac']),
-        ('ours', ['ours']),
-        ('chorale', ['cho', 'ra', 'le']),
-        ('femme', ['fe', 'mme']),
-        ('oignon', ['oi', 'gnon']),
-        ('écho', ['é', 'cho']),
-        ('automne', ['au', 'tom', 'ne']),
-        ('mille', ['mi', 'lle']),
-        ('septième', ['sep', 'tiè', 'me']),
-        ('fusil', ['fu', 'sil']),
-        ('orchestre', ['or', 'ches', 'tre']),
-        ('hiver', ['hi', 'ver']),
-        ('examen', ['e', 'xa', 'men']),
-        ('second', ['se', 'cond']),
-        ('parasol', ['pa', 'ra', 'sol']),
-        ('monsieur', ['mon', 'sieur']),
-        ('révolver', ['ré', 'vol', 'ver'])
-        ]
-
+class TestSyllabesMots1(MixinSyllabeTest):
     def test_mots(self):
-        nb_mots = len(self.mots_syllabes)
-        self.assertEqual(nb_mots, len(self.mots_phonemes))
-        for i in range(nb_mots):
-            mot = pretraitement_texte(self.mots_syllabes[i][0])
-            # contrôle de type de chaîne
-            self.assertEqual(mot, u(self.mots_syllabes[i][0]))
-            # contrôle de l'extraction de phonèmes
-            pp = extraire_phonemes(mot, mot, 0)
-            self.assertEqual(pp, [(phon[0], u(phon[1])) for phon in self.mots_phonemes[i][1]])
-            # contrôler ensuite le décodage en syllabes
-            self.assertEqual(extraire_syllabes(pp), [u(syll) for syll in self.mots_syllabes[i][1]])
+        mots = {
+            'abri': {'phoneme': [('a', 'a'), ('b', 'b'), ('r', 'r'), ('i', 'i')],
+                     'syllabe': ['a', 'bri']},
+            'adresse': {'phoneme': [('a', 'a'),
+                                    ('d', 'd'),
+                                    ('r', 'r'),
+                                    ('e^_comp', 'e'),
+                                    ('s', 'ss'),
+                                    ('q_caduc', 'e')],
+                        'syllabe': ['a', 'dre', 'sse']},
+            'appel': {'phoneme': [('a', 'a'), ('p', 'pp'), ('e^_comp', 'e'), ('l', 'l')],
+                      'syllabe': ['a', 'ppel']},
+            'approche': {'phoneme': [('a', 'a'),
+                                     ('p', 'pp'),
+                                     ('r', 'r'),
+                                     ('o_ouvert', 'o'),
+                                     ('s^', 'ch'),
+                                     ('q_caduc', 'e')],
+                         'syllabe': ['a', 'ppro', 'che']},
+            'avenue': {'phoneme': [('a', 'a'),
+                                   ('v', 'v'),
+                                   ('q', 'e'),
+                                   ('n', 'n'),
+                                   ('y', 'u'),
+                                   ('#', 'e')],
+                       'syllabe': ['a', 've', 'nue']},
+            'caisse': {'phoneme': [('k', 'c'),
+                                   ('e^_comp', 'ai'),
+                                   ('s', 'ss'),
+                                   ('q_caduc', 'e')],
+                       'syllabe': ['cai', 'sse']},
+            'copieur': {'phoneme': [('k', 'c'),
+                                    ('o', 'o'),
+                                    ('p', 'p'),
+                                    ('j_x', 'ieu'),
+                                    ('r', 'r')],
+                        'syllabe': ['co', 'pieur']},
+            'couvée': {'phoneme': [('k', 'c'),
+                                   ('u', 'ou'),
+                                   ('v', 'v'),
+                                   ('e', 'é'),
+                                   ('#', 'e')],
+                       'syllabe': ['cou', 'vée']},
+            'explosion': {'phoneme': [('e^', 'e'),
+                                      ('ks', 'x'),
+                                      ('p', 'p'),
+                                      ('l', 'l'),
+                                      ('o', 'o'),
+                                      ('z_s', 's'),
+                                      ('j_o~', 'ion')],
+                          'syllabe': ['ex', 'plo', 'sion']},
+            'force': {'phoneme': [('f', 'f'),
+                                  ('o_ouvert', 'o'),
+                                  ('r', 'r'),
+                                  ('s_c', 'c'),
+                                  ('q_caduc', 'e')],
+                      'syllabe': ['for', 'ce']},
+            'friser': {'phoneme': [('f', 'f'),
+                                   ('r', 'r'),
+                                   ('i', 'i'),
+                                   ('z_s', 's'),
+                                   ('e_comp', 'er')],
+                       'syllabe': ['fri', 'ser']},
+            'fumer': {'phoneme': [('f', 'f'), ('y', 'u'), ('m', 'm'), ('e_comp', 'er')],
+                      'syllabe': ['fu', 'mer']},
+            'matin': {'phoneme': [('m', 'm'), ('a', 'a'), ('t', 't'), ('e~', 'in')],
+                      'syllabe': ['ma', 'tin']},
+            'meilleur': {'phoneme': [('m', 'm'),
+                                     ('e^_comp', 'e'),
+                                     ('j', 'ill'),
+                                     ('x', 'eu'),
+                                     ('r', 'r')],
+                         'syllabe': ['me', 'illeur']},
+            'muscle': {'phoneme': [('m', 'm'),
+                                   ('y', 'u'),
+                                   ('s', 's'),
+                                   ('k', 'c'),
+                                   ('l', 'l'),
+                                   ('q_caduc', 'e')],
+                       'syllabe': ['mus', 'cle']},
+            'nul': {'phoneme': [('n', 'n'), ('y', 'u'), ('l', 'l')], 'syllabe': ['nul']},
+            'onze': {'phoneme': [('o~', 'on'), ('z', 'z'), ('q_caduc', 'e')],
+                     'syllabe': ['on', 'ze']},
+            'pair': {'phoneme': [('p', 'p'), ('e^_comp', 'ai'), ('r', 'r')],
+                     'syllabe': ['pair']},
+            'piloter': {'phoneme': [('p', 'p'),
+                                    ('i', 'i'),
+                                    ('l', 'l'),
+                                    ('o', 'o'),
+                                    ('t', 't'),
+                                    ('e_comp', 'er')],
+                        'syllabe': ['pi', 'lo', 'ter']},
+            'rétablir': {'phoneme': [('r', 'r'),
+                                     ('e', 'é'),
+                                     ('t', 't'),
+                                     ('a', 'a'),
+                                     ('b', 'b'),
+                                     ('l', 'l'),
+                                     ('i', 'i'),
+                                     ('r', 'r')],
+                         'syllabe': ['ré', 'ta', 'blir']},
+            'soleil': {'phoneme': [('s', 's'),
+                                   ('o', 'o'),
+                                   ('l', 'l'),
+                                   ('e^_comp', 'e'),
+                                   ('j', 'il')],
+                       'syllabe': ['so', 'leil']},
+            'sonnerie': {'phoneme': [('s', 's'),
+                                     ('o', 'o'),
+                                     ('n', 'nn'),
+                                     ('q', 'e'),
+                                     ('r', 'r'),
+                                     ('i', 'i'),
+                                     ('#', 'e')],
+                         'syllabe': ['so', 'nne', 'rie']},
+            'talon': {'phoneme': [('t', 't'), ('a', 'a'), ('l', 'l'), ('o~', 'on')],
+                      'syllabe': ['ta', 'lon']},
+            'éponge': {'phoneme': [('e', 'é'),
+                                   ('p', 'p'),
+                                   ('o~', 'on'),
+                                   ('z^_g', 'g'),
+                                   ('q_caduc', 'e')],
+                       'syllabe': ['é', 'pon', 'ge']}}
+
+        self.assert_syllabes_ok(mots)
+
+
+class TestSyllabesMots2(MixinSyllabeTest):
+    def test_mots(self):
+        mots = {
+            'aiguille': {'phoneme': [('e^_comp', 'ai'),
+                                     ('g', 'g'),
+                                     ('y', 'u'),
+                                     ('i', 'i'),
+                                     ('j', 'll'),
+                                     ('q_caduc', 'e')],
+                         'syllabe': ['ai', 'gui', 'lle']},
+            'automne': {'phoneme': [('o_comp', 'au'),
+                                    ('t', 't'),
+                                    ('o', 'o'),
+                                    ('#', 'm'),
+                                    ('n', 'n'),
+                                    ('q_caduc', 'e')],
+                        'syllabe': ['au', 'tom', 'ne']},
+            'cassis': {'phoneme': [('k', 'c'),
+                                   ('a', 'a'),
+                                   ('s', 'ss'),
+                                   ('i', 'i'),
+                                   ('#', 's')],
+                       'syllabe': ['ca', 'ssis']},
+            'chorale': {'phoneme': [('k', 'ch'),
+                                    ('o_ouvert', 'o'),
+                                    ('r', 'r'),
+                                    ('a', 'a'),
+                                    ('l', 'l'),
+                                    ('q_caduc', 'e')],
+                        'syllabe': ['cho', 'ra', 'le']},
+            'examen': {'phoneme': [('e^', 'e'),
+                                   ('gz', 'x'),
+                                   ('a', 'a'),
+                                   ('m', 'm'),
+                                   ('e~', 'en')],
+                       'syllabe': ['e', 'xa', 'men']},
+            'faisan': {'phoneme': [('f', 'f'),
+                                   ('e^_comp', 'ai'),
+                                   ('z_s', 's'),
+                                   ('a~', 'an')],
+                       'syllabe': ['fai', 'san']},
+            'femme': {'phoneme': [('f', 'f'), ('a', 'e'), ('m', 'mm'), ('q_caduc', 'e')],
+                      'syllabe': ['fe', 'mme']},
+            'fusil': {'phoneme': [('f', 'f'),
+                                  ('y', 'u'),
+                                  ('z_s', 's'),
+                                  ('i', 'i'),
+                                  ('#', 'l')],
+                      'syllabe': ['fu', 'sil']},
+            'hiver': {'phoneme': [('#', 'h'), ('i', 'i'), ('v', 'v'), ('e_comp', 'er')],
+                      'syllabe': ['hi', 'ver']},
+            'mille': {'phoneme': [('m', 'm'), ('i', 'i'), ('l', 'll'), ('q_caduc', 'e')],
+                      'syllabe': ['mi', 'lle']},
+            'moelle': {'phoneme': [('m', 'm'),
+                                   ('wa', 'oe'),
+                                   ('l', 'll'),
+                                   ('q_caduc', 'e')],
+                       'syllabe': ['moe', 'lle']},
+            'monsieur': {'phoneme': [('m', 'm'),
+                                     ('q', 'on'),
+                                     ('s', 's'),
+                                     ('j_x^', 'ieu'),
+                                     ('#', 'r')],
+                         'syllabe': ['mon', 'sieur']},
+            'net': {'phoneme': [('n', 'n'), ('e^_comp', 'et')], 'syllabe': ['net']},
+            'oignon': {'phoneme': [('o', 'oi'), ('n~', 'gn'), ('o~', 'on')],
+                       'syllabe': ['oi', 'gnon']},
+            'orchestre': {'phoneme': [('o_ouvert', 'o'),
+                                      ('r', 'r'),
+                                      ('k', 'ch'),
+                                      ('e^_comp', 'e'),
+                                      ('s', 's'),
+                                      ('t', 't'),
+                                      ('r', 'r'),
+                                      ('q_caduc', 'e')],
+                          'syllabe': ['or', 'ches', 'tre']},
+            'ours': {'phoneme': [('u', 'ou'), ('r', 'r'), ('s', 's')],
+                     'syllabe': ['ours']},
+            'parasol': {'phoneme': [('p', 'p'),
+                                    ('a', 'a'),
+                                    ('r', 'r'),
+                                    ('a', 'a'),
+                                    ('s', 's'),
+                                    ('o', 'o'),
+                                    ('l', 'l')],
+                        'syllabe': ['pa', 'ra', 'sol']},
+            'porc': {'phoneme': [('p', 'p'), ('o_ouvert', 'o'), ('r', 'r'), ('#', 'c')],
+                     'syllabe': ['porc']},
+            'révolver': {'phoneme': [('r', 'r'),
+                                     ('e', 'é'),
+                                     ('v', 'v'),
+                                     ('o_ouvert', 'o'),
+                                     ('l', 'l'),
+                                     ('v', 'v'),
+                                     ('e^_comp', 'e'),
+                                     ('r', 'r')],
+                         'syllabe': ['ré', 'vol', 'ver']},
+            'second': {'phoneme': [('s', 's'),
+                                   ('q', 'e'),
+                                   ('k', 'c'),
+                                   ('o~', 'on'),
+                                   ('#', 'd')],
+                       'syllabe': ['se', 'cond']},
+            'septième': {'phoneme': [('s', 's'),
+                                     ('e^_comp', 'e'),
+                                     ('p', 'p'),
+                                     ('t', 't'),
+                                     ('j_e^', 'iè'),
+                                     ('m', 'm'),
+                                     ('q_caduc', 'e')],
+                         'syllabe': ['sep', 'tiè', 'me']},
+            'tabac': {'phoneme': [('t', 't'),
+                                  ('a', 'a'),
+                                  ('b', 'b'),
+                                  ('a', 'a'),
+                                  ('#', 'c')],
+                      'syllabe': ['ta', 'bac']},
+            'écho': {'phoneme': [('e', 'é'), ('s^', 'ch'), ('o', 'o')],
+                     'syllabe': ['é', 'cho']}}
+
+        self.assert_syllabes_ok(mots)
+
 
 if __name__ == "__main__":
     unittest.main()
